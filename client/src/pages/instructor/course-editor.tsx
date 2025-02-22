@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -31,7 +31,7 @@ export default function CourseEditorPage() {
   );
 
   // Update state when course data is loaded
-  React.useEffect(() => {
+  useEffect(() => {
     if (course) {
       setTitle(course.title);
       setDescription(course.description);
