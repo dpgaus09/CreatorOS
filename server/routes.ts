@@ -45,6 +45,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Important: Put the published courses route BEFORE the dynamic :id route
+  app.get("/api/courses/published", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const courses = await storage.getPublishedCourses();
+      console.log("Published courses:", courses); // Debug log
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching published courses:", error);
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+
   app.get("/api/courses/:id", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
@@ -65,20 +81,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching course:", error);
       res.status(500).json({ message: "Failed to fetch course" });
-    }
-  });
-
-  app.get("/api/courses/published", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
-
-    try {
-      const courses = await storage.getPublishedCourses();
-      res.json(courses);
-    } catch (error) {
-      console.error("Error fetching published courses:", error);
-      res.status(500).json({ message: "Failed to fetch courses" });
     }
   });
 
