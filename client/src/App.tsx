@@ -12,10 +12,10 @@ import StudentDashboard from "@/pages/student/dashboard";
 import CourseView from "@/pages/student/course-view";
 import { ProtectedRoute } from "./lib/protected-route";
 
-function Layout({ children }: { children: React.ReactNode }) {
+function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
   return (
     <>
-      <Navbar />
+      {showNav && <Navbar />}
       {children}
     </>
   );
@@ -49,7 +49,7 @@ function Router() {
         component={({ user }) => {
           if (user?.role !== "student") return <NotFound />;
           return (
-            <Layout>
+            <Layout showNav={false}>
               <CourseView />
             </Layout>
           );

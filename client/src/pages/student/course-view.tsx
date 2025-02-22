@@ -32,22 +32,22 @@ function formatVideoUrl(url: string) {
 
 export default function CourseView() {
   const params = useParams();
-  const courseId = parseInt(params.courseId || "");
+  const courseId = parseInt(params.courseId || "0");
   const { toast } = useToast();
 
   const { data: course, isLoading: loadingCourse } = useQuery<Course>({
     queryKey: [`/api/courses/${courseId}`],
-    enabled: !isNaN(courseId),
+    enabled: courseId > 0,
   });
 
   const { data: enrollment, isLoading: loadingEnrollment } = useQuery<Enrollment>({
     queryKey: [`/api/enrollments/${courseId}`],
-    enabled: !isNaN(courseId),
+    enabled: courseId > 0,
   });
 
   const completeLessonMutation = useMutation({
     mutationFn: async (lessonId: string) => {
-      if (isNaN(courseId)) throw new Error("Invalid course ID");
+      if (courseId <= 0) throw new Error("Invalid course ID");
 
       const res = await apiRequest(
         "PATCH",
@@ -75,14 +75,6 @@ export default function CourseView() {
       });
     },
   });
-
-  if (isNaN(courseId)) {
-    return (
-      <div className="container mx-auto py-8">
-        <h1 className="text-2xl font-bold">Invalid course ID</h1>
-      </div>
-    );
-  }
 
   if (loadingCourse || loadingEnrollment) {
     return (
@@ -135,7 +127,7 @@ export default function CourseView() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-6 pt-4">
-                {module.lessons.map((lesson, index) => (
+                {module.lessons.map((lesson) => (
                   <div key={lesson.id} className="space-y-4">
                     <div className="flex items-center justify-between gap-4">
                       <Button
@@ -184,8 +176,8 @@ export default function CourseView() {
                         />
                       </div>
                     )}
-                    {lesson.type === "text" && (
-                      <div className="prose max-w-none">
+                    {lesson.type === "text" && lesson.content && (
+                      <div className="prose dark:prose-invert max-w-none">
                         {lesson.content}
                       </div>
                     )}
