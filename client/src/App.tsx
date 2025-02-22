@@ -9,6 +9,7 @@ import AuthPage from "@/pages/auth-page";
 import InstructorDashboard from "@/pages/instructor/dashboard";
 import CreateCourse from "@/pages/instructor/create-course";
 import StudentDashboard from "@/pages/student/dashboard";
+import CourseView from "@/pages/student/course-view";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,17 @@ function Router() {
           return (
             <Layout>
               <CreateCourse />
+            </Layout>
+          );
+        }}
+      />
+      <ProtectedRoute
+        path="/course/:courseId"
+        component={({ user }) => {
+          if (user?.role !== "student") return <NotFound />;
+          return (
+            <Layout>
+              <CourseView />
             </Layout>
           );
         }}

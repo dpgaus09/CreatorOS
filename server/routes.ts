@@ -38,6 +38,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/courses/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    const courseId = parseInt(req.params.id);
+    const course = await storage.getCourse(courseId);
+
+    if (!course || (!course.published && course.instructorId !== req.user.id)) {
+      return res.sendStatus(404);
+    }
+
+    res.json(course);
+  });
+
   app.get("/api/courses/instructor", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "instructor") {
       return res.sendStatus(401);
@@ -105,6 +120,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const enrollments = await storage.getStudentEnrollments(req.user.id);
     res.json(enrollments);
+  });
+
+  app.get("/api/enrollments/:courseId", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "student") {
+      return res.sendStatus(401);
+    }
+
+    const courseId = parseInt(req.params.courseId);
+    const enrollment = await storage.getEnrollment(req.user.id, courseId);
+
+    if (!enrollment) {
+      return res.sendStatus(404);
+    }
+
+    res.json(enrollment);
   });
 
   app.patch("/api/enrollments/:courseId/progress", async (req, res) => {
