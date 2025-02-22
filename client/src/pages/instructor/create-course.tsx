@@ -3,24 +3,29 @@ import { useLocation } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Course, Module } from "@shared/schema";
+import { useAuth } from "@/hooks/use-auth";
 import CourseEditor from "@/components/course-editor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 
 export default function CreateCourse() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [modules, setModules] = useState<Module[]>([]);
 
   const createCourseMutation = useMutation({
     mutationFn: async (data: Partial<Course>) => {
-      const res = await apiRequest("POST", "/api/courses", data);
+      const res = await apiRequest("POST", "/api/courses", {
+        ...data,
+        instructorId: user?.id,
+      });
       return res.json();
     },
     onSuccess: () => {

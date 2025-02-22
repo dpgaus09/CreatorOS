@@ -14,12 +14,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    const courseData = insertCourseSchema.parse(req.body);
-    const course = await storage.createCourse({
-      ...courseData,
-      instructorId: req.user.id,
+    // Create a modified schema that ensures instructorId is provided
+    const createCourseSchema = insertCourseSchema.extend({
+      instructorId: z.number(),
     });
-    res.json(course);
+
+    try {
+      const courseData = createCourseSchema.parse({
+        ...req.body,
+        instructorId: req.user.id,
+      });
+
+      const course = await storage.createCourse({
+        ...courseData,
+        modules: courseData.modules || [], // Ensure modules is never undefined
+      });
+      res.json(course);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      throw error;
+    }
   });
 
   app.get("/api/courses/instructor", async (req, res) => {
@@ -47,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const courseId = parseInt(req.params.id);
     const course = await storage.getCourse(courseId);
-    
+
     if (!course || course.instructorId !== req.user.id) {
       return res.sendStatus(404);
     }
@@ -66,6 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const enrollment = await storage.createEnrollment({
       ...enrollmentData,
       studentId: req.user.id,
+      progress: {}, // Ensure progress is never undefined
     });
     res.json(enrollment);
   });
@@ -86,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     const courseId = parseInt(req.params.courseId);
     const enrollment = await storage.getEnrollment(req.user.id, courseId);
-    
+
     if (!enrollment) {
       return res.sendStatus(404);
     }
