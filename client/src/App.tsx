@@ -58,14 +58,11 @@ function Router() {
       />
       <ProtectedRoute
         path="/course/:courseId"
-        component={({ user }) => {
-          if (user?.role !== "student") return <NotFound />;
-          return (
-            <Layout showNav={false}>
-              <CourseView />
-            </Layout>
-          );
-        }}
+        component={() => (
+          <Layout showNav={false}>
+            <CourseView />
+          </Layout>
+        )}
       />
       <Route component={NotFound} />
     </Switch>
