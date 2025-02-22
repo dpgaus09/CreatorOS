@@ -12,11 +12,21 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InstructorDashboard() {
   const { user } = useAuth();
-  const { data: courses, isLoading } = useQuery<Course[]>({
+  const { toast } = useToast();
+
+  const { data: courses, isLoading, error } = useQuery<Course[]>({
     queryKey: ["/api/courses/instructor"],
+    onError: (error: Error) => {
+      toast({
+        title: "Error loading courses",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -27,20 +37,29 @@ export default function InstructorDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="text-center py-12">
+          <h3 className="text-xl font-medium text-destructive">
+            Failed to load courses. Please try again later.
+          </h3>
+        </div>
+      </div>
+    );
+  }
+
   const publishedCourses = courses?.filter((c) => c.published) || [];
   const draftCourses = courses?.filter((c) => !c.published) || [];
 
   const totalStudents = publishedCourses.length * 20; // This should come from the API
-  const totalLessons = courses?.reduce(
-    (acc, course) => {
-      const modules = course.modules as Module[];
-      return acc + modules.reduce(
-        (moduleAcc, module) => moduleAcc + module.lessons.length,
-        0
-      );
-    },
-    0
-  ) || 0;
+  const totalLessons = courses?.reduce((acc, course) => {
+    const modules = course.modules as Module[];
+    return acc + modules.reduce(
+      (moduleAcc, module) => moduleAcc + module.lessons.length,
+      0
+    );
+  }, 0) || 0;
 
   return (
     <div className="container mx-auto py-8 space-y-8">
@@ -132,41 +151,43 @@ export default function InstructorDashboard() {
         </TabsContent>
 
         <TabsContent value="published" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {publishedCourses.map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                role="instructor"
-              />
-            ))}
-            {publishedCourses.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <h3 className="text-xl font-medium text-muted-foreground">
-                  No published courses yet
-                </h3>
-              </div>
-            )}
-          </div>
+          {publishedCourses.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-medium text-muted-foreground">
+                No published courses yet
+              </h3>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {publishedCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  role="instructor"
+                />
+              ))}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="drafts" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {draftCourses.map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                role="instructor"
-              />
-            ))}
-            {draftCourses.length === 0 && (
-              <div className="col-span-full text-center py-12">
-                <h3 className="text-xl font-medium text-muted-foreground">
-                  No draft courses
-                </h3>
-              </div>
-            )}
-          </div>
+          {draftCourses.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-xl font-medium text-muted-foreground">
+                No draft courses
+              </h3>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {draftCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  role="instructor"
+                />
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

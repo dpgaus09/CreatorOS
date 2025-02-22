@@ -1,4 +1,4 @@
-import { Course, Enrollment } from "@shared/schema";
+import { Course, Enrollment, Module } from "@shared/schema";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -7,7 +7,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Book, CheckCircle, Users, Clock, Edit, Eye } from "lucide-react";
 import { useLocation } from "wouter";
-import { format } from "date-fns";
 
 interface CourseCardProps {
   course: Course;
@@ -59,9 +58,17 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
           : "Students can now enroll in this course",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update course",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
-  const totalLessons = course.modules.reduce(
+  const modules = course.modules as Module[];
+  const totalLessons = modules.reduce(
     (acc, module) => acc + module.lessons.length,
     0
   );
@@ -101,7 +108,7 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
         <div className="grid grid-cols-2 gap-4 text-sm mb-4">
           <div className="flex items-center gap-2">
             <Book className="h-4 w-4 text-primary" />
-            <span>{course.modules.length} modules</span>
+            <span>{modules.length} modules</span>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-primary" />

@@ -14,46 +14,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    // Create a modified schema that ensures instructorId is provided
-    const createCourseSchema = insertCourseSchema.extend({
-      instructorId: z.number(),
-    });
-
     try {
-      const courseData = createCourseSchema.parse({
+      const courseData = insertCourseSchema.parse({
         ...req.body,
         instructorId: req.user.id,
       });
 
-      const course = await storage.createCourse({
-        ...courseData,
-        modules: courseData.modules || [], // Ensure modules is never undefined
-      });
+      const course = await storage.createCourse(courseData);
       res.json(course);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.message });
       }
-      throw error;
+      console.error("Error creating course:", error);
+      res.status(500).json({ message: "Failed to create course" });
     }
-  });
-
-  app.get("/api/courses/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
-
-    const courseId = Number(req.params.id);
-    if (isNaN(courseId)) {
-      return res.status(400).json({ message: "Invalid course ID" });
-    }
-
-    const course = await storage.getCourse(courseId);
-    if (!course || (!course.published && course.instructorId !== req.user.id)) {
-      return res.sendStatus(404);
-    }
-
-    res.json(course);
   });
 
   app.get("/api/courses/instructor", async (req, res) => {
@@ -67,6 +42,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching instructor courses:", error);
       res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+
+  app.get("/api/courses/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const courseId = parseInt(req.params.id);
+      if (isNaN(courseId)) {
+        return res.status(400).json({ message: "Invalid course ID" });
+      }
+
+      const course = await storage.getCourse(courseId);
+      if (!course || (!course.published && course.instructorId !== req.user.id)) {
+        return res.sendStatus(404);
+      }
+
+      res.json(course);
+    } catch (error) {
+      console.error("Error fetching course:", error);
+      res.status(500).json({ message: "Failed to fetch course" });
     }
   });
 
@@ -108,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enrollment routes
+  // Enrollment routes remain unchanged
   app.post("/api/enrollments", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "student") {
       return res.sendStatus(401);
