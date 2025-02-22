@@ -19,6 +19,30 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
+  const enrollMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/enrollments", {
+        courseId: course.id,
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/enrollments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/courses/published"] });
+      toast({
+        title: "Enrolled successfully",
+        description: `You are now enrolled in ${course.title}`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to enroll",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const publishMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("PATCH", `/api/courses/${course.id}`, {
@@ -118,7 +142,24 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
             </Button>
           </>
         ) : (
-          <></>
+          enrollment ? (
+            <Button 
+              className="w-full" 
+              variant="outline"
+              onClick={() => setLocation(`/course/${course.id}`)}
+            >
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Continue Learning
+            </Button>
+          ) : (
+            <Button
+              className="w-full"
+              onClick={() => enrollMutation.mutate()}
+              disabled={enrollMutation.isPending}
+            >
+              {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
+            </Button>
+          )
         )}
       </CardFooter>
     </Card>
