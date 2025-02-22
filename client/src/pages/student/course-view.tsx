@@ -1,7 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Course, Enrollment, Module } from "@shared/schema";
-import { useParams } from "wouter";
-import { Loader2, CheckCircle, ArrowRight } from "lucide-react";
+import { useParams, useLocation } from "wouter";
+import { Loader2, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Accordion,
@@ -52,6 +52,7 @@ function formatVideoUrl(url: string) {
 
 export default function CourseView() {
   const params = useParams();
+  const [, setLocation] = useLocation();
   const courseId = parseInt(params.courseId || "0");
   const { toast } = useToast();
   const { user } = useAuth();
@@ -129,9 +130,19 @@ export default function CourseView() {
     <div className="container max-w-5xl mx-auto py-8 space-y-6">
       {isInstructor && (
         <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4 mb-6">
-          <p className="text-yellow-800 dark:text-yellow-200">
-            Preview Mode: Viewing course as a student would see it
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-yellow-800 dark:text-yellow-200">
+              Preview Mode: Viewing course as a student would see it
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => setLocation("/")}
+              className="bg-yellow-200 hover:bg-yellow-300 dark:bg-yellow-800 dark:hover:bg-yellow-700 border-yellow-300 dark:border-yellow-700"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Exit Preview
+            </Button>
+          </div>
         </div>
       )}
 
