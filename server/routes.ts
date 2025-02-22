@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Enrollment routes remain unchanged
+  // Enrollment routes
   app.post("/api/enrollments", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "student") {
       return res.sendStatus(401);

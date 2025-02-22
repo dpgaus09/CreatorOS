@@ -4,12 +4,21 @@ import { useAuth } from "@/hooks/use-auth";
 import CourseCard from "@/components/course-card";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  
+  const { toast } = useToast();
+
   const { data: publishedCourses, isLoading: loadingCourses } = useQuery<Course[]>({
     queryKey: ["/api/courses/published"],
+    onError: (error: Error) => {
+      toast({
+        title: "Error loading courses",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const { data: enrollments, isLoading: loadingEnrollments } = useQuery<Enrollment[]>({
@@ -35,7 +44,7 @@ export default function StudentDashboard() {
         <p className="text-muted-foreground">Continue learning or discover new courses</p>
       </div>
 
-      <Tabs defaultValue="enrolled">
+      <Tabs defaultValue="available">
         <TabsList>
           <TabsTrigger value="enrolled">My Courses</TabsTrigger>
           <TabsTrigger value="available">Available Courses</TabsTrigger>
