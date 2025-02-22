@@ -78,13 +78,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    const enrollmentData = insertEnrollmentSchema.parse(req.body);
-    const enrollment = await storage.createEnrollment({
-      ...enrollmentData,
-      studentId: req.user.id,
-      progress: {}, // Ensure progress is never undefined
-    });
-    res.json(enrollment);
+    try {
+      const enrollmentData = insertEnrollmentSchema.parse({
+        ...req.body,
+        studentId: req.user.id
+      });
+
+      const enrollment = await storage.createEnrollment({
+        ...enrollmentData,
+        progress: {},
+        enrolledAt: new Date(),
+      });
+      res.json(enrollment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      throw error;
+    }
   });
 
   app.get("/api/enrollments", async (req, res) => {

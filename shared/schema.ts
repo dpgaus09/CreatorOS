@@ -53,7 +53,11 @@ export const loginSchema = z.object({
 });
 
 export const insertCourseSchema = createInsertSchema(courses);
-export const insertEnrollmentSchema = createInsertSchema(enrollments);
+export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
+  id: true,
+  enrolledAt: true,
+  progress: true,
+});
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
