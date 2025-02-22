@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
@@ -13,11 +14,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
-
-  if (user) {
-    setLocation("/");
-    return null;
-  }
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -38,6 +34,16 @@ export default function AuthPage() {
       email: "",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
+
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
