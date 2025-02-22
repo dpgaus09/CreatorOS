@@ -61,8 +61,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    const courses = await storage.getCoursesByInstructor(req.user.id);
-    res.json(courses);
+    try {
+      const courses = await storage.getCoursesByInstructor(req.user.id);
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching instructor courses:", error);
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
   });
 
   app.get("/api/courses/published", async (req, res) => {
@@ -84,15 +89,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    const courseId = parseInt(req.params.id);
-    const course = await storage.getCourse(courseId);
+    try {
+      const courseId = parseInt(req.params.id);
+      if (isNaN(courseId)) {
+        return res.status(400).json({ message: "Invalid course ID" });
+      }
 
-    if (!course || course.instructorId !== req.user.id) {
-      return res.sendStatus(404);
+      const course = await storage.getCourse(courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.sendStatus(404);
+      }
+
+      const updatedCourse = await storage.updateCourse(courseId, req.body);
+      res.json(updatedCourse);
+    } catch (error) {
+      console.error("Error updating course:", error);
+      res.status(500).json({ message: "Failed to update course" });
     }
-
-    const updatedCourse = await storage.updateCourse(courseId, req.body);
-    res.json(updatedCourse);
   });
 
   // Enrollment routes

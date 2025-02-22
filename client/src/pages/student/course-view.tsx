@@ -12,6 +12,22 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+function formatVideoUrl(url: string) {
+  try {
+    const videoUrl = new URL(url);
+    if (videoUrl.hostname === 'youtu.be') {
+      const videoId = videoUrl.pathname.slice(1);
+      return `https://www.youtube.com/embed/${videoId}`;
+    } else if (videoUrl.hostname.includes('youtube.com')) {
+      const videoId = videoUrl.searchParams.get('v');
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
+
 export default function CourseView() {
   const { courseId } = useParams();
 
@@ -77,27 +93,44 @@ export default function CourseView() {
             <AccordionContent>
               <div className="space-y-2 pt-2">
                 {module.lessons.map((lesson) => (
-                  <Button
-                    key={lesson.id}
-                    variant="ghost"
-                    className="w-full justify-start h-auto py-4 px-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <CheckCircle 
-                        className={`h-5 w-5 ${
-                          enrollment.progress?.[lesson.id]
-                            ? "text-green-500"
-                            : "text-muted-foreground"
-                        }`} 
-                      />
-                      <div className="text-left">
-                        <p className="font-medium">{lesson.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
-                        </p>
+                  <div key={lesson.id} className="space-y-4">
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start h-auto py-4 px-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <CheckCircle 
+                          className={`h-5 w-5 ${
+                            enrollment.progress?.[lesson.id]
+                              ? "text-green-500"
+                              : "text-muted-foreground"
+                          }`} 
+                        />
+                        <div className="text-left">
+                          <p className="font-medium">{lesson.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </Button>
+                    </Button>
+                    {lesson.type === "video" && lesson.content && (
+                      <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                        <iframe
+                          src={formatVideoUrl(lesson.content)}
+                          className="w-full h-full"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    )}
+                    {lesson.type === "text" && (
+                      <div className="prose max-w-none">
+                        {lesson.content}
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             </AccordionContent>
