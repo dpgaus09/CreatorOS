@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Course, Enrollment, Module } from "@shared/schema";
 import { useParams } from "wouter";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, ArrowRight } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -11,6 +11,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 function formatVideoUrl(url: string) {
   try {
@@ -30,6 +32,7 @@ function formatVideoUrl(url: string) {
 
 export default function CourseView() {
   const { courseId } = useParams();
+  const { toast } = useToast();
 
   const { data: course, isLoading: loadingCourse } = useQuery<Course>({
     queryKey: [`/api/courses/${courseId}`],
@@ -39,6 +42,34 @@ export default function CourseView() {
   const { data: enrollment, isLoading: loadingEnrollment } = useQuery<Enrollment>({
     queryKey: [`/api/enrollments/${courseId}`],
     enabled: !!courseId,
+  });
+
+  const completeLessonMutation = useMutation({
+    mutationFn: async (lessonId: string) => {
+      const res = await apiRequest(
+        "PATCH",
+        `/api/enrollments/${courseId}/progress`,
+        {
+          ...enrollment?.progress,
+          [lessonId]: true,
+        }
+      );
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${courseId}`] });
+      toast({
+        title: "Progress saved",
+        description: "Your progress has been updated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to save progress",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   if (loadingCourse || loadingEnrollment) {
@@ -66,7 +97,7 @@ export default function CourseView() {
   const progress = Math.round((completedLessons / totalLessons) * 100);
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 space-y-6">
+    <div className="container max-w-5xl mx-auto py-8 space-y-6">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">{course.title}</h1>
         <p className="text-muted-foreground">{course.description}</p>
@@ -91,34 +122,50 @@ export default function CourseView() {
               {module.title}
             </AccordionTrigger>
             <AccordionContent>
-              <div className="space-y-2 pt-2">
-                {module.lessons.map((lesson) => (
+              <div className="space-y-6 pt-4">
+                {module.lessons.map((lesson, index) => (
                   <div key={lesson.id} className="space-y-4">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start h-auto py-4 px-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <CheckCircle 
-                          className={`h-5 w-5 ${
-                            enrollment.progress?.[lesson.id]
-                              ? "text-green-500"
-                              : "text-muted-foreground"
-                          }`} 
-                        />
-                        <div className="text-left">
-                          <p className="font-medium">{lesson.title}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
-                          </p>
+                    <div className="flex items-center justify-between gap-4">
+                      <Button
+                        variant="ghost"
+                        className="flex-1 justify-start h-auto py-4 px-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <CheckCircle 
+                            className={`h-5 w-5 ${
+                              enrollment.progress?.[lesson.id]
+                                ? "text-green-500"
+                                : "text-muted-foreground"
+                            }`} 
+                          />
+                          <div className="text-left">
+                            <p className="font-medium">{lesson.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </Button>
+                      </Button>
+                      <Button
+                        onClick={() => completeLessonMutation.mutate(lesson.id)}
+                        disabled={completeLessonMutation.isPending}
+                        variant={enrollment.progress?.[lesson.id] ? "outline" : "default"}
+                      >
+                        {enrollment.progress?.[lesson.id] ? (
+                          "Completed"
+                        ) : (
+                          <>
+                            Complete Lesson
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
                     {lesson.type === "video" && lesson.content && (
-                      <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                      <div className="relative pt-[56.25%] rounded-lg overflow-hidden bg-muted">
                         <iframe
                           src={formatVideoUrl(lesson.content)}
-                          className="w-full h-full"
+                          className="absolute top-0 left-0 w-full h-full"
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
