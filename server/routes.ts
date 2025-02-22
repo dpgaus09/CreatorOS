@@ -70,8 +70,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    const courses = await storage.getPublishedCourses();
-    res.json(courses);
+    try {
+      const courses = await storage.getPublishedCourses();
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching published courses:", error);
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
   });
 
   app.patch("/api/courses/:id", async (req, res) => {
