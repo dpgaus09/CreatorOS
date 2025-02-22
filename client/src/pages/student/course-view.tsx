@@ -31,21 +31,24 @@ function formatVideoUrl(url: string) {
 }
 
 export default function CourseView() {
-  const { courseId } = useParams();
+  const params = useParams();
+  const courseId = parseInt(params.courseId || "");
   const { toast } = useToast();
 
   const { data: course, isLoading: loadingCourse } = useQuery<Course>({
     queryKey: [`/api/courses/${courseId}`],
-    enabled: !!courseId,
+    enabled: !isNaN(courseId),
   });
 
   const { data: enrollment, isLoading: loadingEnrollment } = useQuery<Enrollment>({
     queryKey: [`/api/enrollments/${courseId}`],
-    enabled: !!courseId,
+    enabled: !isNaN(courseId),
   });
 
   const completeLessonMutation = useMutation({
     mutationFn: async (lessonId: string) => {
+      if (isNaN(courseId)) throw new Error("Invalid course ID");
+
       const res = await apiRequest(
         "PATCH",
         `/api/enrollments/${courseId}/progress`,
@@ -72,6 +75,14 @@ export default function CourseView() {
       });
     },
   });
+
+  if (isNaN(courseId)) {
+    return (
+      <div className="container mx-auto py-8">
+        <h1 className="text-2xl font-bold">Invalid course ID</h1>
+      </div>
+    );
+  }
 
   if (loadingCourse || loadingEnrollment) {
     return (
