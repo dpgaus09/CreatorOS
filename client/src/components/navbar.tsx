@@ -10,7 +10,7 @@ export default function Navbar() {
     <nav className="border-b">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="hover:opacity-80 transition-opacity">
-          <h1 className="text-xl font-bold cursor-pointer">LMS</h1>
+          <h1 className="text-xl font-bold cursor-pointer">LearnBruh</h1>
         </Link>
 
         {user && (

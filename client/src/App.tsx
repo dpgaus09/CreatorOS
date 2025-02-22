@@ -11,6 +11,7 @@ import CreateCourse from "@/pages/instructor/create-course";
 import StudentDashboard from "@/pages/student/dashboard";
 import CourseView from "@/pages/student/course-view";
 import CourseEditor from "@/pages/instructor/course-editor";
+import StudentsList from "@/pages/instructor/students-list";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
@@ -33,6 +34,17 @@ function Router() {
             {user?.role === "instructor" ? <InstructorDashboard /> : <StudentDashboard />}
           </Layout>
         )}
+      />
+      <ProtectedRoute
+        path="/students"
+        component={({ user }) => {
+          if (user?.role !== "instructor") return <NotFound />;
+          return (
+            <Layout>
+              <StudentsList />
+            </Layout>
+          );
+        }}
       />
       <ProtectedRoute
         path="/create-course"
