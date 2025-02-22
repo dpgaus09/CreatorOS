@@ -26,6 +26,7 @@ function formatVideoUrl(url: string) {
     }
     return url;
   } catch {
+    // If URL parsing fails, return the original URL
     return url;
   }
 }
@@ -88,6 +89,7 @@ export default function CourseView() {
     return (
       <div className="container mx-auto py-8">
         <h1 className="text-2xl font-bold">Course not found</h1>
+        <p className="text-muted-foreground">The requested course could not be found.</p>
       </div>
     );
   }
@@ -170,6 +172,7 @@ export default function CourseView() {
                         <iframe
                           src={formatVideoUrl(lesson.content)}
                           className="absolute top-0 left-0 w-full h-full"
+                          title={lesson.title}
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
