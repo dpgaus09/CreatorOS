@@ -58,6 +58,7 @@ export default function CourseView() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/enrollments/${courseId}`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/enrollments"] });
       toast({
         title: "Progress saved",
         description: "Your progress has been updated",
@@ -131,12 +132,12 @@ export default function CourseView() {
                         className="flex-1 justify-start h-auto py-4 px-4"
                       >
                         <div className="flex items-center gap-3">
-                          <CheckCircle 
+                          <CheckCircle
                             className={`h-5 w-5 ${
                               enrollment.progress?.[lesson.id]
                                 ? "text-green-500"
                                 : "text-muted-foreground"
-                            }`} 
+                            }`}
                           />
                           <div className="text-left">
                             <p className="font-medium">{lesson.title}</p>
