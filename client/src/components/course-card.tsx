@@ -147,11 +147,19 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
               <Eye className="mr-2 h-4 w-4" />
               {course.published ? "Unpublish" : "Publish"}
             </Button>
+            <Button
+              className="flex-1"
+              variant="outline"
+              onClick={() => setLocation(`/course/${course.id}`)}
+            >
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
+            </Button>
           </>
         ) : (
           enrollment ? (
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               variant="outline"
               onClick={() => setLocation(`/course/${course.id}`)}
             >
