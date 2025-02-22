@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Course } from "@shared/schema";
+import { Course, Module } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
@@ -32,10 +32,13 @@ export default function InstructorDashboard() {
 
   const totalStudents = publishedCourses.length * 20; // This should come from the API
   const totalLessons = courses?.reduce(
-    (acc, course) => acc + course.modules.reduce(
-      (moduleAcc, module) => moduleAcc + module.lessons.length, 
-      0
-    ),
+    (acc, course) => {
+      const modules = course.modules as Module[];
+      return acc + modules.reduce(
+        (moduleAcc, module) => moduleAcc + module.lessons.length,
+        0
+      );
+    },
     0
   ) || 0;
 
@@ -109,7 +112,7 @@ export default function InstructorDashboard() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-6">
-          {courses?.length === 0 ? (
+          {!courses?.length ? (
             <div className="text-center py-12">
               <h3 className="text-xl font-medium text-muted-foreground">
                 No courses yet. Create your first course to get started!
@@ -117,7 +120,7 @@ export default function InstructorDashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses?.map((course) => (
+              {courses.map((course) => (
                 <CourseCard
                   key={course.id}
                   course={course}
