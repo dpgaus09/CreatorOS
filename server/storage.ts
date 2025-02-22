@@ -55,7 +55,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCourse(course: Omit<Course, "id">): Promise<Course> {
-    const [newCourse] = await db.insert(courses).values(course).returning();
+    const [newCourse] = await db.insert(courses).values({
+      ...course,
+      modules: course.modules || [],
+      published: course.published || false,
+    }).returning();
     return newCourse;
   }
 
