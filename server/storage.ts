@@ -1,121 +1,131 @@
+import { users, courses, enrollments } from "@shared/schema";
 import { InsertUser, User, Course, Enrollment } from "@shared/schema";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 import session from "express-session";
-import createMemoryStore from "memorystore";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Course management
   createCourse(course: Omit<Course, "id">): Promise<Course>;
   updateCourse(id: number, course: Partial<Course>): Promise<Course>;
   getCourse(id: number): Promise<Course | undefined>;
   getCoursesByInstructor(instructorId: number): Promise<Course[]>;
   getPublishedCourses(): Promise<Course[]>;
-  
+
   // Enrollments
   createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment>;
   getEnrollment(studentId: number, courseId: number): Promise<Enrollment | undefined>;
   getStudentEnrollments(studentId: number): Promise<Enrollment[]>;
   updateEnrollmentProgress(id: number, progress: Record<string, any>): Promise<Enrollment>;
-  
+
   sessionStore: session.Store;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private courses: Map<number, Course>;
-  private enrollments: Map<number, Enrollment>;
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-  private currentId: number;
 
   constructor() {
-    this.users = new Map();
-    this.courses = new Map();
-    this.enrollments = new Map();
-    this.currentId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
+    this.sessionStore = new PostgresSessionStore({
+      pool,
+      createTableIfMissing: true,
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async createCourse(course: Omit<Course, "id">): Promise<Course> {
-    const id = this.currentId++;
-    const newCourse: Course = { ...course, id };
-    this.courses.set(id, newCourse);
+    const [newCourse] = await db.insert(courses).values(course).returning();
     return newCourse;
   }
 
   async updateCourse(id: number, updates: Partial<Course>): Promise<Course> {
-    const course = this.courses.get(id);
-    if (!course) throw new Error("Course not found");
-    const updatedCourse = { ...course, ...updates };
-    this.courses.set(id, updatedCourse);
+    const [updatedCourse] = await db
+      .update(courses)
+      .set(updates)
+      .where(eq(courses.id, id))
+      .returning();
     return updatedCourse;
   }
 
   async getCourse(id: number): Promise<Course | undefined> {
-    return this.courses.get(id);
+    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    return course;
   }
 
   async getCoursesByInstructor(instructorId: number): Promise<Course[]> {
-    return Array.from(this.courses.values()).filter(
-      (course) => course.instructorId === instructorId,
-    );
+    return db
+      .select()
+      .from(courses)
+      .where(eq(courses.instructorId, instructorId));
   }
 
   async getPublishedCourses(): Promise<Course[]> {
-    return Array.from(this.courses.values()).filter(
-      (course) => course.published,
-    );
+    return db
+      .select()
+      .from(courses)
+      .where(eq(courses.published, true));
   }
 
   async createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment> {
-    const id = this.currentId++;
-    const newEnrollment: Enrollment = { ...enrollment, id };
-    this.enrollments.set(id, newEnrollment);
+    const [newEnrollment] = await db
+      .insert(enrollments)
+      .values(enrollment)
+      .returning();
     return newEnrollment;
   }
 
   async getEnrollment(studentId: number, courseId: number): Promise<Enrollment | undefined> {
-    return Array.from(this.enrollments.values()).find(
-      (e) => e.studentId === studentId && e.courseId === courseId,
-    );
+    const [enrollment] = await db
+      .select()
+      .from(enrollments)
+      .where(
+        and(
+          eq(enrollments.studentId, studentId),
+          eq(enrollments.courseId, courseId)
+        )
+      );
+    return enrollment;
   }
 
   async getStudentEnrollments(studentId: number): Promise<Enrollment[]> {
-    return Array.from(this.enrollments.values()).filter(
-      (e) => e.studentId === studentId,
-    );
+    return db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.studentId, studentId));
   }
 
-  async updateEnrollmentProgress(id: number, progress: Record<string, any>): Promise<Enrollment> {
-    const enrollment = this.enrollments.get(id);
-    if (!enrollment) throw new Error("Enrollment not found");
-    const updatedEnrollment = { ...enrollment, progress };
-    this.enrollments.set(id, updatedEnrollment);
+  async updateEnrollmentProgress(
+    id: number,
+    progress: Record<string, any>
+  ): Promise<Enrollment> {
+    const [updatedEnrollment] = await db
+      .update(enrollments)
+      .set({ progress })
+      .where(eq(enrollments.id, id))
+      .returning();
     return updatedEnrollment;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
