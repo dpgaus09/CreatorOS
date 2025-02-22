@@ -34,6 +34,10 @@ export function setupAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    cookie: {
+      secure: false, // Set to true in production with HTTPS
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
   };
 
   app.set("trust proxy", 1);
@@ -45,9 +49,15 @@ export function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
+        if (!user) {
+          return done(null, false, { message: "Invalid credentials" });
         }
+
+        const isValid = await comparePasswords(password, user.password);
+        if (!isValid) {
+          return done(null, false, { message: "Invalid credentials" });
+        }
+
         return done(null, user);
       } catch (err) {
         return done(err);
@@ -55,10 +65,16 @@ export function setupAuth(app: Express) {
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  passport.serializeUser((user, done) => {
+    done(null, user.id);
+  });
+
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
+      if (!user) {
+        return done(null, false);
+      }
       done(null, user);
     } catch (err) {
       done(err);
@@ -69,17 +85,20 @@ export function setupAuth(app: Express) {
     try {
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
-        return res.status(400).send("Username already exists");
+        return res.status(400).json({ message: "Username already exists" });
       }
 
+      const hashedPassword = await hashPassword(req.body.password);
       const user = await storage.createUser({
         ...req.body,
-        password: await hashPassword(req.body.password),
+        password: hashedPassword,
       });
 
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(201).json(user);
+        // Don't send password back to client
+        const { password, ...userWithoutPassword } = user;
+        res.status(201).json(userWithoutPassword);
       });
     } catch (err) {
       next(err);
@@ -89,13 +108,18 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     try {
       const parsedBody = loginSchema.parse(req.body);
-      passport.authenticate("local", (err: Error | null, user: Express.User | false) => {
-        if (err) return next(err);
-        if (!user) return res.status(401).send("Invalid credentials");
 
-        req.login(user, (err) => {
-          if (err) return next(err);
-          res.json(user);
+      passport.authenticate("local", (err: Error | null, user: Express.User | false, info: any) => {
+        if (err) return next(err);
+        if (!user) {
+          return res.status(401).json({ message: info?.message || "Invalid credentials" });
+        }
+
+        req.login(user, (loginErr) => {
+          if (loginErr) return next(loginErr);
+          // Don't send password back to client
+          const { password, ...userWithoutPassword } = user;
+          res.json(userWithoutPassword);
         });
       })(req, res, next);
     } catch (err) {
@@ -106,12 +130,19 @@ export function setupAuth(app: Express) {
   app.post("/api/logout", (req, res, next) => {
     req.logout((err) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      req.session.destroy((err) => {
+        if (err) return next(err);
+        res.sendStatus(200);
+      });
     });
   });
 
   app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    res.json(req.user);
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+    // Don't send password back to client
+    const { password, ...userWithoutPassword } = req.user;
+    res.json(userWithoutPassword);
   });
 }
