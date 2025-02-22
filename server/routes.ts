@@ -43,9 +43,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    const courseId = parseInt(req.params.id);
-    const course = await storage.getCourse(courseId);
+    const courseId = Number(req.params.id);
+    if (isNaN(courseId)) {
+      return res.status(400).json({ message: "Invalid course ID" });
+    }
 
+    const course = await storage.getCourse(courseId);
     if (!course || (!course.published && course.instructorId !== req.user.id)) {
       return res.sendStatus(404);
     }

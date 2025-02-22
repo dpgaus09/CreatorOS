@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Course, Enrollment } from "@shared/schema";
+import { Course, Enrollment, Module } from "@shared/schema";
 import { useParams } from "wouter";
 import { Loader2, CheckCircle } from "lucide-react";
 import {
@@ -14,13 +14,15 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function CourseView() {
   const { courseId } = useParams();
-  
+
   const { data: course, isLoading: loadingCourse } = useQuery<Course>({
     queryKey: [`/api/courses/${courseId}`],
+    enabled: !!courseId,
   });
 
   const { data: enrollment, isLoading: loadingEnrollment } = useQuery<Enrollment>({
     queryKey: [`/api/enrollments/${courseId}`],
+    enabled: !!courseId,
   });
 
   if (loadingCourse || loadingEnrollment) {
@@ -39,7 +41,7 @@ export default function CourseView() {
     );
   }
 
-  const totalLessons = course.modules.reduce(
+  const totalLessons = (course.modules as Module[]).reduce(
     (acc, module) => acc + module.lessons.length,
     0
   );
@@ -67,7 +69,7 @@ export default function CourseView() {
       </Card>
 
       <Accordion type="single" collapsible className="w-full">
-        {course.modules.map((module) => (
+        {(course.modules as Module[]).map((module) => (
           <AccordionItem key={module.id} value={module.id}>
             <AccordionTrigger className="text-xl hover:no-underline">
               {module.title}
