@@ -10,6 +10,7 @@ import InstructorDashboard from "@/pages/instructor/dashboard";
 import CreateCourse from "@/pages/instructor/create-course";
 import StudentDashboard from "@/pages/student/dashboard";
 import CourseView from "@/pages/student/course-view";
+import CourseEditor from "@/pages/instructor/course-editor";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
@@ -40,6 +41,17 @@ function Router() {
           return (
             <Layout>
               <CreateCourse />
+            </Layout>
+          );
+        }}
+      />
+      <ProtectedRoute
+        path="/course/:courseId/edit"
+        component={({ user }) => {
+          if (user?.role !== "instructor") return <NotFound />;
+          return (
+            <Layout>
+              <CourseEditor />
             </Layout>
           );
         }}
