@@ -15,6 +15,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 function formatVideoUrl(url: string) {
+  if (!url) return '';
+
   try {
     const videoUrl = new URL(url);
     if (videoUrl.hostname === 'youtu.be') {
@@ -22,11 +24,11 @@ function formatVideoUrl(url: string) {
       return `https://www.youtube.com/embed/${videoId}`;
     } else if (videoUrl.hostname.includes('youtube.com')) {
       const videoId = videoUrl.searchParams.get('v');
-      return `https://www.youtube.com/embed/${videoId}`;
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
     }
     return url;
   } catch {
-    // If URL parsing fails, return the original URL
+    console.warn('Invalid video URL:', url);
     return url;
   }
 }
@@ -85,11 +87,11 @@ export default function CourseView() {
     );
   }
 
-  if (!course || !enrollment) {
+  if (!course) {
     return (
       <div className="container mx-auto py-8">
         <h1 className="text-2xl font-bold">Course not found</h1>
-        <p className="text-muted-foreground">The requested course could not be found.</p>
+        <p className="text-muted-foreground">This course does not exist or you don't have access to it.</p>
       </div>
     );
   }
@@ -99,7 +101,7 @@ export default function CourseView() {
     0
   );
 
-  const completedLessons = Object.keys(enrollment.progress || {}).length;
+  const completedLessons = Object.keys(enrollment?.progress || {}).length;
   const progress = Math.round((completedLessons / totalLessons) * 100);
 
   return (
@@ -129,63 +131,66 @@ export default function CourseView() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-6 pt-4">
-                {module.lessons.map((lesson) => (
-                  <div key={lesson.id} className="space-y-4">
-                    <div className="flex items-center justify-between gap-4">
-                      <Button
-                        variant="ghost"
-                        className="flex-1 justify-start h-auto py-4 px-4"
-                      >
-                        <div className="flex items-center gap-3">
-                          <CheckCircle
-                            className={`h-5 w-5 ${
-                              enrollment.progress?.[lesson.id]
-                                ? "text-green-500"
-                                : "text-muted-foreground"
-                            }`}
-                          />
-                          <div className="text-left">
-                            <p className="font-medium">{lesson.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
-                            </p>
+                {module.lessons.map((lesson) => {
+                  console.log('Lesson:', lesson.title, 'Type:', lesson.type, 'Content:', lesson.content);
+                  return (
+                    <div key={lesson.id} className="space-y-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <Button
+                          variant="ghost"
+                          className="flex-1 justify-start h-auto py-4 px-4"
+                        >
+                          <div className="flex items-center gap-3">
+                            <CheckCircle
+                              className={`h-5 w-5 ${
+                                enrollment?.progress?.[lesson.id]
+                                  ? "text-green-500"
+                                  : "text-muted-foreground"
+                              }`}
+                            />
+                            <div className="text-left">
+                              <p className="font-medium">{lesson.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
+                              </p>
+                            </div>
                           </div>
+                        </Button>
+                        <Button
+                          onClick={() => completeLessonMutation.mutate(lesson.id)}
+                          disabled={completeLessonMutation.isPending}
+                          variant={enrollment?.progress?.[lesson.id] ? "outline" : "default"}
+                        >
+                          {enrollment?.progress?.[lesson.id] ? (
+                            "Completed"
+                          ) : (
+                            <>
+                              Complete Lesson
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {lesson.type === "video" && lesson.content && (
+                        <div className="relative pt-[56.25%] rounded-lg overflow-hidden bg-muted">
+                          <iframe
+                            src={formatVideoUrl(lesson.content)}
+                            className="absolute top-0 left-0 w-full h-full"
+                            title={lesson.title}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
                         </div>
-                      </Button>
-                      <Button
-                        onClick={() => completeLessonMutation.mutate(lesson.id)}
-                        disabled={completeLessonMutation.isPending}
-                        variant={enrollment.progress?.[lesson.id] ? "outline" : "default"}
-                      >
-                        {enrollment.progress?.[lesson.id] ? (
-                          "Completed"
-                        ) : (
-                          <>
-                            Complete Lesson
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                          </>
-                        )}
-                      </Button>
+                      )}
+                      {lesson.type === "text" && lesson.content && (
+                        <div className="prose dark:prose-invert max-w-none">
+                          {lesson.content}
+                        </div>
+                      )}
                     </div>
-                    {lesson.type === "video" && lesson.content && (
-                      <div className="relative pt-[56.25%] rounded-lg overflow-hidden bg-muted">
-                        <iframe
-                          src={formatVideoUrl(lesson.content)}
-                          className="absolute top-0 left-0 w-full h-full"
-                          title={lesson.title}
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                        />
-                      </div>
-                    )}
-                    {lesson.type === "text" && lesson.content && (
-                      <div className="prose dark:prose-invert max-w-none">
-                        {lesson.content}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </AccordionContent>
           </AccordionItem>
