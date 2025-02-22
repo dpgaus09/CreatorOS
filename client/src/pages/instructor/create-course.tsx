@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, Save } from "lucide-react";
 
 export default function CreateCourse() {
   const [, setLocation] = useLocation();
@@ -77,25 +77,26 @@ export default function CreateCourse() {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="container max-w-4xl mx-auto py-8 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Create New Course</h1>
-        <div className="space-x-4">
-          <Button
-            variant="outline"
-            onClick={() => setLocation("/")}
-          >
-            Cancel
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setLocation("/")}>
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={createCourseMutation.isPending}
-          >
-            {createCourseMutation.isPending ? "Creating..." : "Create Course"}
-          </Button>
+          <h1 className="text-3xl font-bold">Create New Course</h1>
         </div>
+        <Button
+          size="lg"
+          onClick={handleSubmit}
+          disabled={createCourseMutation.isPending}
+        >
+          <Save className="mr-2 h-4 w-4" />
+          {createCourseMutation.isPending ? "Creating..." : "Save Course"}
+        </Button>
       </div>
 
+      {/* Course Details */}
       <Card>
         <CardHeader>
           <CardTitle>Course Details</CardTitle>
@@ -106,7 +107,8 @@ export default function CreateCourse() {
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Enter course title"
+              placeholder="Enter a descriptive title for your course"
+              className="text-lg"
             />
           </div>
           <div className="space-y-2">
@@ -114,26 +116,21 @@ export default function CreateCourse() {
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter course description"
-              className="min-h-[100px]"
+              placeholder="What will students learn in this course?"
+              className="min-h-[120px] resize-none"
             />
           </div>
         </CardContent>
       </Card>
 
-      {(title || description) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Course Content</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CourseEditor
-              modules={modules}
-              onChange={setModules}
-            />
-          </CardContent>
-        </Card>
-      )}
+      {/* Course Content */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Course Content</h2>
+        <CourseEditor
+          modules={modules}
+          onChange={setModules}
+        />
+      </div>
     </div>
   );
 }

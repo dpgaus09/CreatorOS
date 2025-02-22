@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Video, FileText } from "lucide-react";
+import { Plus, Trash2, Video, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import { nanoid } from "nanoid";
 
 interface CourseEditorProps {
@@ -14,18 +14,26 @@ interface CourseEditorProps {
 }
 
 export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
-  const [selectedModuleIndex, setSelectedModuleIndex] = useState(0);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+
+  const toggleModule = (moduleId: string) => {
+    const newExpanded = new Set(expandedModules);
+    if (newExpanded.has(moduleId)) {
+      newExpanded.delete(moduleId);
+    } else {
+      newExpanded.add(moduleId);
+    }
+    setExpandedModules(newExpanded);
+  };
 
   const addModule = () => {
-    onChange([
-      ...modules,
-      {
-        id: nanoid(),
-        title: `Module ${modules.length + 1}`,
-        lessons: [],
-      },
-    ]);
-    setSelectedModuleIndex(modules.length);
+    const newModule = {
+      id: nanoid(),
+      title: `Module ${modules.length + 1}`,
+      lessons: [],
+    };
+    onChange([...modules, newModule]);
+    setExpandedModules(new Set([...expandedModules, newModule.id]));
   };
 
   const addLesson = (moduleIndex: number) => {
@@ -60,39 +68,60 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
 
   const deleteModule = (moduleIndex: number) => {
     const newModules = [...modules];
+    const moduleId = newModules[moduleIndex].id;
     newModules.splice(moduleIndex, 1);
     onChange(newModules);
-    setSelectedModuleIndex(Math.max(0, moduleIndex - 1));
+    const newExpanded = new Set(expandedModules);
+    newExpanded.delete(moduleId);
+    setExpandedModules(newExpanded);
   };
 
   if (modules.length === 0) {
     return (
-      <div className="text-center py-12">
-        <h3 className="text-xl font-medium mb-4">Start creating your course</h3>
-        <Button onClick={addModule}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add First Module
-        </Button>
-      </div>
+      <Card className="border-2 border-dashed">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <h3 className="text-xl font-medium mb-2 text-muted-foreground">
+            Start building your course
+          </h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            Add your first module to begin organizing your course content
+          </p>
+          <Button onClick={addModule}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add First Module
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
       {modules.map((module, moduleIndex) => (
         <Card key={module.id} className="border-2">
-          <CardContent className="p-6 space-y-6">
-            <div className="flex items-center gap-4">
-              <Input
-                value={module.title}
-                onChange={(e) => {
-                  const newModules = [...modules];
-                  newModules[moduleIndex].title = e.target.value;
-                  onChange(newModules);
-                }}
-                placeholder="Module title"
-                className="text-lg font-medium"
-              />
+          <div className="p-4 flex items-center justify-between border-b">
+            <Input
+              value={module.title}
+              onChange={(e) => {
+                const newModules = [...modules];
+                newModules[moduleIndex].title = e.target.value;
+                onChange(newModules);
+              }}
+              placeholder="Module title"
+              className="text-lg font-medium border-none px-0 max-w-md"
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toggleModule(module.id)}
+              >
+                {expandedModules.has(module.id) ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
@@ -101,10 +130,12 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
+          </div>
 
-            <div className="space-y-4">
+          {expandedModules.has(module.id) && (
+            <CardContent className="p-4 space-y-4">
               {module.lessons.map((lesson, lessonIndex) => (
-                <Card key={lesson.id}>
+                <Card key={lesson.id} className="border">
                   <CardContent className="p-4 space-y-4">
                     <div className="flex items-center gap-4">
                       <Input
@@ -160,7 +191,7 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                           })
                         }
                         placeholder="Enter your lesson content here..."
-                        className="min-h-[200px] resize-y"
+                        className="min-h-[200px] resize-none"
                       />
                     ) : (
                       <div className="space-y-4">
@@ -188,6 +219,7 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                   </CardContent>
                 </Card>
               ))}
+
               <Button
                 variant="outline"
                 className="w-full"
@@ -196,8 +228,8 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                 <Plus className="mr-2 h-4 w-4" />
                 Add Lesson
               </Button>
-            </div>
-          </CardContent>
+            </CardContent>
+          )}
         </Card>
       ))}
 
