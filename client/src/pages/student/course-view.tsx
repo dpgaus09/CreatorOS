@@ -1,7 +1,8 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Course, Enrollment, Module } from "@shared/schema";
 import { useParams, useLocation } from "wouter";
-import { Loader2, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { CheckCircle, ArrowRight, Eye } from "lucide-react";
+import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Accordion,
@@ -133,9 +134,9 @@ export default function CourseView() {
           variant="ghost"
           size="icon"
           onClick={() => setLocation("/")}
-          className="h-8 w-8"
+          className="h-10 w-10 hover:bg-transparent"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <IoArrowBackCircleSharp className="h-8 w-8 text-primary hover:text-primary/80 transition-colors" />
         </Button>
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">{course?.title}</h1>
