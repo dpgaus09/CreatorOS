@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Course, Enrollment, Module } from "@shared/schema";
 import { useParams, useLocation } from "wouter";
-import { CheckCircle, ArrowRight, Eye } from "lucide-react";
+import { CheckCircle, ArrowRight, Eye, Loader2 } from "lucide-react";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { useAuth } from "@/hooks/use-auth";
 import {
