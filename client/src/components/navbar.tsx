@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogOut, User, Pencil } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -31,6 +31,7 @@ export default function Navbar() {
       return apiRequest("POST", "/api/settings/lms-name", { value: newName });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/lms-name"] });
       toast({
         title: "Success",
         description: "LMS name updated successfully",
@@ -76,7 +77,7 @@ export default function Navbar() {
                 }
               }}
               autoFocus
-              className="w-40 text-xl font-bold px-0"
+              className="w-40 text-xl font-bold px-2"
             />
           ) : (
             <div className="flex items-center gap-2">
