@@ -44,7 +44,7 @@ export default function StudentDashboard() {
         <p className="text-muted-foreground">Continue learning or discover new courses</p>
       </div>
 
-      <Tabs defaultValue="available">
+      <Tabs defaultValue="enrolled">
         <TabsList>
           <TabsTrigger value="enrolled">My Courses</TabsTrigger>
           <TabsTrigger value="available">Available Courses</TabsTrigger>
@@ -62,9 +62,12 @@ export default function StudentDashboard() {
             ))}
             {enrolledCourses.length === 0 && (
               <div className="col-span-full text-center py-12">
-                <h3 className="text-xl font-medium text-muted-foreground">
-                  You haven't enrolled in any courses yet
+                <h3 className="text-xl font-medium mb-4">
+                  Welcome! You haven't enrolled in any courses yet
                 </h3>
+                <p className="text-muted-foreground">
+                  Check out our available courses and start learning today!
+                </p>
               </div>
             )}
           </div>

@@ -30,7 +30,7 @@ function formatVideoUrl(url: string) {
     if (videoUrl.hostname === 'youtu.be') {
       const videoId = videoUrl.pathname.slice(1);
       return `https://www.youtube.com/embed/${videoId}`;
-    } 
+    }
     // Handle full YouTube URLs
     else if (videoUrl.hostname.includes('youtube.com')) {
       const videoId = videoUrl.searchParams.get('v');
@@ -128,14 +128,28 @@ export default function CourseView() {
 
   return (
     <div className="container max-w-5xl mx-auto py-8 space-y-6">
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setLocation("/")}
+          className="h-8 w-8"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">{course?.title}</h1>
+          <p className="text-muted-foreground">{course?.description}</p>
+        </div>
+      </div>
       {isInstructor && (
         <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-between">
             <p className="text-yellow-800 dark:text-yellow-200">
               Preview Mode: Viewing course as a student would see it
             </p>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setLocation("/")}
               className="bg-yellow-200 hover:bg-yellow-300 dark:bg-yellow-800 dark:hover:bg-yellow-700 border-yellow-300 dark:border-yellow-700"
             >
@@ -145,11 +159,6 @@ export default function CourseView() {
           </div>
         </div>
       )}
-
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{course.title}</h1>
-        <p className="text-muted-foreground">{course.description}</p>
-      </div>
 
       {!isInstructor && (
         <Card>
