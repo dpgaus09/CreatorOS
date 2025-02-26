@@ -26,7 +26,7 @@ export interface IStorage {
   createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment>;
   getEnrollment(studentId: number, courseId: number): Promise<Enrollment | undefined>;
   getStudentEnrollments(studentId: number): Promise<Enrollment[]>;
-  getStudentsWithEnrollments(): Promise<(User & { enrollments: Enrollment[] })[]>;
+  getStudentsWithEnrollments(): Promise<(User & { enrollments: (Enrollment & { course?: Course })[] })[]>;
   updateEnrollmentProgress(id: number, progress: Record<string, any>): Promise<Enrollment>;
 
   sessionStore: session.Store;
@@ -65,14 +65,28 @@ export class DatabaseStorage implements IStorage {
       .orderBy(users.createdAt);
   }
 
-  async getStudentsWithEnrollments(): Promise<(User & { enrollments: Enrollment[] })[]> {
+  async getStudentsWithEnrollments(): Promise<(User & { enrollments: (Enrollment & { course?: Course })[] })[]> {
     const students = await this.getAllStudents();
     const studentsWithEnrollments = await Promise.all(
       students.map(async (student) => {
-        const enrollments = await this.getStudentEnrollments(student.id);
+        const studentEnrollments = await db
+          .select({
+            enrollment: enrollments,
+            course: courses,
+          })
+          .from(enrollments)
+          .where(eq(enrollments.studentId, student.id))
+          .leftJoin(courses, eq(enrollments.courseId, courses.id));
+
+        // Transform the result to match the expected format
+        const transformedEnrollments = studentEnrollments.map(({ enrollment, course }) => ({
+          ...enrollment,
+          course,
+        }));
+
         return {
           ...student,
-          enrollments,
+          enrollments: transformedEnrollments,
         };
       })
     );
