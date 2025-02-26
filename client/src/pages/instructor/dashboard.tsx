@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Course, Module } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import CourseCard from "@/components/course-card";
 import { Loader2, Plus, BookOpen, Users, Layout } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function InstructorDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const { data: courses, isLoading, error } = useQuery<Course[]>({
     queryKey: ["/api/courses/instructor"],
@@ -102,9 +103,13 @@ export default function InstructorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStudents}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all published courses
-            </p>
+            <Button
+              variant="link"
+              className="px-0 text-xs text-muted-foreground hover:no-underline"
+              onClick={() => setLocation("/students")}
+            >
+              View all students →
+            </Button>
           </CardContent>
         </Card>
         <Card>
