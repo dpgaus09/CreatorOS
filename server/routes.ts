@@ -2,11 +2,44 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertCourseSchema, insertEnrollmentSchema } from "@shared/schema";
+import { insertCourseSchema, insertEnrollmentSchema, insertSettingSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  // Settings routes
+  app.get("/api/settings/lms-name", async (req, res) => {
+    try {
+      const setting = await storage.getSetting("lms-name");
+      res.json(setting || { value: "LearnBruh" });
+    } catch (error) {
+      console.error("Error fetching LMS name:", error);
+      res.status(500).json({ message: "Failed to fetch LMS name" });
+    }
+  });
+
+  app.post("/api/settings/lms-name", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const settingData = insertSettingSchema.parse({
+        name: "lms-name",
+        value: req.body.value
+      });
+
+      const setting = await storage.updateSetting(settingData.name, settingData.value);
+      res.json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Error updating LMS name:", error);
+      res.status(500).json({ message: "Failed to update LMS name" });
+    }
+  });
 
   // Student routes
   app.get("/api/students", async (req, res) => {

@@ -1,5 +1,5 @@
-import { users, courses, enrollments } from "@shared/schema";
-import { InsertUser, User, Course, Enrollment } from "@shared/schema";
+import { users, courses, enrollments, settings } from "@shared/schema";
+import { InsertUser, User, Course, Enrollment, Setting } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -28,6 +28,10 @@ export interface IStorage {
   getStudentEnrollments(studentId: number): Promise<Enrollment[]>;
   getStudentsWithEnrollments(): Promise<(User & { enrollments: (Enrollment & { course?: Course })[] })[]>;
   updateEnrollmentProgress(id: number, progress: Record<string, any>): Promise<Enrollment>;
+
+  // Settings
+  getSetting(name: string): Promise<Setting | undefined>;
+  updateSetting(name: string, value: string): Promise<Setting>;
 
   sessionStore: session.Store;
 }
@@ -168,6 +172,38 @@ export class DatabaseStorage implements IStorage {
       .where(eq(enrollments.id, id))
       .returning();
     return updatedEnrollment;
+  }
+
+  async getSetting(name: string): Promise<Setting | undefined> {
+    const [setting] = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.name, name));
+    return setting;
+  }
+
+  async updateSetting(name: string, value: string): Promise<Setting> {
+    // Try to update existing setting
+    const [existing] = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.name, name));
+
+    if (existing) {
+      const [updated] = await db
+        .update(settings)
+        .set({ value, updatedAt: new Date() })
+        .where(eq(settings.name, name))
+        .returning();
+      return updated;
+    }
+
+    // If setting doesn't exist, create it
+    const [newSetting] = await db
+      .insert(settings)
+      .values({ name, value })
+      .returning();
+    return newSetting;
   }
 }
 
