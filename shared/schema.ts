@@ -3,6 +3,7 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Keep existing tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -29,6 +30,14 @@ export const enrollments = pgTable("enrollments", {
   courseId: integer("course_id").notNull().references(() => courses.id),
   progress: jsonb("progress").notNull().default({}),
   enrolledAt: timestamp("enrolled_at").notNull().defaultNow(),
+});
+
+// Add new settings table
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // Relations
@@ -90,9 +99,15 @@ export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
   progress: true,
 });
 
+export const insertSettingSchema = createInsertSchema(settings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type User = typeof users.$inferSelect;
 export type Course = typeof courses.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type Module = z.infer<typeof moduleSchema>;
+export type Setting = typeof settings.$inferSelect;

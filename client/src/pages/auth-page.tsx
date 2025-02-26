@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -18,6 +19,12 @@ export default function AuthPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const { data: settings } = useQuery({
+    queryKey: ["/api/settings/lms-name"],
+  });
+
+  const lmsName = settings?.value || "LearnBruh";
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -54,7 +61,7 @@ export default function AuthPage() {
       <Card className="w-full max-w-4xl mx-auto grid md:grid-cols-2 gap-6 p-6">
         <div className="space-y-6">
           <CardHeader className="p-0">
-            <CardTitle className="text-2xl font-bold">Welcome to LearnBruh</CardTitle>
+            <CardTitle className="text-2xl font-bold">Welcome to {lmsName}</CardTitle>
           </CardHeader>
           <div className="prose dark:prose-invert">
             <p>

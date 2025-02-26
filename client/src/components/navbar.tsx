@@ -1,17 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogOut, User, Pencil } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Navbar() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
-  const [lmsName, setLmsName] = useState("LearnBruh");
+  const { toast } = useToast();
+
+  const { data: settings } = useQuery({
+    queryKey: ["/api/settings/lms-name"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/lms-name");
+      if (!response.ok) {
+        throw new Error("Failed to fetch LMS name");
+      }
+      return response.json();
+    },
+  });
+
+  const updateLmsNameMutation = useMutation({
+    mutationFn: async (newName: string) => {
+      return apiRequest("POST", "/api/settings/lms-name", { value: newName });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "LMS name updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const isInstructor = user?.role === "instructor";
   const isInstructorDashboard = location === "/";
+  const lmsName = settings?.value || "LearnBruh";
+
+  const handleNameUpdate = (newName: string) => {
+    updateLmsNameMutation.mutate(newName);
+    setIsEditing(false);
+  };
 
   return (
     <nav className="border-b">
@@ -20,11 +60,11 @@ export default function Navbar() {
           {isInstructor && isInstructorDashboard && isEditing ? (
             <Input
               value={lmsName}
-              onChange={(e) => setLmsName(e.target.value)}
-              onBlur={() => setIsEditing(false)}
+              onChange={(e) => handleNameUpdate(e.target.value)} //Changed to handleNameUpdate
+              onBlur={() => handleNameUpdate(lmsName)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  setIsEditing(false);
+                  handleNameUpdate(lmsName);
                 }
               }}
               autoFocus
