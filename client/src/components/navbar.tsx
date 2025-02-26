@@ -12,6 +12,7 @@ export default function Navbar() {
   const { user, logoutMutation } = useAuth();
   const [location] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
+  const [tempName, setTempName] = useState("");
   const { toast } = useToast();
 
   const { data: settings } = useQuery({
@@ -48,8 +49,15 @@ export default function Navbar() {
   const isInstructorDashboard = location === "/";
   const lmsName = settings?.value || "LearnBruh";
 
-  const handleNameUpdate = (newName: string) => {
-    updateLmsNameMutation.mutate(newName);
+  const startEditing = () => {
+    setTempName(lmsName);
+    setIsEditing(true);
+  };
+
+  const handleNameUpdate = () => {
+    if (tempName.trim() && tempName !== lmsName) {
+      updateLmsNameMutation.mutate(tempName);
+    }
     setIsEditing(false);
   };
 
@@ -59,12 +67,12 @@ export default function Navbar() {
         <Link href="/" className="hover:opacity-80 transition-opacity">
           {isInstructor && isInstructorDashboard && isEditing ? (
             <Input
-              value={lmsName}
-              onChange={(e) => handleNameUpdate(e.target.value)} //Changed to handleNameUpdate
-              onBlur={() => handleNameUpdate(lmsName)}
+              value={tempName}
+              onChange={(e) => setTempName(e.target.value)}
+              onBlur={handleNameUpdate}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  handleNameUpdate(lmsName);
+                  handleNameUpdate();
                 }
               }}
               autoFocus
@@ -78,7 +86,7 @@ export default function Navbar() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 hover:bg-transparent"
-                  onClick={() => setIsEditing(true)}
+                  onClick={startEditing}
                 >
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                 </Button>
