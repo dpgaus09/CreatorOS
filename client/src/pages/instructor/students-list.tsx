@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Course, Enrollment } from "@shared/schema";
 
 type Student = {
   id: number;
@@ -19,6 +20,7 @@ type Student = {
   email: string;
   username: string;
   createdAt: string;
+  enrollments: (Enrollment & { course?: Course })[];
 };
 
 export default function StudentsList() {
@@ -54,6 +56,7 @@ export default function StudentsList() {
                   <TableHead>Email</TableHead>
                   <TableHead>Username</TableHead>
                   <TableHead>Registration Date</TableHead>
+                  <TableHead>Enrolled Courses</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -64,6 +67,19 @@ export default function StudentsList() {
                     <TableCell>{student.username}</TableCell>
                     <TableCell>
                       {format(new Date(student.createdAt), "PPpp")}
+                    </TableCell>
+                    <TableCell>
+                      {student.enrollments.length > 0 ? (
+                        <ul className="list-disc list-inside">
+                          {student.enrollments.map((enrollment) => (
+                            <li key={enrollment.id}>
+                              {enrollment.course?.title || "Unknown Course"}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <span className="text-gray-500">No courses enrolled</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

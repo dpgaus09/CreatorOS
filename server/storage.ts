@@ -9,9 +9,11 @@ import { pool } from "./db";
 const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
+  // User management
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllStudents(): Promise<User[]>;
 
   // Course management
   createCourse(course: Omit<Course, "id">): Promise<Course>;
@@ -24,6 +26,7 @@ export interface IStorage {
   createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment>;
   getEnrollment(studentId: number, courseId: number): Promise<Enrollment | undefined>;
   getStudentEnrollments(studentId: number): Promise<Enrollment[]>;
+  getStudentsWithEnrollments(): Promise<(User & { enrollments: Enrollment[] })[]>;
   updateEnrollmentProgress(id: number, progress: Record<string, any>): Promise<Enrollment>;
 
   sessionStore: session.Store;
@@ -52,6 +55,28 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async getAllStudents(): Promise<User[]> {
+    return db
+      .select()
+      .from(users)
+      .where(eq(users.role, "student"))
+      .orderBy(users.createdAt);
+  }
+
+  async getStudentsWithEnrollments(): Promise<(User & { enrollments: Enrollment[] })[]> {
+    const students = await this.getAllStudents();
+    const studentsWithEnrollments = await Promise.all(
+      students.map(async (student) => {
+        const enrollments = await this.getStudentEnrollments(student.id);
+        return {
+          ...student,
+          enrollments,
+        };
+      })
+    );
+    return studentsWithEnrollments;
   }
 
   async createCourse(course: Omit<Course, "id">): Promise<Course> {

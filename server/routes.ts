@@ -8,6 +8,21 @@ import { z } from "zod";
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
+  // Student routes
+  app.get("/api/students", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const students = await storage.getStudentsWithEnrollments();
+      res.json(students);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      res.status(500).json({ message: "Failed to fetch students" });
+    }
+  });
+
   // Course management routes
   app.post("/api/courses", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "instructor") {

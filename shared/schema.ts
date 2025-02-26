@@ -1,4 +1,5 @@
 import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -9,6 +10,7 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["instructor", "student"] }).notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const courses = pgTable("courses", {
@@ -23,11 +25,31 @@ export const courses = pgTable("courses", {
 
 export const enrollments = pgTable("enrollments", {
   id: serial("id").primaryKey(),
-  studentId: integer("student_id").notNull(),
-  courseId: integer("course_id").notNull(),
+  studentId: integer("student_id").notNull().references(() => users.id),
+  courseId: integer("course_id").notNull().references(() => courses.id),
   progress: jsonb("progress").notNull().default({}),
   enrolledAt: timestamp("enrolled_at").notNull().defaultNow(),
 });
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  enrollments: many(enrollments),
+}));
+
+export const coursesRelations = relations(courses, ({ many }) => ({
+  enrollments: many(enrollments),
+}));
+
+export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
+  student: one(users, {
+    fields: [enrollments.studentId],
+    references: [users.id],
+  }),
+  course: one(courses, {
+    fields: [enrollments.courseId],
+    references: [courses.id],
+  }),
+}));
 
 export const moduleSchema = z.object({
   id: z.string(),
@@ -40,8 +62,13 @@ export const moduleSchema = z.object({
   })),
 });
 
-export const insertUserSchema = createInsertSchema(users).extend({
+export const insertUserSchema = createInsertSchema(users, {
+  role: z.enum(["instructor", "student"]),
+}).extend({
   confirmPassword: z.string(),
+}).omit({
+  id: true,
+  createdAt: true,
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -52,7 +79,11 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-export const insertCourseSchema = createInsertSchema(courses);
+export const insertCourseSchema = createInsertSchema(courses).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertEnrollmentSchema = createInsertSchema(enrollments).omit({
   id: true,
   enrolledAt: true,
