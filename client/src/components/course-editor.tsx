@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Video, FileText, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Video, FileText, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { nanoid } from "nanoid";
 
 interface CourseEditorProps {
@@ -15,6 +15,7 @@ interface CourseEditorProps {
 
 export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
 
   const toggleModule = (moduleId: string) => {
     const newExpanded = new Set(expandedModules);
@@ -34,6 +35,7 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
     };
     onChange([...modules, newModule]);
     setExpandedModules(new Set([...expandedModules, newModule.id]));
+    setEditingModuleId(newModule.id); // Start editing the new module title
   };
 
   const addLesson = (moduleIndex: number) => {
@@ -74,6 +76,9 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
     const newExpanded = new Set(expandedModules);
     newExpanded.delete(moduleId);
     setExpandedModules(newExpanded);
+    if (editingModuleId === moduleId) {
+      setEditingModuleId(null);
+    }
   };
 
   if (modules.length === 0) {
@@ -100,16 +105,36 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
       {modules.map((module, moduleIndex) => (
         <Card key={module.id} className="border-2">
           <div className="p-4 flex items-center justify-between border-b">
-            <Input
-              value={module.title}
-              onChange={(e) => {
-                const newModules = [...modules];
-                newModules[moduleIndex].title = e.target.value;
-                onChange(newModules);
-              }}
-              placeholder="Module title"
-              className="text-lg font-medium border-none px-0 max-w-md"
-            />
+            <div className="flex items-center gap-2 flex-1">
+              {editingModuleId === module.id ? (
+                <Input
+                  value={module.title}
+                  onChange={(e) => {
+                    const newModules = [...modules];
+                    newModules[moduleIndex].title = e.target.value;
+                    onChange(newModules);
+                  }}
+                  onBlur={() => setEditingModuleId(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setEditingModuleId(null);
+                    }
+                  }}
+                  autoFocus
+                  placeholder="Module title"
+                  className="text-lg font-medium max-w-md px-2"
+                />
+              ) : (
+                <Button
+                  variant="ghost"
+                  className="text-lg font-medium p-2 h-auto hover:bg-transparent hover:text-primary flex items-center gap-2"
+                  onClick={() => setEditingModuleId(module.id)}
+                >
+                  {module.title}
+                  <Pencil className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Button>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
