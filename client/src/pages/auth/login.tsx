@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 
 const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
@@ -19,16 +18,10 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
+  // Move all hooks to the top
+  const [showPassword, setShowPassword] = useState(false);
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
-  const [showPassword, setShowPassword] = useState(false);
-
-  // Redirect if already logged in
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -36,6 +29,12 @@ export default function Login() {
       password: "",
     }
   });
+
+  // Redirect if already logged in - after all hooks
+  if (user) {
+    setLocation("/");
+    return null;
+  }
 
   const onSubmit = (data: LoginFormData) => {
     loginMutation.mutate(data);
