@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
@@ -22,12 +22,6 @@ export default function Login() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-
-  const { data: settings } = useQuery({
-    queryKey: ["/api/settings/lms-name"],
-  });
-
-  const lmsName = settings?.value || "LearnBruh";
 
   // Redirect if already logged in
   if (user) {
@@ -53,6 +47,7 @@ export default function Login() {
         <div className="space-y-6 p-6">
           <CardHeader className="p-0 text-center">
             <CardTitle className="text-2xl font-bold">Welcome!</CardTitle>
+            <CardDescription className="text-lg mt-2">Login to your account</CardDescription>
           </CardHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
