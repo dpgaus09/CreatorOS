@@ -351,7 +351,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
 
       if (!user) {
-        return res.status(400).json({ message: "Invalid credentials" });
+        return res.status(400).json({ 
+          message: "The email and username do not match, contact the administrator if you need help reseting your password."
+        });
       }
 
       // Update password
