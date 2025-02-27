@@ -53,15 +53,28 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    const port = 5000;
+    let port = 5000;
     const host = "0.0.0.0";
 
-    server.listen(port, host, () => {
-      log(`Server listening on http://${host}:${port}`);
-    }).on('error', (error) => {
-      console.error('Failed to start server:', error);
-      process.exit(1);
-    });
+    const startServer = (attemptPort: number) => {
+      server.listen(attemptPort, host)
+        .on('listening', () => {
+          port = attemptPort;
+          log(`Server listening on http://${host}:${port}`);
+        })
+        .on('error', (error: any) => {
+          if (error.code === 'EADDRINUSE' && attemptPort < 5010) {
+            // Try next port
+            log(`Port ${attemptPort} is busy, trying ${attemptPort + 1}...`);
+            startServer(attemptPort + 1);
+          } else {
+            console.error('Failed to start server:', error);
+            process.exit(1);
+          }
+        });
+    };
+
+    startServer(port);
   } catch (error) {
     console.error('Critical server error:', error);
     process.exit(1);
