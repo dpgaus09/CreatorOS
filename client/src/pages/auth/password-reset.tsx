@@ -58,7 +58,13 @@ export default function PasswordReset() {
   const onSubmit = async (values: ResetFormValues) => {
     setIsLoading(true);
     try {
-      await apiRequest("POST", "/api/reset-password", values);
+      const response = await apiRequest("POST", "/api/reset-password", values);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
       toast({
         title: "Success",
         description: "Your password has been reset successfully",
