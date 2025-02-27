@@ -239,9 +239,10 @@ export default function CourseView() {
                         </div>
                       )}
                       {lesson.type === "text" && lesson.content && (
-                        <div className="prose dark:prose-invert max-w-none">
-                          {lesson.content}
-                        </div>
+                        <div
+                          className="prose dark:prose-invert max-w-none"
+                          dangerouslySetInnerHTML={{ __html: lesson.content }}
+                        />
                       )}
                     </div>
                   );

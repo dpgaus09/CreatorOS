@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Video, FileText, ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { nanoid } from "nanoid";
+import { RichTextEditor } from "./rich-text-editor";
 
 interface CourseEditorProps {
   modules: Module[];
@@ -165,7 +166,7 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                     <div className="flex items-center gap-4">
                       <Input
                         value={lesson.title}
-                        onChange={(e) => 
+                        onChange={(e) =>
                           updateLesson(moduleIndex, lessonIndex, {
                             title: e.target.value,
                           })
@@ -174,7 +175,7 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                       />
                       <Select
                         value={lesson.type}
-                        onValueChange={(value) => 
+                        onValueChange={(value) =>
                           updateLesson(moduleIndex, lessonIndex, {
                             type: value as "text" | "video",
                           })
@@ -208,15 +209,13 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                     </div>
 
                     {lesson.type === "text" ? (
-                      <Textarea
-                        value={lesson.content}
-                        onChange={(e) =>
+                      <RichTextEditor
+                        content={lesson.content}
+                        onChange={(content) =>
                           updateLesson(moduleIndex, lessonIndex, {
-                            content: e.target.value,
+                            content,
                           })
                         }
-                        placeholder="Enter your lesson content here..."
-                        className="min-h-[200px] resize-none"
                       />
                     ) : (
                       <div className="space-y-4">
