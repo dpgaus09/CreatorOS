@@ -5,6 +5,7 @@ import { useParams, useLocation } from "wouter";
 import { CheckCircle, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { useAuth } from "@/hooks/use-auth";
+import { useAccessibility } from "@/hooks/use-accessibility";
 import {
   Accordion,
   AccordionContent,
@@ -58,6 +59,7 @@ export default function CourseView() {
   const courseId = parseInt(params.courseId || "0");
   const { toast } = useToast();
   const { user } = useAuth();
+  const { speak } = useAccessibility();
   const isInstructor = user?.role === "instructor";
 
   const { data: course, isLoading: loadingCourse } = useQuery<Course>({
@@ -136,16 +138,37 @@ export default function CourseView() {
           size="icon"
           onClick={() => setLocation("/")}
           className="h-10 w-10 hover:bg-transparent"
+          onMouseEnter={() => speak("Go back to dashboard")}
+          onFocus={() => speak("Go back to dashboard")}
         >
           <IoArrowBackCircleSharp className="h-8 w-8 text-primary hover:text-primary/80 transition-colors" />
         </Button>
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">{course?.title}</h1>
-          <p className="text-muted-foreground">{course?.description}</p>
+          <h1
+            className="text-3xl font-bold"
+            onMouseEnter={() => speak(course?.title)}
+            onFocus={() => speak(course?.title)}
+            tabIndex={0}
+          >
+            {course?.title}
+          </h1>
+          <p
+            className="text-muted-foreground"
+            onMouseEnter={() => speak(course?.description)}
+            onFocus={() => speak(course?.description)}
+            tabIndex={0}
+          >
+            {course?.description}
+          </p>
         </div>
       </div>
       {isInstructor && (
-        <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4 mb-6">
+        <div
+          className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4 mb-6"
+          onMouseEnter={() => speak("Preview Mode: Viewing course as a student would see it")}
+          onFocus={() => speak("Preview Mode: Viewing course as a student would see it")}
+          tabIndex={0}
+        >
           <div className="flex items-center justify-between">
             <p className="text-yellow-800 dark:text-yellow-200">
               Preview Mode: Viewing course as a student would see it
@@ -154,6 +177,8 @@ export default function CourseView() {
               variant="outline"
               onClick={() => setLocation("/")}
               className="bg-yellow-200 hover:bg-yellow-300 dark:bg-yellow-800 dark:hover:bg-yellow-700 border-yellow-300 dark:border-yellow-700"
+              onMouseEnter={() => speak("Exit Preview")}
+              onFocus={() => speak("Exit Preview")}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Exit Preview
@@ -165,7 +190,12 @@ export default function CourseView() {
       {!isInstructor && (
         <Card>
           <CardContent className="p-6">
-            <div className="space-y-2">
+            <div
+              className="space-y-2"
+              onMouseEnter={() => speak(`Your progress: ${progress}%`)}
+              onFocus={() => speak(`Your progress: ${progress}%`)}
+              tabIndex={0}
+            >
               <div className="flex items-center justify-between text-sm">
                 <span>Your Progress</span>
                 <span className="font-medium">{progress}%</span>
@@ -179,74 +209,88 @@ export default function CourseView() {
       <Accordion type="single" collapsible className="w-full">
         {modules.map((module) => (
           <AccordionItem key={module.id} value={module.id}>
-            <AccordionTrigger className="text-xl hover:no-underline">
+            <AccordionTrigger
+              className="text-xl hover:no-underline"
+              onMouseEnter={() => speak(module.title)}
+              onFocus={() => speak(module.title)}
+              tabIndex={0}
+            >
               {module.title}
             </AccordionTrigger>
             <AccordionContent>
               <div className="space-y-6 pt-4">
-                {module.lessons.map((lesson) => {
-                  console.log('Lesson:', lesson.title, 'Type:', lesson.type, 'Content:', lesson.content);
-                  return (
-                    <div key={lesson.id} className="space-y-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <Button
-                          variant="ghost"
-                          className="flex-1 justify-start h-auto py-4 px-4"
-                        >
-                          <div className="flex items-center gap-3">
-                            <CheckCircle
-                              className={`h-5 w-5 ${
-                                (!isInstructor && enrollment?.progress?.[lesson.id])
-                                  ? "text-green-500"
-                                  : "text-muted-foreground"
-                              }`}
-                            />
-                            <div className="text-left">
-                              <p className="font-medium">{lesson.title}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
-                              </p>
-                            </div>
-                          </div>
-                        </Button>
-                        {!isInstructor && (
-                          <Button
-                            onClick={() => completeLessonMutation.mutate(lesson.id)}
-                            disabled={completeLessonMutation.isPending}
-                            variant={enrollment?.progress?.[lesson.id] ? "outline" : "default"}
-                          >
-                            {enrollment?.progress?.[lesson.id] ? (
-                              "Completed"
-                            ) : (
-                              <>
-                                Complete Lesson
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                      {lesson.type === "video" && lesson.content && (
-                        <div className="relative pt-[56.25%] rounded-lg overflow-hidden bg-muted">
-                          <iframe
-                            src={formatVideoUrl(lesson.content)}
-                            className="absolute top-0 left-0 w-full h-full"
-                            title={lesson.title}
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
+                {module.lessons.map((lesson) => (
+                  <div key={lesson.id} className="space-y-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <Button
+                        variant="ghost"
+                        className="flex-1 justify-start h-auto py-4 px-4"
+                        onMouseEnter={() => speak(`${lesson.title}, ${lesson.type === "video" ? "Video Lesson" : "Text Lesson"}`)}
+                        onFocus={() => speak(`${lesson.title}, ${lesson.type === "video" ? "Video Lesson" : "Text Lesson"}`)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <CheckCircle
+                            className={`h-5 w-5 ${
+                              (!isInstructor && enrollment?.progress?.[lesson.id])
+                                ? "text-green-500"
+                                : "text-muted-foreground"
+                            }`}
                           />
+                          <div className="text-left">
+                            <p className="font-medium">{lesson.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {lesson.type === "video" ? "Video Lesson" : "Text Lesson"}
+                            </p>
+                          </div>
                         </div>
-                      )}
-                      {lesson.type === "text" && lesson.content && (
-                        <div
-                          className="prose dark:prose-invert max-w-none"
-                          dangerouslySetInnerHTML={{ __html: lesson.content }}
-                        />
+                      </Button>
+                      {!isInstructor && (
+                        <Button
+                          onClick={() => completeLessonMutation.mutate(lesson.id)}
+                          disabled={completeLessonMutation.isPending}
+                          variant={enrollment?.progress?.[lesson.id] ? "outline" : "default"}
+                          onMouseEnter={() => speak(enrollment?.progress?.[lesson.id] ? "Completed" : "Complete Lesson")}
+                          onFocus={() => speak(enrollment?.progress?.[lesson.id] ? "Completed" : "Complete Lesson")}
+                        >
+                          {enrollment?.progress?.[lesson.id] ? (
+                            "Completed"
+                          ) : (
+                            <>
+                              Complete Lesson
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                          )}
+                        </Button>
                       )}
                     </div>
-                  );
-                })}
+                    {lesson.type === "video" && lesson.content && (
+                      <div
+                        className="relative pt-[56.25%] rounded-lg overflow-hidden bg-muted"
+                        onMouseEnter={() => speak(`Video: ${lesson.title}`)}
+                        onFocus={() => speak(`Video: ${lesson.title}`)}
+                        tabIndex={0}
+                      >
+                        <iframe
+                          src={formatVideoUrl(lesson.content)}
+                          className="absolute top-0 left-0 w-full h-full"
+                          title={lesson.title}
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                    )}
+                    {lesson.type === "text" && lesson.content && (
+                      <div
+                        className="prose dark:prose-invert max-w-none"
+                        dangerouslySetInnerHTML={{ __html: lesson.content }}
+                        onMouseEnter={() => speak(lesson.title)}
+                        onFocus={() => speak(lesson.title)}
+                        tabIndex={0}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
             </AccordionContent>
           </AccordionItem>
