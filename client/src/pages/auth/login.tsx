@@ -22,7 +22,7 @@ export default function Login() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const { data: settings } = useQuery({
     queryKey: ["/api/settings/lms-name"],
   });
@@ -49,14 +49,11 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-4xl mx-auto grid md:grid-cols-2 gap-6 p-6">
-        <div className="space-y-6">
-          <CardHeader className="p-0">
-            <CardTitle className="text-2xl font-bold">Welcome back!</CardTitle>
+      <Card className="w-full max-w-md mx-auto">
+        <div className="space-y-6 p-6">
+          <CardHeader className="p-0 text-center">
+            <CardTitle className="text-2xl font-bold">Welcome!</CardTitle>
           </CardHeader>
-          <div className="prose dark:prose-invert">
-            <p>Sign in to your {lmsName} account</p>
-          </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -112,16 +109,6 @@ export default function Login() {
               </Button>
             </form>
           </Form>
-        </div>
-        <div className="hidden md:block">
-          <CardContent className="h-full flex items-center justify-center">
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold">Welcome to {lmsName}</h2>
-              <p className="text-muted-foreground">
-                Your comprehensive learning management solution.
-              </p>
-            </div>
-          </CardContent>
         </div>
       </Card>
     </div>
