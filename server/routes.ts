@@ -2,12 +2,16 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertCourseSchema, insertEnrollmentSchema, insertSettingSchema, insertImageSchema } from "@shared/schema";
+import { insertCourseSchema, insertEnrollmentSchema, insertSettingSchema, insertImageSchema, users } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from 'express';
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 // Configure multer for handling file uploads
 const upload = multer({
@@ -30,6 +34,14 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024 // 5MB limit
   }
 });
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -320,6 +332,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update accessibility settings" });
     }
   });
+
+  // Add password reset route
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { email, username, role, newPassword } = req.body;
+
+      // Find user matching all three criteria
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.email, email),
+            eq(users.username, username),
+            eq(users.role, role)
+          )
+        );
+
+      if (!user) {
+        return res.status(400).json({ message: "Invalid credentials" });
+      }
+
+      // Update password
+      const hashedPassword = await hashPassword(newPassword);
+      const updatedUser = await storage.updateUser(user.id, {
+        password: hashedPassword,
+      });
+
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

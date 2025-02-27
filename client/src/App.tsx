@@ -17,6 +17,7 @@ import CourseView from "@/pages/student/course-view";
 import CourseEditor from "@/pages/instructor/course-editor";
 import StudentsList from "@/pages/instructor/students-list";
 import { ProtectedRoute } from "./lib/protected-route";
+import PasswordReset from "@/pages/auth/password-reset";
 
 function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
   return (
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/auth/login" component={Login} />
       <Route path="/auth/register/instructor" component={InstructorRegister} />
       <Route path="/auth/register/student" component={StudentRegister} />
+      <Route path="/auth/reset-password" component={PasswordReset} />
       <ProtectedRoute 
         path="/" 
         component={({ user }) => (

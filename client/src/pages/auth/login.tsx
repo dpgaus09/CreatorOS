@@ -94,13 +94,23 @@ export default function Login() {
                   </FormItem>
                 )}
               />
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loginMutation.isPending}
-              >
-                Sign In
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loginMutation.isPending}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="w-full"
+                  onClick={() => setLocation("/auth/reset-password")}
+                >
+                  Forgot Password?
+                </Button>
+              </div>
             </form>
           </Form>
         </div>
