@@ -19,18 +19,15 @@ export default function InstructorDashboard() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const { data: courses, isLoading, error } = useQuery<Course[]>({
+  const { data: courses, isLoading: loadingCourses, error: coursesError } = useQuery<Course[]>({
     queryKey: ["/api/courses/instructor"],
-    onError: (error: Error) => {
-      toast({
-        title: "Error loading courses",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
-  if (isLoading) {
+  const { data: students, isLoading: loadingStudents } = useQuery({
+    queryKey: ["/api/students"],
+  });
+
+  if (loadingCourses || loadingStudents) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -38,7 +35,7 @@ export default function InstructorDashboard() {
     );
   }
 
-  if (error) {
+  if (coursesError) {
     return (
       <div className="container mx-auto py-8">
         <div className="text-center py-12">
@@ -52,8 +49,8 @@ export default function InstructorDashboard() {
 
   const publishedCourses = courses?.filter((c) => c.published) || [];
   const draftCourses = courses?.filter((c) => !c.published) || [];
+  const totalStudents = students?.length || 0;
 
-  const totalStudents = publishedCourses.length * 20; // This should come from the API
   const totalLessons = courses?.reduce((acc, course) => {
     const modules = course.modules as Module[];
     return acc + modules.reduce(
