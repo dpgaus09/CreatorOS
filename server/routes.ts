@@ -301,6 +301,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(updatedEnrollment);
   });
 
+  // Add this route after the existing user routes
+  app.patch("/api/user/accessibility", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const updatedUser = await storage.updateUser(req.user.id, {
+        accessibility: req.body
+      });
+
+      // Don't send password back to client
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating accessibility settings:", error);
+      res.status(500).json({ message: "Failed to update accessibility settings" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

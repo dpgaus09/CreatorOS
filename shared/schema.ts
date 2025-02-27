@@ -12,7 +12,7 @@ export const images = pgTable("images", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-// Keep existing tables
+// Keep existing tables and add accessibility preferences to users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -20,6 +20,10 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["instructor", "student"] }).notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
+  accessibility: jsonb("accessibility").notNull().default({
+    highContrast: false,
+    textToSpeech: false,
+  }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
