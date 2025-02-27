@@ -1,5 +1,5 @@
-import { users, courses, enrollments, settings } from "@shared/schema";
-import { InsertUser, User, Course, Enrollment, Setting } from "@shared/schema";
+import { users, courses, enrollments, settings, images } from "@shared/schema";
+import { InsertUser, User, Course, Enrollment, Setting, InsertImage, Image } from "@shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
 import session from "express-session";
@@ -32,6 +32,10 @@ export interface IStorage {
   // Settings
   getSetting(name: string): Promise<Setting | undefined>;
   updateSetting(name: string, value: string): Promise<Setting>;
+
+  // Image Management
+  createImage(image: InsertImage): Promise<Image>;
+  getImagesByCourse(courseId: number): Promise<Image[]>;
 
   sessionStore: session.Store;
 }
@@ -204,6 +208,18 @@ export class DatabaseStorage implements IStorage {
       .values({ name, value })
       .returning();
     return newSetting;
+  }
+
+  async createImage(image: InsertImage): Promise<Image> {
+    const [newImage] = await db.insert(images).values(image).returning();
+    return newImage;
+  }
+
+  async getImagesByCourse(courseId: number): Promise<Image[]> {
+    return db
+      .select()
+      .from(images)
+      .where(eq(images.courseId, courseId));
   }
 }
 

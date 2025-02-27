@@ -22,18 +22,22 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useState } from 'react'
+import { apiRequest } from '@/lib/queryClient'
+import { useToast } from '@/hooks/use-toast'
 
 interface RichTextEditorProps {
   content: string
   onChange: (content: string) => void
+  courseId?: number
 }
 
-export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ content, onChange, courseId }: RichTextEditorProps) {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false)
+  const { toast } = useToast()
 
   const editor = useEditor({
     extensions: [
@@ -82,18 +86,34 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     setIsImageDialogOpen(false)
   }
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target?.result
-        if (typeof result === 'string') {
-          editor.chain().focus().setImage({ src: result }).run()
-          setIsImageDialogOpen(false)
-        }
+    if (!file || !courseId) return
+
+    const formData = new FormData()
+    formData.append('image', file)
+    formData.append('courseId', courseId.toString())
+
+    try {
+      const response = await fetch('/api/images/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to upload image')
       }
-      reader.readAsDataURL(file)
+
+      const data = await response.json()
+      editor.chain().focus().setImage({ src: data.url }).run()
+      setIsImageDialogOpen(false)
+    } catch (error) {
+      toast({
+        title: "Failed to upload image",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive"
+      })
     }
   }
 

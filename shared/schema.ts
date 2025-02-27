@@ -3,6 +3,15 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Add new images table
+export const images = pgTable("images", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").references(() => courses.id),
+  filename: text("filename").notNull(),
+  url: text("url").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Keep existing tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -32,7 +41,6 @@ export const enrollments = pgTable("enrollments", {
   enrolledAt: timestamp("enrolled_at").notNull().defaultNow(),
 });
 
-// Add new settings table
 export const settings = pgTable("settings", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -104,6 +112,11 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
   updatedAt: true,
 });
 
+export const insertImageSchema = createInsertSchema(images).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type User = typeof users.$inferSelect;
@@ -111,3 +124,5 @@ export type Course = typeof courses.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type Module = z.infer<typeof moduleSchema>;
 export type Setting = typeof settings.$inferSelect;
+export type InsertImage = z.infer<typeof insertImageSchema>;
+export type Image = typeof images.$inferSelect;

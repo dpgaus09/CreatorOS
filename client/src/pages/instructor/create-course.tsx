@@ -134,6 +134,7 @@ export default function CreateCourse() {
         <CourseEditor
           modules={modules}
           onChange={setModules}
+          courseId={undefined}
         />
       </div>
     </div>

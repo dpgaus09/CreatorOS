@@ -12,9 +12,10 @@ import { RichTextEditor } from "./rich-text-editor";
 interface CourseEditorProps {
   modules: Module[];
   onChange: (modules: Module[]) => void;
+  courseId?: number;  // Add courseId prop
 }
 
-export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
+export default function CourseEditor({ modules, onChange, courseId }: CourseEditorProps) {
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set());
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
 
@@ -36,7 +37,7 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
     };
     onChange([...modules, newModule]);
     setExpandedModules(new Set([...expandedModules, newModule.id]));
-    setEditingModuleId(newModule.id); // Start editing the new module title
+    setEditingModuleId(newModule.id); 
   };
 
   const addLesson = (moduleIndex: number) => {
@@ -216,6 +217,7 @@ export default function CourseEditor({ modules, onChange }: CourseEditorProps) {
                             content,
                           })
                         }
+                        courseId={courseId}  
                       />
                     ) : (
                       <div className="space-y-4">

@@ -168,7 +168,11 @@ export default function CourseEditorPage() {
       {/* Course Content */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Course Content</h2>
-        <CourseEditor modules={modules} onChange={setModules} />
+        <CourseEditor 
+          modules={modules} 
+          onChange={setModules}
+          courseId={courseId}
+        />
       </div>
     </div>
   );
