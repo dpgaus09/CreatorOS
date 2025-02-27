@@ -7,6 +7,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Book, CheckCircle, Users, Clock, Edit, Eye } from "lucide-react";
 import { useLocation } from "wouter";
+import { useAccessibility } from "@/hooks/use-accessibility";
 
 interface CourseCardProps {
   course: Course;
@@ -17,6 +18,7 @@ interface CourseCardProps {
 export default function CourseCard({ course, role, enrollment }: CourseCardProps) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { speak } = useAccessibility();
 
   const enrollMutation = useMutation({
     mutationFn: async () => {
@@ -87,7 +89,9 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
         }`}>
           <span className={`text-sm font-medium ${
             course.published ? "text-green-600" : "text-yellow-600"
-          }`}>
+          }`}
+            onMouseEnter={() => speak(course.published ? "Published" : "Draft")}
+          >
             {course.published ? "Published" : "Draft"}
           </span>
         </div>
@@ -96,8 +100,20 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
       <CardHeader>
         <CardTitle className="flex items-start justify-between">
           <div className="space-y-1">
-            <h3 className="text-xl font-bold">{course.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <h3 
+              className="text-xl font-bold"
+              onMouseEnter={() => speak(course.title)}
+              tabIndex={0}
+              onFocus={() => speak(course.title)}
+            >
+              {course.title}
+            </h3>
+            <p 
+              className="text-sm text-muted-foreground line-clamp-2"
+              onMouseEnter={() => speak(course.description)}
+              tabIndex={0}
+              onFocus={() => speak(course.description)}
+            >
               {course.description}
             </p>
           </div>
@@ -106,18 +122,33 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
 
       <CardContent>
         <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2"
+            onMouseEnter={() => speak(`${modules.length} modules`)}
+            tabIndex={0}
+            onFocus={() => speak(`${modules.length} modules`)}
+          >
             <Book className="h-4 w-4 text-primary" />
             <span>{modules.length} modules</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2"
+            onMouseEnter={() => speak(`${totalLessons} lessons`)}
+            tabIndex={0}
+            onFocus={() => speak(`${totalLessons} lessons`)}
+          >
             <Clock className="h-4 w-4 text-primary" />
             <span>{totalLessons} lessons</span>
           </div>
         </div>
 
         {enrollment && (
-          <div className="space-y-2">
+          <div 
+            className="space-y-2"
+            onMouseEnter={() => speak(`Progress: ${getProgress()}%`)}
+            tabIndex={0}
+            onFocus={() => speak(`Progress: ${getProgress()}%`)}
+          >
             <div className="flex items-center justify-between text-sm">
               <span>Progress</span>
               <span className="font-medium">{getProgress()}%</span>
@@ -134,6 +165,8 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
               className="flex-1"
               variant="outline"
               onClick={() => setLocation(`/course/${course.id}/edit`)}
+              onMouseEnter={() => speak("Edit course")}
+              onFocus={() => speak("Edit course")}
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit
@@ -143,6 +176,8 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
               variant={course.published ? "outline" : "default"}
               onClick={() => publishMutation.mutate()}
               disabled={publishMutation.isPending}
+              onMouseEnter={() => speak(course.published ? "Unpublish course" : "Publish course")}
+              onFocus={() => speak(course.published ? "Unpublish course" : "Publish course")}
             >
               <Eye className="mr-2 h-4 w-4" />
               {course.published ? "Unpublish" : "Publish"}
@@ -151,6 +186,8 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
               className="flex-1"
               variant="outline"
               onClick={() => setLocation(`/course/${course.id}`)}
+              onMouseEnter={() => speak("Preview course")}
+              onFocus={() => speak("Preview course")}
             >
               <Eye className="mr-2 h-4 w-4" />
               Preview
@@ -162,6 +199,8 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
               className="w-full"
               variant="outline"
               onClick={() => setLocation(`/course/${course.id}`)}
+              onMouseEnter={() => speak("Continue Learning")}
+              onFocus={() => speak("Continue Learning")}
             >
               <CheckCircle className="mr-2 h-4 w-4" />
               Continue Learning
@@ -171,6 +210,8 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
               className="w-full"
               onClick={() => enrollMutation.mutate()}
               disabled={enrollMutation.isPending}
+              onMouseEnter={() => speak("Enroll Now")}
+              onFocus={() => speak("Enroll Now")}
             >
               {enrollMutation.isPending ? "Enrolling..." : "Enroll Now"}
             </Button>
