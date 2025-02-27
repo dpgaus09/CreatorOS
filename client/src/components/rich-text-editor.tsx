@@ -2,9 +2,22 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import TextAlign from '@tiptap/extension-text-align'
+import Color from '@tiptap/extension-color'
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
-import { Bold, Italic, Link as LinkIcon, List, ListOrdered, Image as ImageIcon } from 'lucide-react'
+import { 
+  Bold, 
+  Italic, 
+  Link as LinkIcon, 
+  List, 
+  ListOrdered, 
+  Image as ImageIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Palette
+} from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useState } from 'react'
@@ -19,6 +32,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const [linkUrl, setLinkUrl] = useState('')
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false)
 
   const editor = useEditor({
     extensions: [
@@ -33,7 +47,12 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         HTMLAttributes: {
           class: 'rounded-lg max-w-full'
         }
-      })
+      }),
+      TextAlign.configure({
+        types: ['heading', 'paragraph', 'image'],
+        alignments: ['left', 'center', 'right']
+      }),
+      Color
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -76,9 +95,21 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     }
   }
 
+  const colors = [
+    '#000000', // Black
+    '#EF4444', // Red
+    '#F97316', // Orange
+    '#EAB308', // Yellow
+    '#22C55E', // Green
+    '#3B82F6', // Blue
+    '#6366F1', // Indigo
+    '#A855F7', // Purple
+    '#EC4899', // Pink
+  ]
+
   return (
     <div className="border rounded-md">
-      <div className="flex items-center gap-1 p-2 border-b">
+      <div className="flex items-center gap-1 p-2 border-b flex-wrap">
         <Toggle
           size="sm"
           pressed={editor.isActive('bold')}
@@ -122,6 +153,57 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         >
           <ImageIcon className="h-4 w-4" />
         </Button>
+
+        {/* Text Alignment Controls */}
+        <div className="h-4 w-px bg-border mx-1" /> {/* Separator */}
+        <Toggle
+          size="sm"
+          pressed={editor.isActive({ textAlign: 'left' })}
+          onPressedChange={() => editor.chain().focus().setTextAlign('left').run()}
+        >
+          <AlignLeft className="h-4 w-4" />
+        </Toggle>
+        <Toggle
+          size="sm"
+          pressed={editor.isActive({ textAlign: 'center' })}
+          onPressedChange={() => editor.chain().focus().setTextAlign('center').run()}
+        >
+          <AlignCenter className="h-4 w-4" />
+        </Toggle>
+        <Toggle
+          size="sm"
+          pressed={editor.isActive({ textAlign: 'right' })}
+          onPressedChange={() => editor.chain().focus().setTextAlign('right').run()}
+        >
+          <AlignRight className="h-4 w-4" />
+        </Toggle>
+
+        {/* Color Picker */}
+        <div className="h-4 w-px bg-border mx-1" /> {/* Separator */}
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsColorPickerOpen(!isColorPickerOpen)}
+          >
+            <Palette className="h-4 w-4" />
+          </Button>
+          {isColorPickerOpen && (
+            <div className="absolute top-full left-0 mt-1 p-2 bg-popover border rounded-md shadow-md grid grid-cols-3 gap-1 z-50">
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  className="w-6 h-6 rounded-md border"
+                  style={{ backgroundColor: color }}
+                  onClick={() => {
+                    editor.chain().focus().setColor(color).run()
+                    setIsColorPickerOpen(false)
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div className="p-2">
         <EditorContent editor={editor} className="prose dark:prose-invert max-w-none" />
