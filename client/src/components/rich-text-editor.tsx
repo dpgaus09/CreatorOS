@@ -4,6 +4,9 @@ import Link from '@tiptap/extension-link'
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
 import { Bold, Italic, Link as LinkIcon, List, ListOrdered } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { useState } from 'react'
 
 interface RichTextEditorProps {
   content: string
@@ -11,6 +14,9 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
+  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -29,6 +35,14 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
 
   if (!editor) {
     return null
+  }
+
+  const handleAddLink = () => {
+    if (linkUrl) {
+      editor.chain().focus().setLink({ href: linkUrl }).run()
+    }
+    setLinkUrl('')
+    setIsLinkDialogOpen(false)
   }
 
   return (
@@ -65,12 +79,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            const url = window.prompt('Enter URL')
-            if (url) {
-              editor.chain().focus().setLink({ href: url }).run()
-            }
-          }}
+          onClick={() => setIsLinkDialogOpen(true)}
           className={editor.isActive('link') ? 'bg-muted' : ''}
         >
           <LinkIcon className="h-4 w-4" />
@@ -79,6 +88,34 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       <div className="p-2">
         <EditorContent editor={editor} className="prose dark:prose-invert max-w-none" />
       </div>
+
+      <Dialog open={isLinkDialogOpen} onOpenChange={setIsLinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Link</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="Enter URL"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddLink()
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsLinkDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleAddLink}>
+              Add Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
