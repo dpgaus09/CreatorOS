@@ -14,6 +14,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllStudents(): Promise<User[]>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
 
   // Course management
   createCourse(course: Omit<Course, "id">): Promise<Course>;
@@ -220,6 +221,18 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(images)
       .where(eq(images.courseId, courseId));
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
   }
 }
 
