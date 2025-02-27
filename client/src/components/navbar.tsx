@@ -8,6 +8,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
+import AccessibilitySettings from "@/components/accessibility-settings";
 
 export default function Navbar() {
   const { user, logoutMutation } = useAuth();
@@ -99,6 +100,7 @@ export default function Navbar() {
 
         {user && (
           <div className="flex items-center gap-4">
+            <AccessibilitySettings />
             <ThemeToggle />
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
