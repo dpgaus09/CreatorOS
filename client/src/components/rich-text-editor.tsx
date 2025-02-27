@@ -1,9 +1,10 @@
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
+import Image from '@tiptap/extension-image'
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
-import { Bold, Italic, Link as LinkIcon, List, ListOrdered } from 'lucide-react'
+import { Bold, Italic, Link as LinkIcon, List, ListOrdered, Image as ImageIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { useState } from 'react'
@@ -16,6 +17,8 @@ interface RichTextEditorProps {
 export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState('')
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
 
   const editor = useEditor({
     extensions: [
@@ -24,6 +27,11 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         openOnClick: false,
         HTMLAttributes: {
           class: 'text-primary underline'
+        }
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'rounded-lg max-w-full'
         }
       })
     ],
@@ -43,6 +51,14 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     }
     setLinkUrl('')
     setIsLinkDialogOpen(false)
+  }
+
+  const handleAddImage = () => {
+    if (imageUrl) {
+      editor.chain().focus().setImage({ src: imageUrl }).run()
+    }
+    setImageUrl('')
+    setIsImageDialogOpen(false)
   }
 
   return (
@@ -84,6 +100,13 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         >
           <LinkIcon className="h-4 w-4" />
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsImageDialogOpen(true)}
+        >
+          <ImageIcon className="h-4 w-4" />
+        </Button>
       </div>
       <div className="p-2">
         <EditorContent editor={editor} className="prose dark:prose-invert max-w-none" />
@@ -112,6 +135,34 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
             </Button>
             <Button type="button" onClick={handleAddLink}>
               Add Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Image</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="Enter image URL"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddImage()
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsImageDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleAddImage}>
+              Add Image
             </Button>
           </DialogFooter>
         </DialogContent>
