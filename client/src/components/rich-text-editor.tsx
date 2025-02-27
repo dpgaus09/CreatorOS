@@ -4,6 +4,7 @@ import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import TextAlign from '@tiptap/extension-text-align'
 import Color from '@tiptap/extension-color'
+import TextStyle from '@tiptap/extension-text-style'
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
 import { 
@@ -52,6 +53,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
         types: ['heading', 'paragraph', 'image'],
         alignments: ['left', 'center', 'right']
       }),
+      TextStyle,
       Color
     ],
     content,
@@ -196,7 +198,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                   className="w-6 h-6 rounded-md border"
                   style={{ backgroundColor: color }}
                   onClick={() => {
-                    editor.chain().focus().setColor(color).run()
+                    editor.chain().focus().setTextStyle({ color }).run()
                     setIsColorPickerOpen(false)
                   }}
                 />
