@@ -61,6 +61,21 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     setIsImageDialogOpen(false)
   }
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result
+        if (typeof result === 'string') {
+          editor.chain().focus().setImage({ src: result }).run()
+          setIsImageDialogOpen(false)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
   return (
     <div className="border rounded-md">
       <div className="flex items-center gap-1 p-2 border-b">
@@ -145,24 +160,48 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
           <DialogHeader>
             <DialogTitle>Add Image</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
-            <Input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="Enter image URL"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddImage()
-                }
-              }}
-            />
+          <div className="py-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Upload from Computer</label>
+              <Input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="cursor-pointer"
+              />
+            </div>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or</span>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Add Image URL</label>
+              <Input
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Enter image URL"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddImage()
+                  }
+                }}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setIsImageDialogOpen(false)}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleAddImage}>
-              Add Image
+            <Button 
+              type="button" 
+              onClick={handleAddImage}
+              disabled={!imageUrl}
+            >
+              Add Image URL
             </Button>
           </DialogFooter>
         </DialogContent>
