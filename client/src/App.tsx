@@ -6,7 +6,9 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/theme-provider";
 import Navbar from "@/components/navbar";
 import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
+import Login from "@/pages/auth/login";
+import InstructorRegister from "@/pages/auth/instructor-register";
+import StudentRegister from "@/pages/auth/student-register";
 import InstructorDashboard from "@/pages/instructor/dashboard";
 import CreateCourse from "@/pages/instructor/create-course";
 import StudentDashboard from "@/pages/student/dashboard";
@@ -29,7 +31,9 @@ function Layout({ children, showNav = true }: { children: React.ReactNode, showN
 function Router() {
   return (
     <Switch>
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth/login" component={Login} />
+      <Route path="/auth/register/instructor" component={InstructorRegister} />
+      <Route path="/auth/register/student" component={StudentRegister} />
       <ProtectedRoute 
         path="/" 
         component={({ user }) => (

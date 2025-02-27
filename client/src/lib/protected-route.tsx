@@ -18,7 +18,7 @@ export function ProtectedRoute({ path, component: Component }: ProtectedRoutePro
           <Loader2 className="h-8 w-8 animate-spin text-border" />
         </div>
       ) : !user ? (
-        <Redirect to="/auth" />
+        <Redirect to="/auth/login" />
       ) : (
         <Component user={user} />
       )}
