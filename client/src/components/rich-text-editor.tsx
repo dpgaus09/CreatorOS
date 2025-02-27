@@ -198,7 +198,7 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
                   className="w-6 h-6 rounded-md border"
                   style={{ backgroundColor: color }}
                   onClick={() => {
-                    editor.chain().focus().setTextStyle({ color }).run()
+                    editor.commands.setColor(color)
                     setIsColorPickerOpen(false)
                   }}
                 />
