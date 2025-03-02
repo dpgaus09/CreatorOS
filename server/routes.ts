@@ -11,7 +11,7 @@ import express from 'express';
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count } from "drizzle-orm";
 import { analyticsMiddleware, trackCourseView } from "./analytics-middleware";
 
 // Configure multer for handling file uploads
@@ -182,6 +182,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public API endpoint for accessing published courses without auth
+  app.get("/api/courses/public", async (req, res) => {
+    try {
+      const courses = await storage.getPublishedCourses();
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching public courses:", error);
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+
   // Course management routes
   app.post("/api/courses", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "instructor") {
@@ -218,17 +229,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(courses);
     } catch (error) {
       console.error("Error fetching instructor courses:", error);
-      res.status(500).json({ message: "Failed to fetch courses" });
-    }
-  });
-
-  // Public API endpoint for accessing published courses without auth
-  app.get("/api/courses/public", async (req, res) => {
-    try {
-      const courses = await storage.getPublishedCourses();
-      res.json(courses);
-    } catch (error) {
-      console.error("Error fetching public courses:", error);
       res.status(500).json({ message: "Failed to fetch courses" });
     }
   });
@@ -431,31 +431,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Get summary statistics
-      const totalPageViews = await storage.getPageViewCount();
-      const activeSessionCount = await storage.getActiveSessionsCount();
-      const avgSessionDuration = await storage.getAverageSessionDuration();
-      const deviceBreakdown = await storage.getDeviceBreakdown();
-      const popularPages = await storage.getPopularPages(10);
-      const mostViewedCourses = await storage.getMostViewedCourses(5);
-      const courseAnalytics = await storage.getAllCourseAnalytics();
-
-      // Calculate course completion rates
-      const totalCompletions = courseAnalytics.reduce((sum, item) => sum + item.totalCompletions, 0);
-      const totalViews = courseAnalytics.reduce((sum, item) => sum + item.totalViews, 0);
-      const completionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
-
-      res.json({
+      // Initialize response object with default values
+      const response: any = {
         summary: {
-          totalPageViews,
-          activeSessionCount,
-          avgSessionDuration,
-          completionRate,
+          userCount: 0,
+          totalPageViews: 0,
+          activeSessionCount: 0,
+          avgSessionDuration: 0,
+          completionRate: 0,
         },
-        deviceBreakdown,
-        popularPages,
-        mostViewedCourses,
-      });
+        deviceBreakdown: [],
+        popularPages: [],
+        mostViewedCourses: [],
+      };
+
+      // First, get the basic stats that don't rely on analytics tables
+      try {
+        // Count users
+        const [userCountResult] = await db.select({ count: count() }).from(users);
+        response.summary.userCount = userCountResult?.count || 0;
+
+        // Get published courses for mostViewedCourses
+        const publishedCourses = await storage.getPublishedCourses();
+        response.mostViewedCourses = publishedCourses.map(course => ({
+          course,
+          totalViews: 0,
+          totalCompletions: 0,
+        }));
+      } catch (error) {
+        console.error("Error fetching basic stats:", error);
+      }
+
+      // Now try to get analytics data if available
+      try {
+        response.summary.totalPageViews = await storage.getPageViewCount();
+        response.summary.activeSessionCount = await storage.getActiveSessionsCount();
+        response.summary.avgSessionDuration = await storage.getAverageSessionDuration();
+        response.deviceBreakdown = await storage.getDeviceBreakdown();
+        response.popularPages = await storage.getPopularPages(10);
+
+        const analyticsViewedCourses = await storage.getMostViewedCourses(5);
+        if (analyticsViewedCourses.length > 0) {
+          response.mostViewedCourses = analyticsViewedCourses;
+        }
+
+        const courseAnalytics = await storage.getAllCourseAnalytics();
+        const totalCompletions = courseAnalytics.reduce((sum, item) => sum + item.totalCompletions, 0);
+        const totalViews = courseAnalytics.reduce((sum, item) => sum + item.totalViews, 0);
+        response.summary.completionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
+      } catch (error) {
+        console.error("Error fetching analytics data, using basic stats only:", error);
+      }
+
+      res.json(response);
     } catch (error) {
       console.error("Error fetching analytics dashboard:", error);
       res.status(500).json({ message: "Failed to fetch analytics data" });
@@ -468,35 +496,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Get the most recent page views for activity tracking
-      const recentPageViews = await storage.getPageViews(50);
+      // Initialize with empty activity
+      let formattedActivity = [];
 
-      // Format and group by date for the chart
-      const activityByDay = {};
+      // Try to get analytics data if available
+      try {
+        // Get the most recent page views for activity tracking
+        const recentPageViews = await storage.getPageViews(50);
 
-      recentPageViews.forEach(view => {
-        const date = new Date(view.timestamp);
-        const day = date.toLocaleDateString();
+        // Format and group by date for the chart
+        const activityByDay: Record<string, {date: string, views: number, uniqueUsers: Set<number>}> = {};
 
-        if (!activityByDay[day]) {
-          activityByDay[day] = { date: day, views: 0, uniqueUsers: new Set() };
-        }
+        recentPageViews.forEach(view => {
+          const date = new Date(view.timestamp);
+          const day = date.toLocaleDateString();
 
-        activityByDay[day].views += 1;
-        if (view.userId) {
-          activityByDay[day].uniqueUsers.add(view.userId);
-        }
-      });
+          if (!activityByDay[day]) {
+            activityByDay[day] = { date: day, views: 0, uniqueUsers: new Set() };
+          }
 
-      // Convert to array and replace Set with count
-      const formattedActivity = Object.values(activityByDay).map(item => ({
-        date: item.date,
-        views: item.views,
-        uniqueUsers: item.uniqueUsers.size,
-      }));
+          activityByDay[day].views += 1;
+          if (view.userId) {
+            activityByDay[day].uniqueUsers.add(view.userId);
+          }
+        });
 
-      // Sort by date
-      formattedActivity.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        // Convert to array and replace Set with count
+        formattedActivity = Object.values(activityByDay).map(item => ({
+          date: item.date,
+          views: item.views,
+          uniqueUsers: item.uniqueUsers.size,
+        }));
+
+        // Sort by date
+        formattedActivity.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      } catch (error) {
+        console.error("Error processing user activity, returning empty data:", error);
+
+        // Generate current date for empty placeholder
+        const today = new Date().toLocaleDateString();
+        formattedActivity = [
+          { date: today, views: 0, uniqueUsers: 0 }
+        ];
+      }
 
       res.json(formattedActivity);
     } catch (error) {
@@ -522,10 +564,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Not authorized to view this course's analytics" });
       }
 
-      const analytics = await storage.getCourseAnalytics(courseId);
+      let analytics;
+      try {
+        analytics = await storage.getCourseAnalytics(courseId);
+      } catch (error) {
+        console.error("Analytics table not available, creating default analytics object", error);
+      }
 
       if (!analytics) {
-        return res.status(404).json({ message: "No analytics found for this course" });
+        // Return default analytics if not found
+        analytics = {
+          id: 0,
+          courseId,
+          totalViews: 0,
+          uniqueViews: 0,
+          totalCompletions: 0,
+          averageRating: 0,
+          lastUpdated: new Date()
+        };
       }
 
       res.json(analytics);
