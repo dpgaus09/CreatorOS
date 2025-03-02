@@ -18,13 +18,28 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { 
+  BarChart, 
+  Bar, 
+  PieChart, 
+  Pie, 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer, 
+  Cell 
+} from "recharts";
 
 export default function AdminSettings() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
   const [lmsName, setLmsName] = useState("LearnBruh");
-  const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login"); // Default to login page
+  const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login"); 
   const [activeTab, setActiveTab] = useState("general");
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
 
@@ -106,6 +121,53 @@ export default function AdminSettings() {
   const handleSaveEnrollmentUrl = () => {
     updateEnrollmentUrlMutation.mutate(enrollmentUrl);
   };
+
+  // Mock data for analytics visualizations
+  const userActivity = [
+    { name: 'Mon', active: 120, new: 20 },
+    { name: 'Tue', active: 140, new: 15 },
+    { name: 'Wed', active: 135, new: 12 },
+    { name: 'Thu', active: 150, new: 18 },
+    { name: 'Fri', active: 160, new: 25 },
+    { name: 'Sat', active: 90, new: 10 },
+    { name: 'Sun', active: 80, new: 8 },
+  ];
+
+  const courseCompletionData = [
+    { name: 'Completed', value: 68, color: '#10b981' },
+    { name: 'In Progress', value: 24, color: '#3b82f6' },
+    { name: 'Not Started', value: 8, color: '#6b7280' },
+  ];
+
+  const contentEngagementData = [
+    { name: 'Videos', views: 340, completion: 78, avgTime: '12:30' },
+    { name: 'Quizzes', views: 290, completion: 92, avgTime: '8:15' },
+    { name: 'Readings', views: 210, completion: 65, avgTime: '10:45' },
+    { name: 'Discussions', views: 180, completion: 55, avgTime: '15:20' },
+    { name: 'Assignments', views: 250, completion: 82, avgTime: '45:10' },
+  ];
+
+  const deviceUsageData = [
+    { name: 'Desktop', value: 55, color: '#3b82f6' },
+    { name: 'Mobile', value: 35, color: '#10b981' },
+    { name: 'Tablet', value: 10, color: '#f59e0b' },
+  ];
+
+  const weeklyEnrollmentData = [
+    { name: 'Week 1', enrollments: 45 },
+    { name: 'Week 2', enrollments: 52 },
+    { name: 'Week 3', enrollments: 48 },
+    { name: 'Week 4', enrollments: 65 },
+    { name: 'Week 5', enrollments: 78 },
+  ];
+
+  // Stats summary data
+  const statsSummary = [
+    { title: 'Total Users', value: 1254, change: '+12%', trend: 'up' },
+    { title: 'Active Courses', value: 18, change: '+3', trend: 'up' },
+    { title: 'Avg. Completion Rate', value: '68%', change: '+5%', trend: 'up' },
+    { title: 'Avg. Session Length', value: '24m', change: '+2m', trend: 'up' },
+  ];
 
   return (
     <div className="container max-w-5xl mx-auto py-8 space-y-6">
@@ -393,163 +455,244 @@ export default function AdminSettings() {
         {/* Analytics Tab */}
         <TabsContent value="analytics">
           {analyticsEnabled ? (
-            <div className="grid gap-6">
+            <div className="space-y-6">
+              {/* Stats summary cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {statsSummary.map((stat, index) => (
+                  <Card key={index}>
+                    <CardContent className="pt-6">
+                      <div className="text-sm text-muted-foreground mb-1">{stat.title}</div>
+                      <div className="flex items-end justify-between">
+                        <div className="text-3xl font-bold">{stat.value}</div>
+                        <div className={`text-sm ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
+                          {stat.change}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* User activity chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>User Engagement Analytics</CardTitle>
+                  <CardTitle>User Activity (Last 7 Days)</CardTitle>
                   <CardDescription>
-                    Configure and view analytics for user engagement
+                    Daily active users and new sign-ups
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="track-clicks">Track Page & Button Clicks</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Record user interactions with pages and UI elements
-                      </p>
-                    </div>
-                    <Switch id="track-clicks" defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="track-time">Session Duration Tracking</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Measure how long users spend on different pages
-                      </p>
-                    </div>
-                    <Switch id="track-time" defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="track-path">User Journey Analysis</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Track the path users take through your platform
-                      </p>
-                    </div>
-                    <Switch id="track-path" defaultChecked />
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={userActivity}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="active" name="Active Users" fill="#3b82f6" />
+                        <Bar dataKey="new" name="New Users" fill="#10b981" />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Course completion and device usage side by side */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Course completion pie chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Course Completion</CardTitle>
+                    <CardDescription>
+                      Overall course completion statistics
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64 flex justify-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={courseCompletionData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {courseCompletionData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Device usage pie chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Device Usage</CardTitle>
+                    <CardDescription>
+                      Platform access by device type
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="h-64 flex justify-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={deviceUsageData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {deviceUsageData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Weekly Enrollment Trend */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Course Completion Analytics</CardTitle>
+                  <CardTitle>Weekly Enrollment Trend</CardTitle>
                   <CardDescription>
-                    Track and analyze course completion rates
+                    New enrollments over the past 5 weeks
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="course-progress">Course Progress Tracking</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Track detailed user progress through course content
-                      </p>
-                    </div>
-                    <Switch id="course-progress" defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="completion-rates">Completion Rate Analytics</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Generate reports on course completion rates
-                      </p>
-                    </div>
-                    <Switch id="completion-rates" defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="drop-off">Drop-off Point Analysis</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Identify where students typically abandon courses
-                      </p>
-                    </div>
-                    <Switch id="drop-off" defaultChecked />
+                <CardContent>
+                  <div className="h-80">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={weeklyEnrollmentData}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="enrollments" 
+                          name="New Enrollments" 
+                          stroke="#8884d8" 
+                          activeDot={{ r: 8 }} 
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Content Engagement Table */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Content Effectiveness Analytics</CardTitle>
+                  <CardTitle>Content Engagement</CardTitle>
                   <CardDescription>
-                    Measure and analyze content effectiveness
+                    User interaction with different content types
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="content-engagement">Content Engagement Metrics</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Track which content receives the most engagement
-                      </p>
-                    </div>
-                    <Switch id="content-engagement" defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="quiz-analytics">Quiz Performance Analytics</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Analyze student performance on quizzes and assessments
-                      </p>
-                    </div>
-                    <Switch id="quiz-analytics" defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="heatmaps">Interactive Content Heatmaps</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Visual representation of user interactions with content
-                      </p>
-                    </div>
-                    <Switch id="heatmaps" defaultChecked />
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4 font-medium">Content Type</th>
+                          <th className="text-left py-3 px-4 font-medium">Views</th>
+                          <th className="text-left py-3 px-4 font-medium">Completion Rate</th>
+                          <th className="text-left py-3 px-4 font-medium">Avg. Time Spent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {contentEngagementData.map((item, index) => (
+                          <tr key={index} className={index !== contentEngagementData.length - 1 ? "border-b" : ""}>
+                            <td className="py-3 px-4">{item.name}</td>
+                            <td className="py-3 px-4">{item.views}</td>
+                            <td className="py-3 px-4">{item.completion}%</td>
+                            <td className="py-3 px-4">{item.avgTime}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
 
+              {/* Export & Reporting */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Data Export & Integration</CardTitle>
+                  <CardTitle>Analytics Reports</CardTitle>
                   <CardDescription>
-                    Configure data export options and third-party integrations
+                    Export or schedule analytics reports
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="scheduled-reports">Scheduled Analytics Reports</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Automatically generate and email periodic reports
-                      </p>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1 space-y-2">
+                      <Label>Report Type</Label>
+                      <Select defaultValue="user-activity">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select report type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user-activity">User Activity Report</SelectItem>
+                          <SelectItem value="course-completion">Course Completion Report</SelectItem>
+                          <SelectItem value="content-engagement">Content Engagement Report</SelectItem>
+                          <SelectItem value="revenue">Revenue Report</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <Switch id="scheduled-reports" defaultChecked />
+                    <div className="flex-1 space-y-2">
+                      <Label>Time Range</Label>
+                      <Select defaultValue="last-month">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select time range" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="last-week">Last 7 Days</SelectItem>
+                          <SelectItem value="last-month">Last 30 Days</SelectItem>
+                          <SelectItem value="last-quarter">Last 90 Days</SelectItem>
+                          <SelectItem value="last-year">Last 365 Days</SelectItem>
+                          <SelectItem value="custom">Custom Range</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <Label>Format</Label>
+                      <Select defaultValue="csv">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select format" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="csv">CSV</SelectItem>
+                          <SelectItem value="xlsx">Excel</SelectItem>
+                          <SelectItem value="pdf">PDF</SelectItem>
+                          <SelectItem value="json">JSON</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="data-export">Custom Data Export</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Export analytics data in various formats (CSV, JSON)
-                      </p>
-                    </div>
-                    <Switch id="data-export" defaultChecked />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label htmlFor="ga-integration">Google Analytics Integration</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Send data to Google Analytics for advanced reporting
-                      </p>
-                    </div>
-                    <Switch id="ga-integration" />
+                  <div className="flex justify-end">
+                    <Button className="w-full sm:w-auto">Generate Report</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -559,7 +702,7 @@ export default function AdminSettings() {
               <BarChart3 className="h-16 w-16 text-muted-foreground mb-4" />
               <h2 className="text-2xl font-bold mb-2">Analytics are disabled</h2>
               <p className="text-muted-foreground mb-4">
-                Enable analytics in the General settings tab to configure and view analytics features.
+                Enable analytics in the General settings tab to view usage statistics and reports.
               </p>
               <Button onClick={() => {
                 setActiveTab("general");
