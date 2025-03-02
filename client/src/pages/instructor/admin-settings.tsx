@@ -25,12 +25,12 @@ export default function AdminSettings() {
   const { user } = useAuth();
   const [lmsName, setLmsName] = useState("LearnBruh");
   const [activeTab, setActiveTab] = useState("general");
-  
+
   // Settings query
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/settings/lms-name"],
   });
-  
+
   // Update LMS name mutation
   const updateLmsNameMutation = useMutation({
     mutationFn: async (value: string) => {
@@ -148,7 +148,7 @@ export default function AdminSettings() {
                     </div>
                     <Switch id="analytics" defaultChecked />
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="maintenance">Maintenance Mode</Label>
@@ -158,7 +158,7 @@ export default function AdminSettings() {
                     </div>
                     <Switch id="maintenance" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="timezone">Default Timezone</Label>
                     <Select defaultValue="utc">
@@ -177,46 +177,6 @@ export default function AdminSettings() {
                 </div>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Platform Features</CardTitle>
-                <CardDescription>
-                  Enable or disable platform features
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="discussions">Discussion Forums</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable discussion forums in courses
-                    </p>
-                  </div>
-                  <Switch id="discussions" defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="certificates">Certificates</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable course completion certificates
-                    </p>
-                  </div>
-                  <Switch id="certificates" defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="gamification">Gamification</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable points, badges, and leaderboards
-                    </p>
-                  </div>
-                  <Switch id="gamification" />
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
 
@@ -230,17 +190,7 @@ export default function AdminSettings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Primary Color</Label>
-                <div className="flex gap-4">
-                  <Button className="bg-blue-500 hover:bg-blue-600 h-10 w-10 rounded-full p-0" />
-                  <Button className="bg-green-500 hover:bg-green-600 h-10 w-10 rounded-full p-0" />
-                  <Button className="bg-purple-500 hover:bg-purple-600 h-10 w-10 rounded-full p-0" />
-                  <Button className="bg-red-500 hover:bg-red-600 h-10 w-10 rounded-full p-0" />
-                  <Button className="bg-amber-500 hover:bg-amber-600 h-10 w-10 rounded-full p-0" />
-                </div>
-              </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="theme">Default Theme</Label>
                 <Select defaultValue="system">
@@ -254,7 +204,7 @@ export default function AdminSettings() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Logo</Label>
                 <div className="border border-input rounded-md p-4 flex items-center justify-center">
@@ -284,17 +234,7 @@ export default function AdminSettings() {
                 </div>
                 <Switch id="self-registration" defaultChecked />
               </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="email-verification">Email Verification</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Require email verification for new accounts
-                  </p>
-                </div>
-                <Switch id="email-verification" defaultChecked />
-              </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="default-role">Default User Role</Label>
                 <Select defaultValue="student">
@@ -330,7 +270,7 @@ export default function AdminSettings() {
                 </div>
                 <Switch id="auto-enrollment" />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="course-catalog">Public Course Catalog</Label>
@@ -340,7 +280,7 @@ export default function AdminSettings() {
                 </div>
                 <Switch id="course-catalog" defaultChecked />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="course-reviews">Course Reviews</Label>
@@ -364,26 +304,6 @@ export default function AdminSettings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="email-notifications">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Send notifications via email
-                  </p>
-                </div>
-                <Switch id="email-notifications" defaultChecked />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="course-reminders">Course Reminders</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Send reminders for upcoming deadlines
-                  </p>
-                </div>
-                <Switch id="course-reminders" defaultChecked />
-              </div>
-              
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="announcements">System Announcements</Label>
