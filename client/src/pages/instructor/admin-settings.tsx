@@ -9,29 +9,29 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3 } from "lucide-react";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer, 
-  Cell 
+import {
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell
 } from "recharts";
 
 export default function AdminSettings() {
@@ -39,7 +39,7 @@ export default function AdminSettings() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [lmsName, setLmsName] = useState("LearnBruh");
-  const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login"); 
+  const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login");
   const [activeTab, setActiveTab] = useState("general");
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
 
@@ -167,7 +167,8 @@ export default function AdminSettings() {
   };
 
   const handleToggleAnalytics = (enabled: boolean) => {
-    handleToggleAnalytics(enabled);
+    // Removed the recursive call that was causing the infinite loop
+    setAnalyticsEnabled(enabled);
     updateAnalyticsEnabledMutation.mutate(enabled);
   };
 
@@ -175,9 +176,9 @@ export default function AdminSettings() {
   const deviceUsageData = analyticsData?.deviceBreakdown?.map(item => ({
     name: item.deviceType || 'Unknown',
     value: item.count,
-    color: item.deviceType === 'desktop' ? '#3b82f6' : 
-           item.deviceType === 'mobile' ? '#10b981' : 
-           item.deviceType === 'tablet' ? '#f59e0b' : '#6b7280'
+    color: item.deviceType === 'desktop' ? '#3b82f6' :
+      item.deviceType === 'mobile' ? '#10b981' :
+        item.deviceType === 'tablet' ? '#f59e0b' : '#6b7280'
   })) || [
     { name: 'Desktop', value: 0, color: '#3b82f6' },
     { name: 'Mobile', value: 0, color: '#10b981' },
@@ -259,7 +260,7 @@ export default function AdminSettings() {
                       onChange={(e) => setLmsName(e.target.value)}
                       placeholder="Enter your LMS name"
                     />
-                    <Button 
+                    <Button
                       onClick={handleSaveLmsName}
                       disabled={updateLmsNameMutation.isPending}
                     >
@@ -280,8 +281,8 @@ export default function AdminSettings() {
                         Track user engagement and course metrics
                       </p>
                     </div>
-                    <Switch 
-                      id="analytics" 
+                    <Switch
+                      id="analytics"
                       checked={analyticsEnabled}
                       onCheckedChange={handleToggleAnalytics}
                     />
@@ -442,7 +443,7 @@ export default function AdminSettings() {
                     onChange={(e) => setEnrollmentUrl(e.target.value)}
                     placeholder="Enter enrollment URL (e.g., /auth/login, https://payment.example.com)"
                   />
-                  <Button 
+                  <Button
                     onClick={handleSaveEnrollmentUrl}
                     disabled={updateEnrollmentUrlMutation.isPending}
                   >
@@ -470,10 +471,10 @@ export default function AdminSettings() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                   <Label htmlFor="announcements">System Announcements</Label>
-                   <p className="text-sm text-muted-foreground">
-                     Notify all users about system changes
-                   </p>
+                  <Label htmlFor="announcements">System Announcements</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Notify all users about system changes
+                  </p>
                 </div>
                 <Switch id="announcements" defaultChecked />
               </div>
