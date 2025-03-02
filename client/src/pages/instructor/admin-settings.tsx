@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3 } from "lucide-react";
 import { 
   Select, 
   SelectContent, 
@@ -26,6 +26,7 @@ export default function AdminSettings() {
   const [lmsName, setLmsName] = useState("LearnBruh");
   const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login"); // Default to login page
   const [activeTab, setActiveTab] = useState("general");
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
 
   // Settings query
   const { data: settings, isLoading } = useQuery({
@@ -120,7 +121,7 @@ export default function AdminSettings() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-5 mb-8">
+        <TabsList className="grid grid-cols-6 mb-8">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             <span>General</span>
@@ -140,6 +141,10 @@ export default function AdminSettings() {
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
             <span>Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" />
+            <span>Analytics</span>
           </TabsTrigger>
         </TabsList>
 
@@ -184,7 +189,11 @@ export default function AdminSettings() {
                         Track user engagement and course metrics
                       </p>
                     </div>
-                    <Switch id="analytics" defaultChecked />
+                    <Switch 
+                      id="analytics" 
+                      defaultChecked={analyticsEnabled} 
+                      onCheckedChange={setAnalyticsEnabled}
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -329,7 +338,7 @@ export default function AdminSettings() {
                 <Switch id="course-reviews" defaultChecked />
               </div>
 
-              {/* New Enrollment URL Setting */}
+              {/* Enrollment URL Setting */}
               <div className="space-y-2 pt-4">
                 <Label htmlFor="enrollment-url">Enrollment URL</Label>
                 <p className="text-sm text-muted-foreground mb-2">
@@ -379,6 +388,187 @@ export default function AdminSettings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics">
+          {analyticsEnabled ? (
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Engagement Analytics</CardTitle>
+                  <CardDescription>
+                    Configure and view analytics for user engagement
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="track-clicks">Track Page & Button Clicks</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Record user interactions with pages and UI elements
+                      </p>
+                    </div>
+                    <Switch id="track-clicks" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="track-time">Session Duration Tracking</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Measure how long users spend on different pages
+                      </p>
+                    </div>
+                    <Switch id="track-time" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="track-path">User Journey Analysis</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Track the path users take through your platform
+                      </p>
+                    </div>
+                    <Switch id="track-path" defaultChecked />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Course Completion Analytics</CardTitle>
+                  <CardDescription>
+                    Track and analyze course completion rates
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="course-progress">Course Progress Tracking</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Track detailed user progress through course content
+                      </p>
+                    </div>
+                    <Switch id="course-progress" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="completion-rates">Completion Rate Analytics</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Generate reports on course completion rates
+                      </p>
+                    </div>
+                    <Switch id="completion-rates" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="drop-off">Drop-off Point Analysis</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Identify where students typically abandon courses
+                      </p>
+                    </div>
+                    <Switch id="drop-off" defaultChecked />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Effectiveness Analytics</CardTitle>
+                  <CardDescription>
+                    Measure and analyze content effectiveness
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="content-engagement">Content Engagement Metrics</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Track which content receives the most engagement
+                      </p>
+                    </div>
+                    <Switch id="content-engagement" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="quiz-analytics">Quiz Performance Analytics</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Analyze student performance on quizzes and assessments
+                      </p>
+                    </div>
+                    <Switch id="quiz-analytics" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="heatmaps">Interactive Content Heatmaps</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Visual representation of user interactions with content
+                      </p>
+                    </div>
+                    <Switch id="heatmaps" defaultChecked />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Data Export & Integration</CardTitle>
+                  <CardDescription>
+                    Configure data export options and third-party integrations
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="scheduled-reports">Scheduled Analytics Reports</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Automatically generate and email periodic reports
+                      </p>
+                    </div>
+                    <Switch id="scheduled-reports" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="data-export">Custom Data Export</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Export analytics data in various formats (CSV, JSON)
+                      </p>
+                    </div>
+                    <Switch id="data-export" defaultChecked />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="ga-integration">Google Analytics Integration</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Send data to Google Analytics for advanced reporting
+                      </p>
+                    </div>
+                    <Switch id="ga-integration" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center p-12 text-center">
+              <BarChart3 className="h-16 w-16 text-muted-foreground mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Analytics are disabled</h2>
+              <p className="text-muted-foreground mb-4">
+                Enable analytics in the General settings tab to configure and view analytics features.
+              </p>
+              <Button onClick={() => {
+                setActiveTab("general");
+                setAnalyticsEnabled(true);
+              }}>
+                Enable Analytics
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
