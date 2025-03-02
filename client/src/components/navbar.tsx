@@ -2,17 +2,25 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogOut, User, Pencil } from "lucide-react";
+import { LogOut, User, Pencil, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/theme-toggle";
 import AccessibilitySettings from "@/components/accessibility-settings";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Navbar() {
   const { user, logoutMutation } = useAuth();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState("");
   const { toast } = useToast();
@@ -102,10 +110,33 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <AccessibilitySettings />
             <ThemeToggle />
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span>{user.name}</span>
-            </div>
+
+            {isInstructor && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    <span>{user.name}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Admin Menu</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setLocation("/admin/settings")}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span>LMS Settings</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {!isInstructor && (
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4" />
+                <span>{user.name}</span>
+              </div>
+            )}
+
             <Button 
               variant="outline" 
               size="sm"

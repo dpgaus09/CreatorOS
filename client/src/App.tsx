@@ -18,6 +18,7 @@ import CourseEditor from "@/pages/instructor/course-editor";
 import StudentsList from "@/pages/instructor/students-list";
 import { ProtectedRoute } from "./lib/protected-route";
 import PasswordReset from "@/pages/auth/password-reset";
+import AdminSettings from "@/pages/instructor/admin-settings";
 
 function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
   return (
@@ -85,6 +86,17 @@ function Router() {
             <CourseView />
           </Layout>
         )}
+      />
+      <ProtectedRoute
+        path="/admin/settings"
+        component={({ user }) => {
+          if (user?.role !== "instructor") return <NotFound />;
+          return (
+            <Layout>
+              <AdminSettings />
+            </Layout>
+          );
+        }}
       />
       <Route component={NotFound} />
     </Switch>
