@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+// import { apiRequest } from "@/lib/queryClient"; //Removed as fetch is used instead
 
 const resetSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -60,7 +60,12 @@ export default function PasswordReset() {
     setIsLoading(true);
     setErrorMessage("");
     try {
-      const response = await apiRequest("POST", "/api/reset-password", values);
+      const response = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
+
       const data = await response.json();
 
       if (!response.ok) {
