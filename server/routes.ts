@@ -12,6 +12,7 @@ import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
+import { analyticsMiddleware, trackCourseView } from "./analytics-middleware";
 
 // Configure multer for handling file uploads
 const upload = multer({
@@ -45,6 +46,9 @@ async function hashPassword(password: string) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  // Register the analytics middleware
+  app.use(analyticsMiddleware);
 
   // Create uploads directory if it doesn't exist
   if (!fs.existsSync('./uploads')) {
@@ -190,7 +194,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         instructorId: req.user.id,
       });
 
-      const course = await storage.createCourse(courseData);
+      const course = await storage.createCourse({
+        ...courseData,
+        createdAt: new Date(),
+      });
       res.json(course);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -257,6 +264,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!course || (!course.published && course.instructorId !== req.user.id)) {
         return res.sendStatus(404);
       }
+
+      // Track course view for analytics
+      await trackCourseView(courseId, req.user.id);
 
       res.json(course);
     } catch (error) {
@@ -414,6 +424,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics API endpoints
+  app.get("/api/analytics/dashboard", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      // Get summary statistics
+      const totalPageViews = await storage.getPageViewCount();
+      const activeSessionCount = await storage.getActiveSessionsCount();
+      const avgSessionDuration = await storage.getAverageSessionDuration();
+      const deviceBreakdown = await storage.getDeviceBreakdown();
+      const popularPages = await storage.getPopularPages(10);
+      const mostViewedCourses = await storage.getMostViewedCourses(5);
+      const courseAnalytics = await storage.getAllCourseAnalytics();
+
+      // Calculate course completion rates
+      const totalCompletions = courseAnalytics.reduce((sum, item) => sum + item.totalCompletions, 0);
+      const totalViews = courseAnalytics.reduce((sum, item) => sum + item.totalViews, 0);
+      const completionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
+
+      res.json({
+        summary: {
+          totalPageViews,
+          activeSessionCount,
+          avgSessionDuration,
+          completionRate,
+        },
+        deviceBreakdown,
+        popularPages,
+        mostViewedCourses,
+      });
+    } catch (error) {
+      console.error("Error fetching analytics dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch analytics data" });
+    }
+  });
+
+  app.get("/api/analytics/user-activity", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      // Get the most recent page views for activity tracking
+      const recentPageViews = await storage.getPageViews(50);
+
+      // Format and group by date for the chart
+      const activityByDay = {};
+
+      recentPageViews.forEach(view => {
+        const date = new Date(view.timestamp);
+        const day = date.toLocaleDateString();
+
+        if (!activityByDay[day]) {
+          activityByDay[day] = { date: day, views: 0, uniqueUsers: new Set() };
+        }
+
+        activityByDay[day].views += 1;
+        if (view.userId) {
+          activityByDay[day].uniqueUsers.add(view.userId);
+        }
+      });
+
+      // Convert to array and replace Set with count
+      const formattedActivity = Object.values(activityByDay).map(item => ({
+        date: item.date,
+        views: item.views,
+        uniqueUsers: item.uniqueUsers.size,
+      }));
+
+      // Sort by date
+      formattedActivity.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+      res.json(formattedActivity);
+    } catch (error) {
+      console.error("Error fetching user activity:", error);
+      res.status(500).json({ message: "Failed to fetch user activity data" });
+    }
+  });
+
+  app.get("/api/analytics/course/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const courseId = parseInt(req.params.id);
+      if (isNaN(courseId)) {
+        return res.status(400).json({ message: "Invalid course ID" });
+      }
+
+      // Get course to verify ownership
+      const course = await storage.getCourse(courseId);
+      if (!course || course.instructorId !== req.user.id) {
+        return res.status(403).json({ message: "Not authorized to view this course's analytics" });
+      }
+
+      const analytics = await storage.getCourseAnalytics(courseId);
+
+      if (!analytics) {
+        return res.status(404).json({ message: "No analytics found for this course" });
+      }
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching course analytics:", error);
+      res.status(500).json({ message: "Failed to fetch course analytics" });
+    }
+  });
+
+  app.get("/api/analytics/settings", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const setting = await storage.getSetting("analytics-enabled");
+      res.json(setting || { value: "true" });
+    } catch (error) {
+      console.error("Error fetching analytics setting:", error);
+      res.status(500).json({ message: "Failed to fetch analytics setting" });
+    }
+  });
+
+  app.post("/api/analytics/settings", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const settingData = insertSettingSchema.parse({
+        name: "analytics-enabled",
+        value: req.body.value
+      });
+
+      const setting = await storage.updateSetting(settingData.name, settingData.value);
+      res.json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Error updating analytics setting:", error);
+      res.status(500).json({ message: "Failed to update analytics setting" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;

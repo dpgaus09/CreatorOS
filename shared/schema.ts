@@ -52,13 +52,60 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// New analytics tables
+export const pageViews = pgTable("page_views", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  path: text("path").notNull(),
+  query: text("query"),
+  referrer: text("referrer"),
+  userAgent: text("user_agent"),
+  deviceType: text("device_type"),
+  ipAddress: text("ip_address"),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+export const userEvents = pgTable("user_events", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  eventType: text("event_type").notNull(),
+  eventData: jsonb("event_data").notNull().default({}),
+  path: text("path").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+export const courseAnalytics = pgTable("course_analytics", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id),
+  totalViews: integer("total_views").notNull().default(0),
+  uniqueViews: integer("unique_views").notNull().default(0),
+  totalCompletions: integer("total_completions").notNull().default(0),
+  averageRating: integer("average_rating").notNull().default(0),
+  lastUpdated: timestamp("last_updated").notNull().defaultNow(),
+});
+
+export const sessionData = pgTable("session_data", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id"),
+  sessionId: text("session_id").notNull(),
+  startTime: timestamp("start_time").notNull().defaultNow(),
+  endTime: timestamp("end_time"),
+  duration: integer("duration"),
+  deviceType: text("device_type"),
+  browserInfo: text("browser_info"),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   enrollments: many(enrollments),
+  pageViews: many(pageViews),
+  userEvents: many(userEvents),
+  sessions: many(sessionData),
 }));
 
 export const coursesRelations = relations(courses, ({ many }) => ({
   enrollments: many(enrollments),
+  analytics: many(courseAnalytics),
 }));
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({
@@ -121,6 +168,29 @@ export const insertImageSchema = createInsertSchema(images).omit({
   createdAt: true,
 });
 
+// Insert schemas for analytics tables
+export const insertPageViewSchema = createInsertSchema(pageViews).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertUserEventSchema = createInsertSchema(userEvents).omit({
+  id: true,
+  timestamp: true,
+});
+
+export const insertCourseAnalyticsSchema = createInsertSchema(courseAnalytics).omit({
+  id: true,
+  lastUpdated: true,
+});
+
+export const insertSessionDataSchema = createInsertSchema(sessionData).omit({
+  id: true,
+  startTime: true,
+  endTime: true,
+  duration: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type User = typeof users.$inferSelect;
@@ -130,3 +200,13 @@ export type Module = z.infer<typeof moduleSchema>;
 export type Setting = typeof settings.$inferSelect;
 export type InsertImage = z.infer<typeof insertImageSchema>;
 export type Image = typeof images.$inferSelect;
+
+// Analytics types
+export type PageView = typeof pageViews.$inferSelect;
+export type InsertPageView = z.infer<typeof insertPageViewSchema>;
+export type UserEvent = typeof userEvents.$inferSelect;
+export type InsertUserEvent = z.infer<typeof insertUserEventSchema>;
+export type CourseAnalytic = typeof courseAnalytics.$inferSelect;
+export type InsertCourseAnalytic = z.infer<typeof insertCourseAnalyticsSchema>;
+export type SessionData = typeof sessionData.$inferSelect;
+export type InsertSessionData = z.infer<typeof insertSessionDataSchema>;

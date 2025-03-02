@@ -1,7 +1,7 @@
-import { users, courses, enrollments, settings, images } from "@shared/schema";
-import { InsertUser, User, Course, Enrollment, Setting, InsertImage, Image } from "@shared/schema";
+import { users, courses, enrollments, settings, images, pageViews, userEvents, courseAnalytics, sessionData } from "@shared/schema";
+import { InsertUser, User, Course, Enrollment, Setting, InsertImage, Image, InsertPageView, PageView, InsertUserEvent, UserEvent, InsertCourseAnalytic, CourseAnalytic, InsertSessionData, SessionData } from "@shared/schema";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc, count, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -37,6 +37,33 @@ export interface IStorage {
   // Image Management
   createImage(image: InsertImage): Promise<Image>;
   getImagesByCourse(courseId: number): Promise<Image[]>;
+
+  // Analytics
+  createPageView(pageView: InsertPageView): Promise<PageView>;
+  getPageViews(limit?: number): Promise<PageView[]>;
+  getPageViewsByPath(path: string): Promise<PageView[]>;
+  getPageViewsByUserId(userId: number): Promise<PageView[]>;
+  getPageViewCount(): Promise<number>;
+  getPopularPages(limit?: number): Promise<{path: string, count: number}[]>;
+
+  createUserEvent(event: InsertUserEvent): Promise<UserEvent>;
+  getUserEvents(limit?: number): Promise<UserEvent[]>;
+  getUserEventsByType(eventType: string): Promise<UserEvent[]>;
+  getUserEventsByUserId(userId: number): Promise<UserEvent[]>;
+
+  getCourseAnalytics(courseId: number): Promise<CourseAnalytic | undefined>;
+  createCourseAnalytics(analytics: Partial<InsertCourseAnalytic>): Promise<CourseAnalytic>;
+  updateCourseAnalytics(courseId: number, updates: Partial<CourseAnalytic>): Promise<CourseAnalytic>;
+  getAllCourseAnalytics(): Promise<CourseAnalytic[]>;
+  getMostViewedCourses(limit?: number): Promise<(CourseAnalytic & { course: Course })[]>;
+
+  createSession(session: InsertSessionData): Promise<SessionData>;
+  getSessionBySessionId(sessionId: string): Promise<SessionData | undefined>;
+  updateSession(id: number, updates: Partial<SessionData>): Promise<SessionData>;
+  getActiveSessionsCount(): Promise<number>;
+  getSessionsByUserId(userId: number): Promise<SessionData[]>;
+  getAverageSessionDuration(): Promise<number>;
+  getDeviceBreakdown(): Promise<{deviceType: string, count: number}[]>;
 
   sessionStore: session.Store;
 }
@@ -90,7 +117,7 @@ export class DatabaseStorage implements IStorage {
         // Transform the result to match the expected format
         const transformedEnrollments = studentEnrollments.map(({ enrollment, course }) => ({
           ...enrollment,
-          course,
+          course: course || undefined,
         }));
 
         return {
@@ -226,13 +253,221 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: number, updates: Partial<User>): Promise<User> {
     const [updatedUser] = await db
       .update(users)
-      .set({
-        ...updates,
-        updatedAt: new Date()
-      })
+      .set(updates)
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+
+  // Analytics implementation
+
+  async createPageView(pageView: InsertPageView): Promise<PageView> {
+    const [newPageView] = await db.insert(pageViews).values(pageView).returning();
+    return newPageView;
+  }
+
+  async getPageViews(limit: number = 100): Promise<PageView[]> {
+    return db
+      .select()
+      .from(pageViews)
+      .orderBy(desc(pageViews.timestamp))
+      .limit(limit);
+  }
+
+  async getPageViewsByPath(path: string): Promise<PageView[]> {
+    return db
+      .select()
+      .from(pageViews)
+      .where(eq(pageViews.path, path))
+      .orderBy(desc(pageViews.timestamp));
+  }
+
+  async getPageViewsByUserId(userId: number): Promise<PageView[]> {
+    return db
+      .select()
+      .from(pageViews)
+      .where(eq(pageViews.userId, userId))
+      .orderBy(desc(pageViews.timestamp));
+  }
+
+  async getPageViewCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(pageViews);
+    return result?.count || 0;
+  }
+
+  async getPopularPages(limit: number = 10): Promise<{path: string, count: number}[]> {
+    const result = await db
+      .select({
+        path: pageViews.path,
+        count: count(),
+      })
+      .from(pageViews)
+      .groupBy(pageViews.path)
+      .orderBy(desc(count()))
+      .limit(limit);
+
+    return result;
+  }
+
+  async createUserEvent(event: InsertUserEvent): Promise<UserEvent> {
+    const [newEvent] = await db.insert(userEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async getUserEvents(limit: number = 100): Promise<UserEvent[]> {
+    return db
+      .select()
+      .from(userEvents)
+      .orderBy(desc(userEvents.timestamp))
+      .limit(limit);
+  }
+
+  async getUserEventsByType(eventType: string): Promise<UserEvent[]> {
+    return db
+      .select()
+      .from(userEvents)
+      .where(eq(userEvents.eventType, eventType))
+      .orderBy(desc(userEvents.timestamp));
+  }
+
+  async getUserEventsByUserId(userId: number): Promise<UserEvent[]> {
+    return db
+      .select()
+      .from(userEvents)
+      .where(eq(userEvents.userId, userId))
+      .orderBy(desc(userEvents.timestamp));
+  }
+
+  async getCourseAnalytics(courseId: number): Promise<CourseAnalytic | undefined> {
+    const [analytics] = await db
+      .select()
+      .from(courseAnalytics)
+      .where(eq(courseAnalytics.courseId, courseId));
+    return analytics;
+  }
+
+  async createCourseAnalytics(analytics: Partial<InsertCourseAnalytic>): Promise<CourseAnalytic> {
+    const fullAnalytics = {
+      ...analytics,
+      totalViews: analytics.totalViews || 0,
+      uniqueViews: analytics.uniqueViews || 0,
+      totalCompletions: analytics.totalCompletions || 0,
+      averageRating: analytics.averageRating || 0,
+    };
+
+    const [newAnalytics] = await db
+      .insert(courseAnalytics)
+      .values(fullAnalytics as InsertCourseAnalytic)
+      .returning();
+    return newAnalytics;
+  }
+
+  async updateCourseAnalytics(courseId: number, updates: Partial<CourseAnalytic>): Promise<CourseAnalytic> {
+    const [updatedAnalytics] = await db
+      .update(courseAnalytics)
+      .set({
+        ...updates,
+        lastUpdated: new Date()
+      })
+      .where(eq(courseAnalytics.courseId, courseId))
+      .returning();
+    return updatedAnalytics;
+  }
+
+  async getAllCourseAnalytics(): Promise<CourseAnalytic[]> {
+    return db
+      .select()
+      .from(courseAnalytics)
+      .orderBy(desc(courseAnalytics.totalViews));
+  }
+
+  async getMostViewedCourses(limit: number = 10): Promise<(CourseAnalytic & { course: Course })[]> {
+    const analytics = await db
+      .select({
+        analytics: courseAnalytics,
+        course: courses,
+      })
+      .from(courseAnalytics)
+      .innerJoin(courses, eq(courseAnalytics.courseId, courses.id))
+      .orderBy(desc(courseAnalytics.totalViews))
+      .limit(limit);
+
+    return analytics.map(({ analytics, course }) => ({
+      ...analytics,
+      course,
+    }));
+  }
+
+  async createSession(sessionData: InsertSessionData): Promise<SessionData> {
+    const [newSession] = await db
+      .insert(sessionData)
+      .values({
+        ...sessionData,
+      })
+      .returning();
+    return newSession;
+  }
+
+  async getSessionBySessionId(sessionId: string): Promise<SessionData | undefined> {
+    const [session] = await db
+      .select()
+      .from(sessionData)
+      .where(eq(sessionData.sessionId, sessionId));
+    return session;
+  }
+
+  async updateSession(id: number, updates: Partial<SessionData>): Promise<SessionData> {
+    const [updatedSession] = await db
+      .update(sessionData)
+      .set(updates)
+      .where(eq(sessionData.id, id))
+      .returning();
+    return updatedSession;
+  }
+
+  async getActiveSessionsCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(sessionData)
+      .where(sql`${sessionData.endTime} IS NULL`);
+    return result?.count || 0;
+  }
+
+  async getSessionsByUserId(userId: number): Promise<SessionData[]> {
+    return db
+      .select()
+      .from(sessionData)
+      .where(eq(sessionData.userId, userId))
+      .orderBy(desc(sessionData.startTime));
+  }
+
+  async getAverageSessionDuration(): Promise<number> {
+    const [result] = await db
+      .select({
+        avgDuration: sql<number>`AVG(${sessionData.duration})`,
+      })
+      .from(sessionData)
+      .where(sql`${sessionData.duration} IS NOT NULL`);
+
+    return result?.avgDuration || 0;
+  }
+
+  async getDeviceBreakdown(): Promise<{deviceType: string, count: number}[]> {
+    const result = await db
+      .select({
+        deviceType: sessionData.deviceType,
+        count: count(),
+      })
+      .from(sessionData)
+      .groupBy(sessionData.deviceType)
+      .orderBy(desc(count()));
+
+    return result.map(item => ({
+      deviceType: item.deviceType || "unknown",
+      count: item.count,
+    }));
   }
 }
 

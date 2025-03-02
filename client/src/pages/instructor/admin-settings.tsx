@@ -53,6 +53,22 @@ export default function AdminSettings() {
     queryKey: ["/api/settings/enrollment-url"],
   });
 
+  // Analytics settings query
+  const { data: analyticsEnabledSetting } = useQuery({
+    queryKey: ["/api/analytics/settings"],
+  });
+
+  // Analytics data queries
+  const { data: analyticsData, isLoading: isLoadingAnalytics } = useQuery({
+    queryKey: ["/api/analytics/dashboard"],
+    enabled: analyticsEnabled,
+  });
+
+  const { data: userActivityData } = useQuery({
+    queryKey: ["/api/analytics/user-activity"],
+    enabled: analyticsEnabled,
+  });
+
   // Update LMS name mutation
   const updateLmsNameMutation = useMutation({
     mutationFn: async (value: string) => {
@@ -97,6 +113,28 @@ export default function AdminSettings() {
     },
   });
 
+  // Update analytics setting mutation
+  const updateAnalyticsEnabledMutation = useMutation({
+    mutationFn: async (value: boolean) => {
+      const res = await apiRequest("POST", "/api/analytics/settings", { value: value ? "true" : "false" });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/settings"] });
+      toast({
+        title: "Settings updated",
+        description: "Analytics settings have been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (settings?.value) {
       setLmsName(settings.value);
@@ -108,6 +146,12 @@ export default function AdminSettings() {
       setEnrollmentUrl(enrollmentUrlSetting.value);
     }
   }, [enrollmentUrlSetting]);
+
+  useEffect(() => {
+    if (analyticsEnabledSetting?.value) {
+      setAnalyticsEnabled(analyticsEnabledSetting.value === "true");
+    }
+  }, [analyticsEnabledSetting]);
 
   // Only instructors should access this page
   if (user?.role !== "instructor") {
@@ -122,52 +166,37 @@ export default function AdminSettings() {
     updateEnrollmentUrlMutation.mutate(enrollmentUrl);
   };
 
-  // Mock data for analytics visualizations
-  const userActivity = [
-    { name: 'Mon', active: 120, new: 20 },
-    { name: 'Tue', active: 140, new: 15 },
-    { name: 'Wed', active: 135, new: 12 },
-    { name: 'Thu', active: 150, new: 18 },
-    { name: 'Fri', active: 160, new: 25 },
-    { name: 'Sat', active: 90, new: 10 },
-    { name: 'Sun', active: 80, new: 8 },
+  const handleToggleAnalytics = (enabled: boolean) => {
+    handleToggleAnalytics(enabled);
+    updateAnalyticsEnabledMutation.mutate(enabled);
+  };
+
+  // Use real data when available, fallback to defaults for a better UX
+  const deviceUsageData = analyticsData?.deviceBreakdown?.map(item => ({
+    name: item.deviceType || 'Unknown',
+    value: item.count,
+    color: item.deviceType === 'desktop' ? '#3b82f6' : 
+           item.deviceType === 'mobile' ? '#10b981' : 
+           item.deviceType === 'tablet' ? '#f59e0b' : '#6b7280'
+  })) || [
+    { name: 'Desktop', value: 0, color: '#3b82f6' },
+    { name: 'Mobile', value: 0, color: '#10b981' },
+    { name: 'Tablet', value: 0, color: '#f59e0b' },
   ];
 
+  // Prepare course completion data (placeholder until we have real completion tracking)
   const courseCompletionData = [
-    { name: 'Completed', value: 68, color: '#10b981' },
-    { name: 'In Progress', value: 24, color: '#3b82f6' },
-    { name: 'Not Started', value: 8, color: '#6b7280' },
+    { name: 'Completed', value: analyticsData?.summary?.completionRate || 0, color: '#10b981' },
+    { name: 'In Progress', value: 100 - (analyticsData?.summary?.completionRate || 0), color: '#6b7280' },
   ];
 
-  const contentEngagementData = [
-    { name: 'Videos', views: 340, completion: 78, avgTime: '12:30' },
-    { name: 'Quizzes', views: 290, completion: 92, avgTime: '8:15' },
-    { name: 'Readings', views: 210, completion: 65, avgTime: '10:45' },
-    { name: 'Discussions', views: 180, completion: 55, avgTime: '15:20' },
-    { name: 'Assignments', views: 250, completion: 82, avgTime: '45:10' },
-  ];
+  // Format activity data for chart
+  const formattedUserActivity = (userActivityData?.map(item => ({
+    date: item.date,
+    views: item.pageViews,
+    uniqueUsers: item.uniqueUsers,
+  })) || []);
 
-  const deviceUsageData = [
-    { name: 'Desktop', value: 55, color: '#3b82f6' },
-    { name: 'Mobile', value: 35, color: '#10b981' },
-    { name: 'Tablet', value: 10, color: '#f59e0b' },
-  ];
-
-  const weeklyEnrollmentData = [
-    { name: 'Week 1', enrollments: 45 },
-    { name: 'Week 2', enrollments: 52 },
-    { name: 'Week 3', enrollments: 48 },
-    { name: 'Week 4', enrollments: 65 },
-    { name: 'Week 5', enrollments: 78 },
-  ];
-
-  // Stats summary data
-  const statsSummary = [
-    { title: 'Total Users', value: 1254, change: '+12%', trend: 'up' },
-    { title: 'Active Courses', value: 18, change: '+3', trend: 'up' },
-    { title: 'Avg. Completion Rate', value: '68%', change: '+5%', trend: 'up' },
-    { title: 'Avg. Session Length', value: '24m', change: '+2m', trend: 'up' },
-  ];
 
   return (
     <div className="container max-w-5xl mx-auto py-8 space-y-6">
@@ -253,8 +282,8 @@ export default function AdminSettings() {
                     </div>
                     <Switch 
                       id="analytics" 
-                      defaultChecked={analyticsEnabled} 
-                      onCheckedChange={setAnalyticsEnabled}
+                      checked={analyticsEnabled}
+                      onCheckedChange={handleToggleAnalytics}
                     />
                   </div>
 
@@ -458,43 +487,62 @@ export default function AdminSettings() {
             <div className="space-y-6">
               {/* Stats summary cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {statsSummary.map((stat, index) => (
-                  <Card key={index}>
-                    <CardContent className="pt-6">
-                      <div className="text-sm text-muted-foreground mb-1">{stat.title}</div>
-                      <div className="flex items-end justify-between">
-                        <div className="text-3xl font-bold">{stat.value}</div>
-                        <div className={`text-sm ${stat.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                          {stat.change}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-muted-foreground mb-1">Total Users</div>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">{analyticsData?.summary?.userCount || 0}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-muted-foreground mb-1">Active Courses</div>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">{analyticsData?.mostViewedCourses?.length || 0}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-muted-foreground mb-1">Avg. Completion Rate</div>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">{analyticsData?.summary?.completionRate || 0}%</div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-sm text-muted-foreground mb-1">Total Page Views</div>
+                    <div className="flex items-end justify-between">
+                      <div className="text-3xl font-bold">{analyticsData?.summary?.totalPageViews || 0}</div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
               {/* User activity chart */}
               <Card>
                 <CardHeader>
-                  <CardTitle>User Activity (Last 7 Days)</CardTitle>
+                  <CardTitle>User Activity</CardTitle>
                   <CardDescription>
-                    Daily active users and new sign-ups
+                    Daily page views and unique users
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={userActivity}
+                        data={formattedUserActivity}
                         margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
+                        <XAxis dataKey="date" />
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="active" name="Active Users" fill="#3b82f6" />
-                        <Bar dataKey="new" name="New Users" fill="#10b981" />
+                        <Bar dataKey="views" name="Page Views" fill="#3b82f6" />
+                        <Bar dataKey="uniqueUsers" name="Unique Users" fill="#10b981" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -562,7 +610,7 @@ export default function AdminSettings() {
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+                          <Tooltip formatter={(value) => [`${value}`, 'Users']} />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -570,45 +618,12 @@ export default function AdminSettings() {
                 </Card>
               </div>
 
-              {/* Weekly Enrollment Trend */}
+              {/* Popular Pages */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Weekly Enrollment Trend</CardTitle>
+                  <CardTitle>Popular Pages</CardTitle>
                   <CardDescription>
-                    New enrollments over the past 5 weeks
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={weeklyEnrollmentData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="enrollments" 
-                          name="New Enrollments" 
-                          stroke="#8884d8" 
-                          activeDot={{ r: 8 }} 
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Content Engagement Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Content Engagement</CardTitle>
-                  <CardDescription>
-                    User interaction with different content types
+                    Most frequently visited pages
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -616,21 +631,57 @@ export default function AdminSettings() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium">Content Type</th>
+                          <th className="text-left py-3 px-4 font-medium">Page</th>
                           <th className="text-left py-3 px-4 font-medium">Views</th>
-                          <th className="text-left py-3 px-4 font-medium">Completion Rate</th>
-                          <th className="text-left py-3 px-4 font-medium">Avg. Time Spent</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {contentEngagementData.map((item, index) => (
-                          <tr key={index} className={index !== contentEngagementData.length - 1 ? "border-b" : ""}>
-                            <td className="py-3 px-4">{item.name}</td>
-                            <td className="py-3 px-4">{item.views}</td>
-                            <td className="py-3 px-4">{item.completion}%</td>
-                            <td className="py-3 px-4">{item.avgTime}</td>
+                        {analyticsData?.popularPages?.map((item, index) => (
+                          <tr key={index} className={index !== (analyticsData?.popularPages?.length || 0) - 1 ? "border-b" : ""}>
+                            <td className="py-3 px-4">{item.path}</td>
+                            <td className="py-3 px-4">{item.count}</td>
                           </tr>
-                        ))}
+                        )) || (
+                          <tr>
+                            <td className="py-3 px-4" colSpan={2}>No data available</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Popular Courses */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Most Viewed Courses</CardTitle>
+                  <CardDescription>
+                    Courses with highest engagement
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-4 font-medium">Course</th>
+                          <th className="text-left py-3 px-4 font-medium">Views</th>
+                          <th className="text-left py-3 px-4 font-medium">Completions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData?.mostViewedCourses?.map((item, index) => (
+                          <tr key={index} className={index !== (analyticsData?.mostViewedCourses?.length || 0) - 1 ? "border-b" : ""}>
+                            <td className="py-3 px-4">{item.course?.title || 'Unknown'}</td>
+                            <td className="py-3 px-4">{item.totalViews}</td>
+                            <td className="py-3 px-4">{item.totalCompletions}</td>
+                          </tr>
+                        )) || (
+                          <tr>
+                            <td className="py-3 px-4" colSpan={3}>No data available</td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
