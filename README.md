@@ -1,4 +1,3 @@
-
 # LearnBruh Learning Management System
 
 A comprehensive learning management system for instructors and students.
@@ -10,6 +9,11 @@ The system provides three distinct URLs for authentication:
 - `/auth/register/instructor` - For instructor registration
 - `/auth/register/student` - For student registration  
 - `/auth/login` - Unified login page for both instructors and students
+- `/auth/reset-password` - Password reset page for both instructors and students
+
+## Public Access
+
+- `/courses` - Public course catalog that displays all published courses without requiring authentication
 
 ## Getting Started
 
@@ -38,3 +42,5 @@ The system provides three distinct URLs for authentication:
 - Lesson modules with various content types
 - Student enrollment and progress tracking
 - Responsive design for desktop and mobile
+- Accessibility features including high contrast mode and text-to-speech
+- Public course catalog for non-authenticated users

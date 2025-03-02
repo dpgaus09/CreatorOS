@@ -181,6 +181,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Public API endpoint for accessing published courses without auth
+  app.get("/api/courses/public", async (req, res) => {
+    try {
+      const courses = await storage.getPublishedCourses();
+      res.json(courses);
+    } catch (error) {
+      console.error("Error fetching public courses:", error);
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+
   // Important: Put the published courses route BEFORE the dynamic :id route
   app.get("/api/courses/published", async (req, res) => {
     if (!req.isAuthenticated()) {
