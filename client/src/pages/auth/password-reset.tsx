@@ -43,6 +43,7 @@ export default function PasswordReset() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const form = useForm<ResetFormValues>({
     resolver: zodResolver(resetSchema),
@@ -57,11 +58,18 @@ export default function PasswordReset() {
 
   const onSubmit = async (values: ResetFormValues) => {
     setIsLoading(true);
+    setErrorMessage("");
     try {
       const response = await apiRequest("POST", "/api/reset-password", values);
       const data = await response.json();
 
       if (!response.ok) {
+        setErrorMessage(data.message);
+        toast({
+          title: "Error",
+          description: data.message,
+          variant: "destructive",
+        });
         throw new Error(data.message);
       }
 
@@ -71,11 +79,14 @@ export default function PasswordReset() {
       });
       setLocation("/auth/login");
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Something went wrong",
-        variant: "destructive",
-      });
+      console.error("Password reset error:", error);
+      if (!errorMessage) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Something went wrong",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -88,6 +99,11 @@ export default function PasswordReset() {
           <CardTitle>Reset Password</CardTitle>
         </CardHeader>
         <CardContent>
+          {errorMessage && (
+            <div className="bg-destructive/15 border border-destructive text-destructive p-3 rounded-md mb-4">
+              {errorMessage}
+            </div>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
