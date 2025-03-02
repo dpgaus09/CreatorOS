@@ -84,6 +84,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add these routes after the existing lms-name routes
+  app.get("/api/settings/enrollment-url", async (req, res) => {
+    try {
+      const setting = await storage.getSetting("enrollment-url");
+      res.json(setting || { value: "/auth/login" });
+    } catch (error) {
+      console.error("Error fetching enrollment URL:", error);
+      res.status(500).json({ message: "Failed to fetch enrollment URL" });
+    }
+  });
+
+  app.post("/api/settings/enrollment-url", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const settingData = insertSettingSchema.parse({
+        name: "enrollment-url",
+        value: req.body.value
+      });
+
+      const setting = await storage.updateSetting(settingData.name, settingData.value);
+      res.json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Error updating enrollment URL:", error);
+      res.status(500).json({ message: "Failed to update enrollment URL" });
+    }
+  });
+
+
   // Image upload route
   app.post("/api/images/upload", upload.single('image'), async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "instructor") {

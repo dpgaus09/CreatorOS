@@ -24,11 +24,17 @@ export default function AdminSettings() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [lmsName, setLmsName] = useState("LearnBruh");
+  const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login"); // Default to login page
   const [activeTab, setActiveTab] = useState("general");
 
   // Settings query
   const { data: settings, isLoading } = useQuery({
     queryKey: ["/api/settings/lms-name"],
+  });
+
+  // Enrollment URL query
+  const { data: enrollmentUrlSetting } = useQuery({
+    queryKey: ["/api/settings/enrollment-url"],
   });
 
   // Update LMS name mutation
@@ -53,11 +59,39 @@ export default function AdminSettings() {
     },
   });
 
+  // Update enrollment URL mutation
+  const updateEnrollmentUrlMutation = useMutation({
+    mutationFn: async (value: string) => {
+      const res = await apiRequest("POST", "/api/settings/enrollment-url", { value });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/enrollment-url"] });
+      toast({
+        title: "Settings updated",
+        description: "Enrollment URL has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (settings?.value) {
       setLmsName(settings.value);
     }
   }, [settings]);
+
+  useEffect(() => {
+    if (enrollmentUrlSetting?.value) {
+      setEnrollmentUrl(enrollmentUrlSetting.value);
+    }
+  }, [enrollmentUrlSetting]);
 
   // Only instructors should access this page
   if (user?.role !== "instructor") {
@@ -66,6 +100,10 @@ export default function AdminSettings() {
 
   const handleSaveLmsName = () => {
     updateLmsNameMutation.mutate(lmsName);
+  };
+
+  const handleSaveEnrollmentUrl = () => {
+    updateEnrollmentUrlMutation.mutate(enrollmentUrl);
   };
 
   return (
@@ -290,6 +328,32 @@ export default function AdminSettings() {
                 </div>
                 <Switch id="course-reviews" defaultChecked />
               </div>
+
+              {/* New Enrollment URL Setting */}
+              <div className="space-y-2 pt-4">
+                <Label htmlFor="enrollment-url">Enrollment URL</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  URL where users will be directed from public catalog to enroll (payment page, signup, etc.)
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    id="enrollment-url"
+                    value={enrollmentUrl}
+                    onChange={(e) => setEnrollmentUrl(e.target.value)}
+                    placeholder="Enter enrollment URL (e.g., /auth/login, https://payment.example.com)"
+                  />
+                  <Button 
+                    onClick={handleSaveEnrollmentUrl}
+                    disabled={updateEnrollmentUrlMutation.isPending}
+                  >
+                    {updateEnrollmentUrlMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -306,10 +370,10 @@ export default function AdminSettings() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label htmlFor="announcements">System Announcements</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Notify all users about system changes
-                  </p>
+                   <Label htmlFor="announcements">System Announcements</Label>
+                   <p className="text-sm text-muted-foreground">
+                     Notify all users about system changes
+                   </p>
                 </div>
                 <Switch id="announcements" defaultChecked />
               </div>

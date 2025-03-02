@@ -20,7 +20,8 @@ interface Course {
 
 export default function PublicCourseCatalog() {
   const [, setLocation] = useLocation();
-  
+  const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login"); // Default to login page
+
   // Fetch public courses
   const { data: courses = [], isLoading } = useQuery<Course[]>({
     queryKey: ["/api/courses/public"],
@@ -31,7 +32,30 @@ export default function PublicCourseCatalog() {
     queryKey: ["/api/settings/lms-name"],
   });
 
+  // Fetch enrollment URL setting
+  const { data: enrollmentUrlSetting } = useQuery({
+    queryKey: ["/api/settings/enrollment-url"],
+  });
+
   const lmsName = lmsSettings?.value || "LearnBruh";
+
+  // Update enrollment URL when setting is loaded
+  useEffect(() => {
+    if (enrollmentUrlSetting?.value) {
+      setEnrollmentUrl(enrollmentUrlSetting.value);
+    }
+  }, [enrollmentUrlSetting]);
+
+  // Handle enrollment click - navigate to the configured enrollment URL
+  const handleEnrollmentClick = (courseId: number) => {
+    // If the URL is external (starts with http), navigate to it directly
+    if (enrollmentUrl.startsWith('http')) {
+      window.location.href = enrollmentUrl;
+    } else {
+      // Otherwise use wouter to navigate internally
+      setLocation(enrollmentUrl);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,7 +118,7 @@ export default function PublicCourseCatalog() {
                 <CardFooter>
                   <Button
                     className="w-full"
-                    onClick={() => setLocation("/auth/login")}
+                    onClick={() => handleEnrollmentClick(course.id)}
                   >
                     Sign in to enroll
                   </Button>
