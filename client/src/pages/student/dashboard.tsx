@@ -40,14 +40,14 @@ export default function StudentDashboard() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Welcome, {user?.name}!</h1>
+        <h1 className="text-3xl font-bold">Welcome, <span className="accent-orange">{user?.name}</span>!</h1>
         <p className="text-muted-foreground">Continue learning or discover new courses</p>
       </div>
 
       <Tabs defaultValue="enrolled">
-        <TabsList>
-          <TabsTrigger value="enrolled">My Courses</TabsTrigger>
-          <TabsTrigger value="available">Available Courses</TabsTrigger>
+        <TabsList className="bg-secondary">
+          <TabsTrigger value="enrolled" className="data-[state=active]:bg-primary data-[state=active]:text-[#FF661F] data-[state=active]:font-bold">My Courses</TabsTrigger>
+          <TabsTrigger value="available" className="data-[state=active]:bg-primary data-[state=active]:text-[#FF661F] data-[state=active]:font-bold">Available Courses</TabsTrigger>
         </TabsList>
 
         <TabsContent value="enrolled" className="mt-6">
@@ -61,7 +61,7 @@ export default function StudentDashboard() {
               />
             ))}
             {enrolledCourses.length === 0 && (
-              <div className="col-span-full text-center py-12">
+              <div className="col-span-full text-center py-12 border-2 border-dashed border-orange rounded-lg p-8">
                 <h3 className="text-xl font-medium mb-4">
                   Welcome! You haven't enrolled in any courses yet
                 </h3>

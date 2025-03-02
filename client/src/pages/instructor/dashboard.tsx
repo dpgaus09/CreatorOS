@@ -63,13 +63,13 @@ export default function InstructorDashboard() {
     <div className="container mx-auto py-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Welcome back, {user?.name}!</h1>
+          <h1 className="text-3xl font-bold">Welcome back, <span className="accent-orange">{user?.name}</span>!</h1>
           <p className="text-muted-foreground">
             Manage your courses and track student progress
           </p>
         </div>
         <Link href="/create-course">
-          <Button size="lg">
+          <Button size="lg" className="btn-primary">
             <Plus className="mr-2 h-4 w-4" />
             Create New Course
           </Button>
@@ -77,7 +77,7 @@ export default function InstructorDashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-l-4 border-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Courses
@@ -87,34 +87,34 @@ export default function InstructorDashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{courses?.length || 0}</div>
             <p className="text-xs text-muted-foreground">
-              {publishedCourses.length} published, {draftCourses.length} drafts
+              <span className="accent-green">{publishedCourses.length} published</span>, <span className="accent-orange">{draftCourses.length} drafts</span>
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-green">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Students
             </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-4 w-4 text-[#318F35]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalStudents}</div>
             <Button
               variant="link"
-              className="px-0 text-xs text-muted-foreground hover:no-underline"
+              className="px-0 text-xs accent-green hover:no-underline"
               onClick={() => setLocation("/students")}
             >
               View all students →
             </Button>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-orange">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Total Lessons
             </CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <BookOpen className="h-4 w-4 text-[#FF661F]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalLessons}</div>
