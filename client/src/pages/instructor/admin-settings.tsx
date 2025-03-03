@@ -390,7 +390,9 @@ export default function AdminSettings() {
       return res.json();
     },
     onSuccess: () => {
+      // Invalidate both regular and active announcements queries
       queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements/active"] });
       toast({
         title: "Announcement deleted",
         description: "The announcement has been deleted successfully",
@@ -1160,8 +1162,8 @@ export default function AdminSettings() {
                         <TableCell className="max-w-xs truncate">{announcement.content}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
-                            <Switch 
-                              checked={announcement.active} 
+                            <Switch
+                              checked={announcement.active}
                               onCheckedChange={(checked) => handleToggleAnnouncementActive(announcement.id, checked)}
                             />
                             <span className={`text-xs font-medium ${

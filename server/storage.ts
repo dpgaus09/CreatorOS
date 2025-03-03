@@ -323,9 +323,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteAnnouncement(id: number): Promise<void> {
-    await db
-      .delete(announcements)
-      .where(eq(announcements.id, id));
+    console.log(`Storage: Attempting to delete announcement with ID ${id}`);
+
+    // First verify the announcement exists
+    const announcement = await this.getAnnouncement(id);
+    if (!announcement) {
+      console.log(`Storage: No announcement found with ID ${id}`);
+      return;
+    }
+
+    try {
+      await db
+        .delete(announcements)
+        .where(eq(announcements.id, id));
+      console.log(`Storage: Successfully deleted announcement with ID ${id} from database`);
+    } catch (error) {
+      console.error(`Storage: Error deleting announcement with ID ${id}:`, error);
+      throw error;
+    }
   }
 
   // Analytics implementation

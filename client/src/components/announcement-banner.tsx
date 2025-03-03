@@ -8,7 +8,7 @@ import { Card } from "./ui/card";
 export function AnnouncementBanner() {
   const [dismissed, setDismissed] = useState(false);
 
-  // Fetch active announcements
+  // Fetch active announcements with shorter staleTime and refetch interval
   const { data: announcements = [] } = useQuery<Announcement[]>({
     queryKey: ["/api/announcements/active"],
     queryFn: async () => {
@@ -18,12 +18,20 @@ export function AnnouncementBanner() {
       }
       return response.json();
     },
-    // Refresh every 5 minutes to get new announcements
-    refetchInterval: 5 * 60 * 1000,
+    // Refresh more frequently to get updates
+    refetchInterval: 30 * 1000, // Check every 30 seconds
+    staleTime: 10 * 1000, // Consider data stale after 10 seconds
   });
 
   // Get the first active announcement
   const activeAnnouncement = announcements.length > 0 ? announcements[0] : null;
+
+  // Reset dismissed state when a new announcement appears
+  useEffect(() => {
+    if (activeAnnouncement) {
+      setDismissed(false);
+    }
+  }, [activeAnnouncement?.id]);
 
   // Display nothing if there are no active announcements or it's dismissed
   if (!activeAnnouncement || dismissed) {

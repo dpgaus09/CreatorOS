@@ -333,7 +333,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Announcement not found" });
       }
 
+      console.log(`Deleting announcement with ID: ${announcementId}`);
       await storage.deleteAnnouncement(announcementId);
+      console.log(`Announcement ${announcementId} deleted successfully`);
+
       res.json({ message: "Announcement deleted successfully" });
     } catch (error) {
       console.error("Error deleting announcement:", error);
