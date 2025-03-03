@@ -121,6 +121,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add the logo upload endpoint after existing settings endpoints
+  app.post("/api/settings/logo", upload.single('logo'), async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      // Handle removing logo case (value is sent directly in body without a file)
+      if (req.body.value === "") {
+        const settingData = insertSettingSchema.parse({
+          name: "logo-url",
+          value: ""
+        });
+
+        const setting = await storage.updateSetting(settingData.name, settingData.value);
+        return res.json(setting);
+      }
+
+      // Handle file upload case
+      if (!req.file) {
+        throw new Error('No file uploaded');
+      }
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const logoUrl = `${baseUrl}/uploads/${req.file.filename}`;
+
+      const settingData = insertSettingSchema.parse({
+        name: "logo-url",
+        value: logoUrl
+      });
+
+      const setting = await storage.updateSetting(settingData.name, settingData.value);
+      res.json(setting);
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to upload logo" });
+    }
+  });
+
+  app.get("/api/settings/logo", async (req, res) => {
+    try {
+      const setting = await storage.getSetting("logo-url");
+      res.json(setting || { value: "" });
+    } catch (error) {
+      console.error("Error fetching logo URL:", error);
+      res.status(500).json({ message: "Failed to fetch logo URL" });
+    }
+  });
 
   // Image upload route
   app.post("/api/images/upload", upload.single('image'), async (req, res) => {
@@ -433,7 +484,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
 
       if (!user) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "The email and username do not match, contact the administrator if you need help reseting your password."
         });
       }

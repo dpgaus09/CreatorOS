@@ -36,6 +36,18 @@ export default function Navbar() {
     },
   });
 
+  // Add query for logo URL
+  const { data: logoSettings } = useQuery({
+    queryKey: ["/api/settings/logo"],
+    queryFn: async () => {
+      const response = await fetch("/api/settings/logo");
+      if (!response.ok) {
+        throw new Error("Failed to fetch logo");
+      }
+      return response.json();
+    },
+  });
+
   const updateLmsNameMutation = useMutation({
     mutationFn: async (newName: string) => {
       return apiRequest("POST", "/api/settings/lms-name", { value: newName });
@@ -59,6 +71,8 @@ export default function Navbar() {
   const isInstructor = user?.role === "instructor";
   const isInstructorDashboard = location === "/";
   const lmsName = settings?.value || "LearnBruh";
+  // Get logo URL from settings
+  const logoUrl = logoSettings?.value || "";
 
   const startEditing = () => {
     setTempName(lmsName);
@@ -91,8 +105,18 @@ export default function Navbar() {
             />
           ) : (
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold cursor-pointer">{lmsName}</h1>
-              {isInstructor && isInstructorDashboard && (
+              {logoUrl ? (
+                // Display logo if available
+                <img 
+                  src={logoUrl} 
+                  alt="LMS Logo" 
+                  className="h-8 max-w-[200px] object-contain"
+                />
+              ) : (
+                // Otherwise display text name
+                <h1 className="text-xl font-bold cursor-pointer">{lmsName}</h1>
+              )}
+              {isInstructor && isInstructorDashboard && !logoUrl && (
                 <Button
                   variant="ghost"
                   size="icon"

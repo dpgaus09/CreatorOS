@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -72,6 +72,8 @@ export default function AdminSettings() {
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Settings query
   const { data: settings, isLoading } = useQuery({
@@ -86,6 +88,11 @@ export default function AdminSettings() {
   // Analytics settings query
   const { data: analyticsEnabledSetting } = useQuery({
     queryKey: ["/api/analytics/settings"],
+  });
+
+  // Logo query
+  const logoQuery = useQuery({
+    queryKey: ["/api/settings/logo"],
   });
 
   // Analytics data queries
@@ -194,6 +201,64 @@ export default function AdminSettings() {
     },
   });
 
+  // Logo upload mutation
+  const uploadLogo = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('logo', file);
+
+      const res = await fetch('/api/settings/logo', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to upload logo');
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/logo"] });
+      setSelectedFile(null);
+      toast({
+        title: "Logo updated",
+        description: "Your platform logo has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error uploading logo",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Logo remove mutation
+  const removeLogo = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/settings/logo", { value: "" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/logo"] });
+      toast({
+        title: "Logo removed",
+        description: "Your platform logo has been removed",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error removing logo",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+
   useEffect(() => {
     if (settings?.value) {
       setLmsName(settings.value);
@@ -226,7 +291,6 @@ export default function AdminSettings() {
   };
 
   const handleToggleAnalytics = (enabled: boolean) => {
-    // Removed the recursive call that was causing the infinite loop
     setAnalyticsEnabled(enabled);
     updateAnalyticsEnabledMutation.mutate(enabled);
   };
@@ -240,6 +304,22 @@ export default function AdminSettings() {
     if (studentToDelete) {
       deleteStudentMutation.mutate(studentToDelete.id);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadLogo = () => {
+    if (selectedFile) {
+      uploadLogo.mutate(selectedFile);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    removeLogo.mutate();
   };
 
   // Use real data when available, fallback to defaults for a better UX
@@ -402,7 +482,86 @@ export default function AdminSettings() {
                 Customize how your learning platform looks
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Logo Upload UI */}
+              <div className="space-y-4">
+                <Label>Logo</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Upload a logo to replace the LMS name in the header. Recommended size: 200x50px.
+                </p>
+
+                {/* Logo preview area */}
+                <div className="border border-input rounded-md p-6 flex flex-col items-center justify-center gap-4">
+                  {logoQuery.data?.value ? (
+                    <div className="flex flex-col items-center gap-4">
+                      <img
+                        src={logoQuery.data.value}
+                        alt="Current Logo"
+                        className="max-h-16 max-w-xs object-contain mb-2"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          Change Logo
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleRemoveLogo}
+                          disabled={removeLogo.isPending}
+                        >
+                          {removeLogo.isPending ? (
+                            <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Removing</>
+                          ) : (
+                            'Remove Logo'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center">
+                      <div className="text-4xl font-bold text-muted-foreground mb-4">{lmsName}</div>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        No logo uploaded. Upload one to replace the text name.
+                      </p>
+                      <Button
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        Upload Logo
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/jpeg,image/png,image/gif"
+                    onChange={handleFileChange}
+                  />
+                </div>
+
+                {/* Upload progress/status */}
+                {selectedFile && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-sm">Selected: {selectedFile.name}</span>
+                    <Button
+                      onClick={handleUploadLogo}
+                      disabled={uploadLogo.isPending || !selectedFile}
+                      size="sm"
+                    >
+                      {uploadLogo.isPending ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Uploading</>
+                      ) : (
+                        'Upload'
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="theme">Default Theme</Label>
@@ -416,13 +575,6 @@ export default function AdminSettings() {
                     <SelectItem value="system">System</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Logo</Label>
-                <div className="border border-input rounded-md p-4 flex items-center justify-center">
-                  <Button variant="outline">Upload Logo</Button>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -610,8 +762,8 @@ export default function AdminSettings() {
                 <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
                   Cancel
                 </Button>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   onClick={confirmDeleteStudent}
                   disabled={deleteStudentMutation.isPending}
                 >
