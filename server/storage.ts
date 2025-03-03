@@ -15,6 +15,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getAllStudents(): Promise<User[]>;
   updateUser(id: number, updates: Partial<User>): Promise<User>;
+  deleteStudent(id: number): Promise<void>; // Added this method
 
   // Course management
   createCourse(course: Omit<Course, "id">): Promise<Course>;
@@ -257,6 +258,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return updatedUser;
+  }
+
+  // Implementation of deleteStudent method
+  async deleteStudent(id: number): Promise<void> {
+    // First delete any enrollments associated with this student
+    await db
+      .delete(enrollments)
+      .where(eq(enrollments.studentId, id));
+
+    // Then delete the student
+    await db
+      .delete(users)
+      .where(and(
+        eq(users.id, id),
+        eq(users.role, "student")  // Ensure we only delete students
+      ));
   }
 
   // Analytics implementation

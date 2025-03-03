@@ -182,6 +182,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add a DELETE endpoint for students
+  app.delete("/api/students/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const studentId = parseInt(req.params.id);
+      if (isNaN(studentId)) {
+        return res.status(400).json({ message: "Invalid student ID" });
+      }
+
+      // Check if the student exists and is actually a student
+      const student = await storage.getUser(studentId);
+      if (!student || student.role !== "student") {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      // Delete the student
+      await storage.deleteStudent(studentId);
+      res.json({ message: "Student deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting student:", error);
+      res.status(500).json({ message: "Failed to delete student" });
+    }
+  });
+
   // Public API endpoint for accessing published courses without auth
   app.get("/api/courses/public", async (req, res) => {
     try {

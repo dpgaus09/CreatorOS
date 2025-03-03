@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3 } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3, Trash2, UserX } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -33,6 +33,34 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { format } from "date-fns";
+import { Course, Enrollment } from "@shared/schema";
+
+type Student = {
+  id: number;
+  name: string;
+  email: string;
+  username: string;
+  createdAt: string;
+  enrollments: (Enrollment & { course?: Course })[];
+};
 
 export default function AdminSettings() {
   const [, setLocation] = useLocation();
@@ -42,6 +70,8 @@ export default function AdminSettings() {
   const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login");
   const [activeTab, setActiveTab] = useState("general");
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Settings query
   const { data: settings, isLoading } = useQuery({
@@ -67,6 +97,11 @@ export default function AdminSettings() {
   const { data: userActivityData } = useQuery({
     queryKey: ["/api/analytics/user-activity"],
     enabled: analyticsEnabled,
+  });
+
+  // Students list query
+  const { data: students, isLoading: isLoadingStudents } = useQuery<Student[]>({
+    queryKey: ["/api/students"],
   });
 
   // Update LMS name mutation
@@ -135,6 +170,30 @@ export default function AdminSettings() {
     },
   });
 
+  // Delete student mutation
+  const deleteStudentMutation = useMutation({
+    mutationFn: async (studentId: number) => {
+      const res = await apiRequest("DELETE", `/api/students/${studentId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/students"] });
+      setShowDeleteDialog(false);
+      setStudentToDelete(null);
+      toast({
+        title: "Student deleted",
+        description: "The student has been removed successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting student",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (settings?.value) {
       setLmsName(settings.value);
@@ -170,6 +229,17 @@ export default function AdminSettings() {
     // Removed the recursive call that was causing the infinite loop
     setAnalyticsEnabled(enabled);
     updateAnalyticsEnabledMutation.mutate(enabled);
+  };
+
+  const handleDeleteStudent = (student: Student) => {
+    setStudentToDelete(student);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteStudent = () => {
+    if (studentToDelete) {
+      deleteStudentMutation.mutate(studentToDelete.id);
+    }
   };
 
   // Use real data when available, fallback to defaults for a better UX
@@ -213,7 +283,7 @@ export default function AdminSettings() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-6 mb-8">
+        <TabsList className="grid grid-cols-7 mb-8">
           <TabsTrigger value="general" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             <span>General</span>
@@ -229,6 +299,10 @@ export default function AdminSettings() {
           <TabsTrigger value="courses" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             <span>Courses</span>
+          </TabsTrigger>
+          <TabsTrigger value="students" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            <span>Students</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-2">
             <Bell className="h-4 w-4" />
@@ -457,6 +531,99 @@ export default function AdminSettings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Students Tab */}
+        <TabsContent value="students">
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Management</CardTitle>
+              <CardDescription>
+                View and manage registered students
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {isLoadingStudents ? (
+                <div className="text-center py-4">Loading students...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Student Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Username</TableHead>
+                      <TableHead>Registration Date</TableHead>
+                      <TableHead>Enrolled Courses</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {students?.map((student) => (
+                      <TableRow key={student.id}>
+                        <TableCell className="font-medium">{student.name}</TableCell>
+                        <TableCell>{student.email}</TableCell>
+                        <TableCell>{student.username}</TableCell>
+                        <TableCell>
+                          {format(new Date(student.createdAt), "PPpp")}
+                        </TableCell>
+                        <TableCell>
+                          {student.enrollments.length > 0 ? (
+                            <ul className="list-disc list-inside">
+                              {student.enrollments.map((enrollment) => (
+                                <li key={enrollment.id}>
+                                  {enrollment.course?.title || "Unknown Course"}
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <span className="text-gray-500">No courses enrolled</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteStudent(student)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Delete Student Confirmation Dialog */}
+          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Student</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete {studentToDelete?.name}? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  onClick={confirmDeleteStudent}
+                  disabled={deleteStudentMutation.isPending}
+                >
+                  {deleteStudentMutation.isPending ? (
+                    <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Deleting...</>
+                  ) : (
+                    <><UserX className="h-4 w-4 mr-2" /> Delete Student</>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Notifications Settings */}
@@ -753,7 +920,7 @@ export default function AdminSettings() {
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <BarChart3 className="h-16 w-16 text-muted-foreground mb-4" />
               <h2 className="text-2xl font-bold mb-2">Analytics are disabled</h2>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-mutedforeground mb-4">
                 Enable analytics in the General settings tab to view usage statistics and reports.
               </p>
               <Button onClick={() => {
