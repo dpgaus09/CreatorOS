@@ -298,19 +298,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActiveAnnouncements(): Promise<Announcement[]> {
-    const now = new Date();
     return db
       .select()
       .from(announcements)
-      .where(
-        and(
-          eq(announcements.active, true),
-          or(
-            isNull(announcements.expiresAt),
-            gt(announcements.expiresAt, now)
-          )
-        )
-      )
+      .where(eq(announcements.active, true))
       .orderBy(desc(announcements.createdAt));
   }
 

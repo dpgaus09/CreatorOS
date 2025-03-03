@@ -221,16 +221,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Routes for active announcements
   app.get("/api/announcements/active", async (req, res) => {
     try {
       // Check if announcements are enabled
       const enabled = await storage.getSetting("announcements-enabled");
       if (enabled && enabled.value === "false") {
+        console.log("Announcements are disabled. Returning empty array.");
         return res.json([]);
       }
 
+      // Get active announcements
+      console.log("Fetching active announcements...");
       const announcements = await storage.getActiveAnnouncements();
-      res.json(announcements);
+      console.log("Active announcements fetched successfully:", JSON.stringify(announcements));
+
+      return res.json(announcements);
     } catch (error) {
       console.error("Error fetching active announcements:", error);
       res.status(500).json({ message: "Failed to fetch active announcements" });
