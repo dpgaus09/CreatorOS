@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3, Trash2, UserX, Plus, Edit, Clock } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3, Trash2, UserX, Plus, Edit } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -262,7 +262,6 @@ export default function AdminSettings() {
           title: data.title,
           content: data.content,
           active: data.active,
-          expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
           createdBy: user?.id
         }),
         credentials: 'include', // This is crucial for sending cookies with the request
@@ -327,6 +326,44 @@ export default function AdminSettings() {
     },
     onError: (error: Error) => {
       console.error("Announcement update error:", error);
+      toast({
+        title: "Error updating announcement",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Toggle announcement active status
+  const toggleAnnouncementActiveMutation = useMutation({
+    mutationFn: async ({ id, active }: { id: number, active: boolean }) => {
+      console.log(`Setting announcement ${id} active state to: ${active}`);
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ active }),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to update announcement' }));
+        console.error("Announcement update error:", errorData);
+        throw new Error(errorData.message || 'Failed to update announcement status');
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
+      toast({
+        title: "Announcement updated",
+        description: "The announcement status has been updated",
+      });
+    },
+    onError: (error: Error) => {
+      console.error("Announcement status update error:", error);
       toast({
         title: "Error updating announcement",
         description: error.message,
@@ -426,12 +463,11 @@ export default function AdminSettings() {
     },
   });
 
-  // Announcement form schema
+  // Simplified announcement form schema (removed expiresAt)
   const announcementFormSchema = z.object({
     title: z.string().min(1, "Title is required"),
     content: z.string().min(1, "Content is required"),
     active: z.boolean().default(true),
-    expiresAt: z.string().optional(),
   });
 
   // Announcement form
@@ -441,7 +477,6 @@ export default function AdminSettings() {
       title: "",
       content: "",
       active: true,
-      expiresAt: "",
     },
   });
 
@@ -476,15 +511,12 @@ export default function AdminSettings() {
         title: editingAnnouncement.title,
         content: editingAnnouncement.content,
         active: editingAnnouncement.active,
-        expiresAt: editingAnnouncement.expiresAt ?
-          new Date(editingAnnouncement.expiresAt).toISOString().split('T')[0] : undefined,
       });
     } else {
       announcementForm.reset({
         title: "",
         content: "",
         active: true,
-        expiresAt: "",
       });
     }
   }, [editingAnnouncement, announcementForm]);
@@ -553,14 +585,41 @@ export default function AdminSettings() {
     deleteAnnouncementMutation.mutate(id);
   };
 
+  const handleToggleAnnouncementActive = (id: number, active: boolean) => {
+    // If we're activating this announcement, we need to deactivate all others
+    if (active && announcements) {
+      // First, deactivate all other announcements
+      announcements.forEach(announcement => {
+        if (announcement.id !== id && announcement.active) {
+          toggleAnnouncementActiveMutation.mutate({ id: announcement.id, active: false });
+        }
+      });
+    }
+
+    // Now toggle the current announcement
+    toggleAnnouncementActiveMutation.mutate({ id, active });
+  };
+
   const onSubmitAnnouncement = (data: z.infer<typeof announcementFormSchema>) => {
     console.log("Submitting announcement data:", data);
+
+    // If we're creating a new announcement with active=true or updating an existing one to active=true
+    if (data.active) {
+      // Deactivate all other announcements first
+      announcements?.forEach(announcement => {
+        if ((!editingAnnouncement || announcement.id !== editingAnnouncement.id) && announcement.active) {
+          toggleAnnouncementActiveMutation.mutate({ id: announcement.id, active: false });
+        }
+      });
+    }
+
     if (editingAnnouncement) {
       updateAnnouncementMutation.mutate({
         id: editingAnnouncement.id,
         data: {
-          ...data,
-          expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : null,
+          title: data.title,
+          content: data.content,
+          active: data.active,
         },
       });
     } else {
@@ -568,7 +627,6 @@ export default function AdminSettings() {
         title: data.title,
         content: data.content,
         active: data.active,
-        expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
         createdBy: user?.id,
       });
     }
@@ -971,7 +1029,7 @@ export default function AdminSettings() {
                         </TableCell>
                         <TableCell>
                           {student.enrollments && student.enrollments.length > 0 ? (
-                            <ul<ul className="list-disc pl-4">
+                            <ul className="list-disc pl-4">
                               {student.enrollments.slice(0, 3).map((enrollment, idx) => (
                                 <li key={idx} className="text-sm">
                                   {enrollment.course?.title || "Unknown Course"}
@@ -1061,7 +1119,7 @@ export default function AdminSettings() {
               <div>
                 <CardTitle>Manage Announcements</CardTitle>
                 <CardDescription>
-                  Create and manage announcements for your platform users
+                  Create and manage announcements for your platform. Only one announcement can be active at a time.
                 </CardDescription>
               </div>
               <Button
@@ -1089,9 +1147,9 @@ export default function AdminSettings() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Title</TableHead>
+                      <TableHead>Content</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Created</TableHead>
-                      <TableHead>Expires</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1099,20 +1157,22 @@ export default function AdminSettings() {
                     {announcements?.map((announcement) => (
                       <TableRow key={announcement.id}>
                         <TableCell className="font-medium">{announcement.title}</TableCell>
+                        <TableCell className="max-w-xs truncate">{announcement.content}</TableCell>
                         <TableCell>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            announcement.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                          }`}>
-                            {announcement.active ? 'Active' : 'Inactive'}
-                          </span>
+                          <div className="flex items-center space-x-2">
+                            <Switch 
+                              checked={announcement.active} 
+                              onCheckedChange={(checked) => handleToggleAnnouncementActive(announcement.id, checked)}
+                            />
+                            <span className={`text-xs font-medium ${
+                              announcement.active ? 'text-green-600' : 'text-gray-400'
+                            }`}>
+                              {announcement.active ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           {format(new Date(announcement.createdAt), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell>
-                          {announcement.expiresAt
-                            ? format(new Date(announcement.expiresAt), "MMM d, yyyy")
-                            : "Never"}
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-2">
@@ -1185,50 +1245,26 @@ export default function AdminSettings() {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={announcementForm.control}
-                      name="active"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                          <div className="space-y-0.5">
-                            <FormLabel>Active</FormLabel>
-                            <FormDescription>
-                              Display this announcement to users
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={announcementForm.control}
-                      name="expiresAt"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Expiration Date</FormLabel>
-                          <FormControl>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <Input
-                                type="date"
-                                placeholder="Expiration date (optional)"
-                                {...field}
-                              />
-                            </div>
-                          </FormControl>
+                  <FormField
+                    control={announcementForm.control}
+                    name="active"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                        <div className="space-y-0.5">
+                          <FormLabel>Active</FormLabel>
                           <FormDescription>
-                            Optional, leave empty to never expire
+                            Display this announcement to users (only one announcement can be active at a time)
                           </FormDescription>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                   <DialogFooter>
                     <Button
                       type="button"
@@ -1422,7 +1458,7 @@ export default function AdminSettings() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
+                  <div className="rounded-md border">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
@@ -1447,7 +1483,6 @@ export default function AdminSettings() {
                 </CardContent>
               </Card>
 
-              {/* Top courses */}
               <Card>
                 <CardHeader>
                   <CardTitle>Popular Courses</CardTitle>
@@ -1456,7 +1491,7 @@ export default function AdminSettings() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
+                  <div className="rounded-md border">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">

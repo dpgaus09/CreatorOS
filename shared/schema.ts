@@ -52,7 +52,7 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-// New announcements table
+// Simplified announcements table - removed expiresAt field
 export const announcements = pgTable("announcements", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -60,7 +60,6 @@ export const announcements = pgTable("announcements", {
   active: boolean("active").notNull().default(true),
   createdBy: integer("created_by").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  expiresAt: timestamp("expires_at"),
 });
 
 // New analytics tables
@@ -179,11 +178,8 @@ export const insertImageSchema = createInsertSchema(images).omit({
   createdAt: true,
 });
 
-// Insert schema for announcements
-export const insertAnnouncementSchema = createInsertSchema(announcements).extend({
-  // Make expiresAt optional and accept both Date objects and strings
-  expiresAt: z.union([z.date(), z.string(), z.null()]).optional(),
-}).omit({
+// Simplified insert schema for announcements - removed expiresAt field
+export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
   id: true,
   createdAt: true,
 });
