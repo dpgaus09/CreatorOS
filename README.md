@@ -3,6 +3,15 @@
 
 A comprehensive learning management system for instructors and students.
 
+## Accessing Your Private Deployment
+
+This LMS has been deployed privately for your organization. To access:
+
+1. Create a Replit account if you don't already have one
+2. Accept the team invitation sent to your email
+3. Visit the deployment URL provided to you
+4. Log in with your Replit credentials
+
 ## Quick Start for New Users
 
 To get started with your own copy of LearnBruh LMS:
