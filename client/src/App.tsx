@@ -20,12 +20,14 @@ import { ProtectedRoute } from "./lib/protected-route";
 import PasswordReset from "@/pages/auth/password-reset";
 import AdminSettings from "@/pages/instructor/admin-settings";
 import PublicCourseCatalog from "@/pages/public/course-catalog";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 
 function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
   return (
     <div className="min-h-screen bg-background">
       {showNav && <Navbar />}
       <main className="container mx-auto px-4 py-8">
+        <AnnouncementBanner />
         {children}
       </main>
     </div>

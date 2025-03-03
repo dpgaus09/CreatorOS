@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertCourseSchema, insertEnrollmentSchema, insertSettingSchema, insertImageSchema, users } from "@shared/schema";
+import { insertCourseSchema, insertEnrollmentSchema, insertSettingSchema, insertImageSchema, users, insertAnnouncementSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -170,6 +170,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching logo URL:", error);
       res.status(500).json({ message: "Failed to fetch logo URL" });
+    }
+  });
+
+  // System announcements settings
+  app.get("/api/settings/announcements-enabled", async (req, res) => {
+    try {
+      const setting = await storage.getSetting("announcements-enabled");
+      res.json(setting || { value: "true" });
+    } catch (error) {
+      console.error("Error fetching announcements setting:", error);
+      res.status(500).json({ message: "Failed to fetch announcements setting" });
+    }
+  });
+
+  app.post("/api/settings/announcements-enabled", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const settingData = insertSettingSchema.parse({
+        name: "announcements-enabled",
+        value: req.body.value
+      });
+
+      const setting = await storage.updateSetting(settingData.name, settingData.value);
+      res.json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Error updating announcements setting:", error);
+      res.status(500).json({ message: "Failed to update announcements setting" });
+    }
+  });
+
+  // Announcements API endpoints
+  app.get("/api/announcements", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const announcements = await storage.getAnnouncements();
+      res.json(announcements);
+    } catch (error) {
+      console.error("Error fetching announcements:", error);
+      res.status(500).json({ message: "Failed to fetch announcements" });
+    }
+  });
+
+  app.get("/api/announcements/active", async (req, res) => {
+    try {
+      // Check if announcements are enabled
+      const enabled = await storage.getSetting("announcements-enabled");
+      if (enabled && enabled.value === "false") {
+        return res.json([]);
+      }
+
+      const announcements = await storage.getActiveAnnouncements();
+      res.json(announcements);
+    } catch (error) {
+      console.error("Error fetching active announcements:", error);
+      res.status(500).json({ message: "Failed to fetch active announcements" });
+    }
+  });
+
+  app.get("/api/announcements/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const announcementId = parseInt(req.params.id);
+      if (isNaN(announcementId)) {
+        return res.status(400).json({ message: "Invalid announcement ID" });
+      }
+
+      const announcement = await storage.getAnnouncement(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+
+      res.json(announcement);
+    } catch (error) {
+      console.error("Error fetching announcement:", error);
+      res.status(500).json({ message: "Failed to fetch announcement" });
+    }
+  });
+
+  app.post("/api/announcements", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const announcementData = insertAnnouncementSchema.parse({
+        ...req.body,
+        createdBy: req.user.id,
+      });
+
+      const announcement = await storage.createAnnouncement(announcementData);
+      res.json(announcement);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Error creating announcement:", error);
+      res.status(500).json({ message: "Failed to create announcement" });
+    }
+  });
+
+  app.patch("/api/announcements/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const announcementId = parseInt(req.params.id);
+      if (isNaN(announcementId)) {
+        return res.status(400).json({ message: "Invalid announcement ID" });
+      }
+
+      const announcement = await storage.getAnnouncement(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+
+      const updatedAnnouncement = await storage.updateAnnouncement(announcementId, req.body);
+      res.json(updatedAnnouncement);
+    } catch (error) {
+      console.error("Error updating announcement:", error);
+      res.status(500).json({ message: "Failed to update announcement" });
+    }
+  });
+
+  app.delete("/api/announcements/:id", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const announcementId = parseInt(req.params.id);
+      if (isNaN(announcementId)) {
+        return res.status(400).json({ message: "Invalid announcement ID" });
+      }
+
+      const announcement = await storage.getAnnouncement(announcementId);
+      if (!announcement) {
+        return res.status(404).json({ message: "Announcement not found" });
+      }
+
+      await storage.deleteAnnouncement(announcementId);
+      res.json({ message: "Announcement deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting announcement:", error);
+      res.status(500).json({ message: "Failed to delete announcement" });
     }
   });
 

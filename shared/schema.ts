@@ -52,6 +52,17 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// New announcements table
+export const announcements = pgTable("announcements", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdBy: integer("created_by").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
 // New analytics tables
 export const pageViews = pgTable("page_views", {
   id: serial("id").primaryKey(),
@@ -168,6 +179,12 @@ export const insertImageSchema = createInsertSchema(images).omit({
   createdAt: true,
 });
 
+// Insert schema for announcements
+export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Insert schemas for analytics tables
 export const insertPageViewSchema = createInsertSchema(pageViews).omit({
   id: true,
@@ -200,6 +217,10 @@ export type Module = z.infer<typeof moduleSchema>;
 export type Setting = typeof settings.$inferSelect;
 export type InsertImage = z.infer<typeof insertImageSchema>;
 export type Image = typeof images.$inferSelect;
+
+// Announcement types
+export type Announcement = typeof announcements.$inferSelect;
+export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
 
 // Analytics types
 export type PageView = typeof pageViews.$inferSelect;

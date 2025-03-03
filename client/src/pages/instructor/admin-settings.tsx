@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3, Trash2, UserX } from "lucide-react";
+import { ArrowLeft, Save, RefreshCw, Palette, Bell, Users, BookOpen, Settings, BarChart3, Trash2, UserX, Plus, Edit, Clock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -50,8 +50,21 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
-import { Course, Enrollment } from "@shared/schema";
+import { Course, Enrollment, Announcement } from "@shared/schema";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 type Student = {
   id: number;
@@ -74,6 +87,9 @@ export default function AdminSettings() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [announcementsEnabled, setAnnouncementsEnabled] = useState(true);
+  const [showAnnouncementDialog, setShowAnnouncementDialog] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
 
   // Settings query
   const { data: settings, isLoading } = useQuery({
@@ -88,6 +104,16 @@ export default function AdminSettings() {
   // Analytics settings query
   const { data: analyticsEnabledSetting } = useQuery({
     queryKey: ["/api/analytics/settings"],
+  });
+
+  // Announcements settings query
+  const { data: announcementsEnabledSetting } = useQuery({
+    queryKey: ["/api/settings/announcements-enabled"],
+  });
+
+  // Announcements query
+  const { data: announcements, isLoading: isLoadingAnnouncements } = useQuery<Announcement[]>({
+    queryKey: ["/api/announcements"],
   });
 
   // Logo query
@@ -177,6 +203,28 @@ export default function AdminSettings() {
     },
   });
 
+  // Update announcements enabled mutation
+  const updateAnnouncementsEnabledMutation = useMutation({
+    mutationFn: async (value: boolean) => {
+      const res = await apiRequest("POST", "/api/settings/announcements-enabled", { value: value ? "true" : "false" });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/announcements-enabled"] });
+      toast({
+        title: "Settings updated",
+        description: "Announcements settings have been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Delete student mutation
   const deleteStudentMutation = useMutation({
     mutationFn: async (studentId: number) => {
@@ -195,6 +243,76 @@ export default function AdminSettings() {
     onError: (error: Error) => {
       toast({
         title: "Error deleting student",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create announcement mutation
+  const createAnnouncementMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof announcementFormSchema>) => {
+      const res = await apiRequest("POST", "/api/announcements", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
+      setShowAnnouncementDialog(false);
+      setEditingAnnouncement(null);
+      toast({
+        title: "Announcement created",
+        description: "The announcement has been created successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error creating announcement",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update announcement mutation
+  const updateAnnouncementMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: Partial<Announcement> }) => {
+      const res = await apiRequest("PATCH", `/api/announcements/${id}`, data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
+      setShowAnnouncementDialog(false);
+      setEditingAnnouncement(null);
+      toast({
+        title: "Announcement updated",
+        description: "The announcement has been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating announcement",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Delete announcement mutation
+  const deleteAnnouncementMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/announcements/${id}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/announcements"] });
+      toast({
+        title: "Announcement deleted",
+        description: "The announcement has been deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error deleting announcement",
         description: error.message,
         variant: "destructive",
       });
@@ -258,6 +376,24 @@ export default function AdminSettings() {
     },
   });
 
+  // Announcement form schema
+  const announcementFormSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    content: z.string().min(1, "Content is required"),
+    active: z.boolean().default(true),
+    expiresAt: z.string().optional(),
+  });
+
+  // Announcement form
+  const announcementForm = useForm<z.infer<typeof announcementFormSchema>>({
+    resolver: zodResolver(announcementFormSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      active: true,
+      expiresAt: "",
+    },
+  });
 
   useEffect(() => {
     if (settings?.value) {
@@ -277,6 +413,32 @@ export default function AdminSettings() {
     }
   }, [analyticsEnabledSetting]);
 
+  useEffect(() => {
+    if (announcementsEnabledSetting?.value) {
+      setAnnouncementsEnabled(announcementsEnabledSetting.value === "true");
+    }
+  }, [announcementsEnabledSetting]);
+
+  // Reset form when editing announcement changes
+  useEffect(() => {
+    if (editingAnnouncement) {
+      announcementForm.reset({
+        title: editingAnnouncement.title,
+        content: editingAnnouncement.content,
+        active: editingAnnouncement.active,
+        expiresAt: editingAnnouncement.expiresAt ?
+          new Date(editingAnnouncement.expiresAt).toISOString().split('T')[0] : undefined,
+      });
+    } else {
+      announcementForm.reset({
+        title: "",
+        content: "",
+        active: true,
+        expiresAt: "",
+      });
+    }
+  }, [editingAnnouncement, announcementForm]);
+
   // Only instructors should access this page
   if (user?.role !== "instructor") {
     return null;
@@ -293,6 +455,11 @@ export default function AdminSettings() {
   const handleToggleAnalytics = (enabled: boolean) => {
     setAnalyticsEnabled(enabled);
     updateAnalyticsEnabledMutation.mutate(enabled);
+  };
+
+  const handleToggleAnnouncements = (enabled: boolean) => {
+    setAnnouncementsEnabled(enabled);
+    updateAnnouncementsEnabledMutation.mutate(enabled);
   };
 
   const handleDeleteStudent = (student: Student) => {
@@ -322,6 +489,37 @@ export default function AdminSettings() {
     removeLogo.mutate();
   };
 
+  const openCreateAnnouncementDialog = () => {
+    setEditingAnnouncement(null);
+    setShowAnnouncementDialog(true);
+  };
+
+  const openEditAnnouncementDialog = (announcement: Announcement) => {
+    setEditingAnnouncement(announcement);
+    setShowAnnouncementDialog(true);
+  };
+
+  const handleDeleteAnnouncement = (id: number) => {
+    deleteAnnouncementMutation.mutate(id);
+  };
+
+  const onSubmitAnnouncement = (data: z.infer<typeof announcementFormSchema>) => {
+    if (editingAnnouncement) {
+      updateAnnouncementMutation.mutate({
+        id: editingAnnouncement.id,
+        data: {
+          ...data,
+          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+        },
+      });
+    } else {
+      createAnnouncementMutation.mutate({
+        ...data,
+        expiresAt: data.expiresAt ? data.expiresAt : undefined,
+      });
+    }
+  };
+
   // Use real data when available, fallback to defaults for a better UX
   const deviceUsageData = analyticsData?.deviceBreakdown?.map(item => ({
     name: item.deviceType || 'Unknown',
@@ -344,7 +542,7 @@ export default function AdminSettings() {
   // Format activity data for chart
   const formattedUserActivity = (userActivityData?.map(item => ({
     date: item.date,
-    views: item.pageViews,
+    views: item.views,
     uniqueUsers: item.uniqueUsers,
   })) || []);
 
@@ -783,7 +981,7 @@ export default function AdminSettings() {
             <CardHeader>
               <CardTitle>Notification Settings</CardTitle>
               <CardDescription>
-                Configure system notifications
+                Configure system notifications and announcements
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -791,13 +989,215 @@ export default function AdminSettings() {
                 <div>
                   <Label htmlFor="announcements">System Announcements</Label>
                   <p className="text-sm text-muted-foreground">
-                    Notify all users about system changes
+                    Show announcements to users across the platform
                   </p>
                 </div>
-                <Switch id="announcements" defaultChecked />
+                <Switch
+                  id="announcements"
+                  checked={announcementsEnabled}
+                  onCheckedChange={handleToggleAnnouncements}
+                />
               </div>
             </CardContent>
           </Card>
+
+          {/* Announcements Management */}
+          <Card className="mt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Manage Announcements</CardTitle>
+                <CardDescription>
+                  Create and manage announcements for your platform users
+                </CardDescription>
+              </div>
+              <Button
+                onClick={openCreateAnnouncementDialog}
+                disabled={!announcementsEnabled}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>New Announcement</span>
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {!announcementsEnabled ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Enable System Announcements to manage announcements
+                </div>
+              ) : isLoadingAnnouncements ? (
+                <div className="text-center py-4">Loading announcements...</div>
+              ) : (announcements?.length || 0) === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No announcements created yet. Create your first announcement to notify users.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Expires</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {announcements?.map((announcement) => (
+                      <TableRow key={announcement.id}>
+                        <TableCell className="font-medium">{announcement.title}</TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            announcement.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {announcement.active ? 'Active' : 'Inactive'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(announcement.createdAt), "MMM d, yyyy")}
+                        </TableCell>
+                        <TableCell>
+                          {announcement.expiresAt
+                            ? format(new Date(announcement.expiresAt), "MMM d, yyyy")
+                            : "Never"}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openEditAnnouncementDialog(announcement)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteAnnouncement(announcement.id)}
+                              className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Announcement Dialog */}
+          <Dialog open={showAnnouncementDialog} onOpenChange={setShowAnnouncementDialog}>
+            <DialogContent className="sm:max-w-[525px]">
+              <DialogHeader>
+                <DialogTitle>{editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}</DialogTitle>
+                <DialogDescription>
+                  {editingAnnouncement
+                    ? 'Edit your announcement details below'
+                    : 'Create a new announcement to notify all users'
+                  }
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...announcementForm}>
+                <form onSubmit={announcementForm.handleSubmit(onSubmitAnnouncement)} className="space-y-4">
+                  <FormField
+                    control={announcementForm.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Announcement Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Enter announcement title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={announcementForm.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Announcement Content</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Enter announcement content"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={announcementForm.control}
+                      name="active"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel>Active</FormLabel>
+                            <FormDescription>
+                              Display this announcement to users
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={announcementForm.control}
+                      name="expiresAt"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Expiration Date</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="date"
+                                placeholder="Expiration date (optional)"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription>
+                            Optional, leave empty to never expire
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowAnnouncementDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={createAnnouncementMutation.isPending || updateAnnouncementMutation.isPending}
+                    >
+                      {(createAnnouncementMutation.isPending || updateAnnouncementMutation.isPending) ? (
+                        <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+                      ) : (
+                        <>{editingAnnouncement ? 'Update' : 'Create'} Announcement</>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Analytics Tab */}
@@ -886,17 +1286,18 @@ export default function AdminSettings() {
                             data={courseCompletionData}
                             cx="50%"
                             cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            innerRadius={60}
                             outerRadius={80}
-                            fill="#8884d8"
+                            paddingAngle={2}
                             dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                           >
                             {courseCompletionData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
+                          <Tooltip />
+                          <Legend />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -908,7 +1309,7 @@ export default function AdminSettings() {
                   <CardHeader>
                     <CardTitle>Device Usage</CardTitle>
                     <CardDescription>
-                      Platform access by device type
+                      Devices used to access your platform
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -919,17 +1320,18 @@ export default function AdminSettings() {
                             data={deviceUsageData}
                             cx="50%"
                             cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            innerRadius={60}
                             outerRadius={80}
-                            fill="#8884d8"
+                            paddingAngle={2}
                             dataKey="value"
+                            label={({ name, value }) => `${name}: ${value}`}
                           >
                             {deviceUsageData.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
-                          <Tooltip formatter={(value) => [`${value}`, 'Users']} />
+                          <Tooltip />
+                          <Legend />
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -937,12 +1339,12 @@ export default function AdminSettings() {
                 </Card>
               </div>
 
-              {/* Popular Pages */}
+              {/* Popular pages */}
               <Card>
                 <CardHeader>
                   <CardTitle>Popular Pages</CardTitle>
                   <CardDescription>
-                    Most frequently visited pages
+                    Most visited pages in your platform
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -950,8 +1352,8 @@ export default function AdminSettings() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium">Page</th>
-                          <th className="text-left py-3 px-4 font-medium">Views</th>
+                          <th className="py-3 px-4 text-left font-medium">URL Path</th>
+                          <th className="py-3 px-4 text-left font-medium">Visits</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -962,7 +1364,7 @@ export default function AdminSettings() {
                           </tr>
                         )) || (
                           <tr>
-                            <td className="py-3 px-4" colSpan={2}>No data available</td>
+                            <td colSpan={2} className="py-4 text-center text-muted-foreground">No data available</td>
                           </tr>
                         )}
                       </tbody>
@@ -971,12 +1373,12 @@ export default function AdminSettings() {
                 </CardContent>
               </Card>
 
-              {/* Popular Courses */}
+              {/* Top courses */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Most Viewed Courses</CardTitle>
+                  <CardTitle>Popular Courses</CardTitle>
                   <CardDescription>
-                    Courses with highest engagement
+                    Courses with most views and completions
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -984,85 +1386,25 @@ export default function AdminSettings() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium">Course</th>
-                          <th className="text-left py-3 px-4 font-medium">Views</th>
-                          <th className="text-left py-3 px-4 font-medium">Completions</th>
+                          <th className="py-3 px-4 text-left font-medium">Course</th>
+                          <th className="py-3 px-4 text-left font-medium">Views</th>
+                          <th className="py-3 px-4 text-left font-medium">Completions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {analyticsData?.mostViewedCourses?.map((item, index) => (
                           <tr key={index} className={index !== (analyticsData?.mostViewedCourses?.length || 0) - 1 ? "border-b" : ""}>
-                            <td className="py-3 px-4">{item.course?.title || 'Unknown'}</td>
+                            <td className="py-3 px-4">{item.course.title}</td>
                             <td className="py-3 px-4">{item.totalViews}</td>
                             <td className="py-3 px-4">{item.totalCompletions}</td>
                           </tr>
                         )) || (
                           <tr>
-                            <td className="py-3 px-4" colSpan={3}>No data available</td>
+                            <td colSpan={3} className="py-4 text-center text-muted-foreground">No data available</td>
                           </tr>
                         )}
                       </tbody>
                     </table>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Export & Reporting */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analytics Reports</CardTitle>
-                  <CardDescription>
-                    Export or schedule analytics reports
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1 space-y-2">
-                      <Label>Report Type</Label>
-                      <Select defaultValue="user-activity">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select report type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user-activity">User Activity Report</SelectItem>
-                          <SelectItem value="course-completion">Course Completion Report</SelectItem>
-                          <SelectItem value="content-engagement">Content Engagement Report</SelectItem>
-                          <SelectItem value="revenue">Revenue Report</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <Label>Time Range</Label>
-                      <Select defaultValue="last-month">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select time range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="last-week">Last 7 Days</SelectItem>
-                          <SelectItem value="last-month">Last 30 Days</SelectItem>
-                          <SelectItem value="last-quarter">Last 90 Days</SelectItem>
-                          <SelectItem value="last-year">Last 365 Days</SelectItem>
-                          <SelectItem value="custom">Custom Range</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <Label>Format</Label>
-                      <Select defaultValue="csv">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select format" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="csv">CSV</SelectItem>
-                          <SelectItem value="xlsx">Excel</SelectItem>
-                          <SelectItem value="pdf">PDF</SelectItem>
-                          <SelectItem value="json">JSON</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button className="w-full sm:w-auto">Generate Report</Button>
                   </div>
                 </CardContent>
               </Card>
@@ -1071,14 +1413,13 @@ export default function AdminSettings() {
             <div className="flex flex-col items-center justify-center p-12 text-center">
               <BarChart3 className="h-16 w-16 text-muted-foreground mb-4" />
               <h2 className="text-2xl font-bold mb-2">Analytics are disabled</h2>
-              <p className="text-mutedforeground mb-4">
+              <p className="text-muted-foreground mb-4">
                 Enable analytics in the General settings tab to view usage statistics and reports.
               </p>
               <Button onClick={() => {
                 setActiveTab("general");
-                setAnalyticsEnabled(true);
               }}>
-                Enable Analytics
+                Go to Settings
               </Button>
             </div>
           )}

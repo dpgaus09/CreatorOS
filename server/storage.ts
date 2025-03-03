@@ -1,7 +1,7 @@
-import { users, courses, enrollments, settings, images, pageViews, userEvents, courseAnalytics, sessionData } from "@shared/schema";
-import { InsertUser, User, Course, Enrollment, Setting, InsertImage, Image, InsertPageView, PageView, InsertUserEvent, UserEvent, InsertCourseAnalytic, CourseAnalytic, InsertSessionData, SessionData } from "@shared/schema";
+import { users, courses, enrollments, settings, images, pageViews, userEvents, courseAnalytics, sessionData, announcements } from "@shared/schema";
+import { InsertUser, User, Course, Enrollment, Setting, InsertImage, Image, InsertPageView, PageView, InsertUserEvent, UserEvent, InsertCourseAnalytic, CourseAnalytic, InsertSessionData, SessionData, Announcement, InsertAnnouncement } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, count, sql } from "drizzle-orm";
+import { eq, and, desc, count, sql, lt, gt, isNull, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -38,6 +38,14 @@ export interface IStorage {
   // Image Management
   createImage(image: InsertImage): Promise<Image>;
   getImagesByCourse(courseId: number): Promise<Image[]>;
+
+  // Announcements
+  createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
+  getAnnouncements(): Promise<Announcement[]>;
+  getActiveAnnouncements(): Promise<Announcement[]>;
+  getAnnouncement(id: number): Promise<Announcement | undefined>;
+  updateAnnouncement(id: number, updates: Partial<Announcement>): Promise<Announcement>;
+  deleteAnnouncement(id: number): Promise<void>;
 
   // Analytics
   createPageView(pageView: InsertPageView): Promise<PageView>;
@@ -274,6 +282,59 @@ export class DatabaseStorage implements IStorage {
         eq(users.id, id),
         eq(users.role, "student")  // Ensure we only delete students
       ));
+  }
+
+  // Announcement methods
+  async createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement> {
+    const [newAnnouncement] = await db.insert(announcements).values(announcement).returning();
+    return newAnnouncement;
+  }
+
+  async getAnnouncements(): Promise<Announcement[]> {
+    return db
+      .select()
+      .from(announcements)
+      .orderBy(desc(announcements.createdAt));
+  }
+
+  async getActiveAnnouncements(): Promise<Announcement[]> {
+    const now = new Date();
+    return db
+      .select()
+      .from(announcements)
+      .where(
+        and(
+          eq(announcements.active, true),
+          or(
+            isNull(announcements.expiresAt),
+            gt(announcements.expiresAt, now)
+          )
+        )
+      )
+      .orderBy(desc(announcements.createdAt));
+  }
+
+  async getAnnouncement(id: number): Promise<Announcement | undefined> {
+    const [announcement] = await db
+      .select()
+      .from(announcements)
+      .where(eq(announcements.id, id));
+    return announcement;
+  }
+
+  async updateAnnouncement(id: number, updates: Partial<Announcement>): Promise<Announcement> {
+    const [updatedAnnouncement] = await db
+      .update(announcements)
+      .set(updates)
+      .where(eq(announcements.id, id))
+      .returning();
+    return updatedAnnouncement;
+  }
+
+  async deleteAnnouncement(id: number): Promise<void> {
+    await db
+      .delete(announcements)
+      .where(eq(announcements.id, id));
   }
 
   // Analytics implementation
