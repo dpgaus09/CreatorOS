@@ -608,7 +608,6 @@ export default function AdminSettings() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="instructor">Instructor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
