@@ -252,7 +252,28 @@ export default function AdminSettings() {
   // Create announcement mutation
   const createAnnouncementMutation = useMutation({
     mutationFn: async (data: z.infer<typeof announcementFormSchema>) => {
-      const res = await apiRequest("POST", "/api/announcements", data);
+      console.log("Creating announcement with data:", JSON.stringify(data));
+      const res = await fetch('/api/announcements', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: data.title,
+          content: data.content,
+          active: data.active,
+          expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
+          createdBy: user?.id
+        }),
+        credentials: 'include', // This is crucial for sending cookies with the request
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to create announcement' }));
+        console.error("Announcement creation error:", errorData);
+        throw new Error(errorData.message || 'Failed to create announcement');
+      }
+
       return res.json();
     },
     onSuccess: () => {
@@ -265,6 +286,7 @@ export default function AdminSettings() {
       });
     },
     onError: (error: Error) => {
+      console.error("Announcement creation error:", error);
       toast({
         title: "Error creating announcement",
         description: error.message,
@@ -276,7 +298,22 @@ export default function AdminSettings() {
   // Update announcement mutation
   const updateAnnouncementMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number, data: Partial<Announcement> }) => {
-      const res = await apiRequest("PATCH", `/api/announcements/${id}`, data);
+      console.log("Updating announcement with data:", JSON.stringify(data));
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include', // Include credentials
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to update announcement' }));
+        console.error("Announcement update error:", errorData);
+        throw new Error(errorData.message || 'Failed to update announcement');
+      }
+
       return res.json();
     },
     onSuccess: () => {
@@ -289,6 +326,7 @@ export default function AdminSettings() {
       });
     },
     onError: (error: Error) => {
+      console.error("Announcement update error:", error);
       toast({
         title: "Error updating announcement",
         description: error.message,
@@ -300,7 +338,18 @@ export default function AdminSettings() {
   // Delete announcement mutation
   const deleteAnnouncementMutation = useMutation({
     mutationFn: async (id: number) => {
-      const res = await apiRequest("DELETE", `/api/announcements/${id}`);
+      console.log("Deleting announcement with id:", id);
+      const res = await fetch(`/api/announcements/${id}`, {
+        method: 'DELETE',
+        credentials: 'include', // Include credentials
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to delete announcement' }));
+        console.error("Announcement deletion error:", errorData);
+        throw new Error(errorData.message || 'Failed to delete announcement');
+      }
+
       return res.json();
     },
     onSuccess: () => {
@@ -311,6 +360,7 @@ export default function AdminSettings() {
       });
     },
     onError: (error: Error) => {
+      console.error("Announcement deletion error:", error);
       toast({
         title: "Error deleting announcement",
         description: error.message,
@@ -504,18 +554,22 @@ export default function AdminSettings() {
   };
 
   const onSubmitAnnouncement = (data: z.infer<typeof announcementFormSchema>) => {
+    console.log("Submitting announcement data:", data);
     if (editingAnnouncement) {
       updateAnnouncementMutation.mutate({
         id: editingAnnouncement.id,
         data: {
           ...data,
-          expiresAt: data.expiresAt ? new Date(data.expiresAt) : null,
+          expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : null,
         },
       });
     } else {
       createAnnouncementMutation.mutate({
-        ...data,
-        expiresAt: data.expiresAt ? data.expiresAt : undefined,
+        title: data.title,
+        content: data.content,
+        active: data.active,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
+        createdBy: user?.id,
       });
     }
   };
@@ -901,8 +955,8 @@ export default function AdminSettings() {
                       <TableHead>Student Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Username</TableHead>
-                      <TableHead>Registration Date</TableHead>
-                      <TableHead>Enrolled Courses</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead>Courses Enrolled</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -913,13 +967,13 @@ export default function AdminSettings() {
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.username}</TableCell>
                         <TableCell>
-                          {format(new Date(student.createdAt), "PPpp")}
+                          {student.createdAt ? format(new Date(student.createdAt), "MMM d, yyyy") : "Unknown"}
                         </TableCell>
                         <TableCell>
-                          {student.enrollments.length > 0 ? (
-                            <ul className="list-disc list-inside">
-                              {student.enrollments.map((enrollment) => (
-                                <li key={enrollment.id}>
+                          {student.enrollments && student.enrollments.length > 0 ? (
+                            <ul<ul className="list-disc pl-4">
+                              {student.enrollments.slice(0, 3).map((enrollment, idx) => (
+                                <li key={idx} className="text-sm">
                                   {enrollment.course?.title || "Unknown Course"}
                                 </li>
                               ))}
@@ -1203,83 +1257,104 @@ export default function AdminSettings() {
         {/* Analytics Tab */}
         <TabsContent value="analytics">
           {analyticsEnabled ? (
-            <div className="space-y-6">
-              {/* Stats summary cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid gap-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-muted-foreground mb-1">Total Users</div>
-                    <div className="flex items-end justify-between">
-                      <div className="text-3xl font-bold">{analyticsData?.summary?.userCount || 0}</div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Users
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {analyticsData?.summary?.userCount || 0}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {analyticsData?.summary?.newUserCount || 0} new in the last 30 days
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-muted-foreground mb-1">Active Courses</div>
-                    <div className="flex items-end justify-between">
-                      <div className="text-3xl font-bold">{analyticsData?.mostViewedCourses?.length || 0}</div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Courses
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {analyticsData?.summary?.courseCount || 0}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {analyticsData?.summary?.publishedCourseCount || 0} published courses
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-muted-foreground mb-1">Avg. Completion Rate</div>
-                    <div className="flex items-end justify-between">
-                      <div className="text-3xl font-bold">{analyticsData?.summary?.completionRate || 0}%</div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total Enrollments
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {analyticsData?.summary?.enrollmentCount || 0}
                     </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-sm text-muted-foreground mb-1">Total Page Views</div>
-                    <div className="flex items-end justify-between">
-                      <div className="text-3xl font-bold">{analyticsData?.summary?.totalPageViews || 0}</div>
-                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {analyticsData?.summary?.activeEnrollmentCount || 0} active enrollments
+                    </p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* User activity chart */}
+              {/* User Activity Chart */}
               <Card>
                 <CardHeader>
                   <CardTitle>User Activity</CardTitle>
                   <CardDescription>
-                    Daily page views and unique users
+                    Daily views and unique users over time
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-80">
+                  <div className="h-[300px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={formattedUserActivity}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                      >
+                      <LineChart data={formattedUserActivity}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" />
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="views" name="Page Views" fill="#3b82f6" />
-                        <Bar dataKey="uniqueUsers" name="Unique Users" fill="#10b981" />
-                      </BarChart>
+                        <Line
+                          type="monotone"
+                          dataKey="views"
+                          stroke="#3b82f6"
+                          name="Page Views"
+                          strokeWidth={2}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="uniqueUsers"
+                          stroke="#10b981"
+                          name="Unique Users"
+                          strokeWidth={2}
+                        />
+                      </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Course completion and device usage side by side */}
+              {/* Pie Charts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Course completion pie chart */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Course Completion</CardTitle>
                     <CardDescription>
-                      Overall course completion statistics
+                      Progress for all enrolled students
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-64 flex justify-center">
+                    <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -1304,7 +1379,6 @@ export default function AdminSettings() {
                   </CardContent>
                 </Card>
 
-                {/* Device usage pie chart */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Device Usage</CardTitle>
@@ -1313,7 +1387,7 @@ export default function AdminSettings() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="h-64 flex justify-center">
+                    <div className="h-[300px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
@@ -1357,8 +1431,8 @@ export default function AdminSettings() {
                         </tr>
                       </thead>
                       <tbody>
-                        {analyticsData?.popularPages?.map((item, index) => (
-                          <tr key={index} className={index !== (analyticsData?.popularPages?.length || 0) - 1 ? "border-b" : ""}>
+                        {analyticsData?.mostVisitedPages?.map((item, index) => (
+                          <tr key={index} className={index !== (analyticsData?.mostVisitedPages?.length || 0) - 1 ? "border-b" : ""}>
                             <td className="py-3 px-4">{item.path}</td>
                             <td className="py-3 px-4">{item.count}</td>
                           </tr>
@@ -1425,6 +1499,34 @@ export default function AdminSettings() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Student</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {studentToDelete?.name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteStudent}
+              disabled={deleteStudentMutation.isPending}
+            >
+              {deleteStudentMutation.isPending ? (
+                <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Deleting...</>
+              ) : (
+                <><UserX className="h-4 w-4 mr-2" /> Delete Student</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

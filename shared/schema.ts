@@ -180,7 +180,10 @@ export const insertImageSchema = createInsertSchema(images).omit({
 });
 
 // Insert schema for announcements
-export const insertAnnouncementSchema = createInsertSchema(announcements).omit({
+export const insertAnnouncementSchema = createInsertSchema(announcements).extend({
+  // Make expiresAt optional and accept both Date objects and strings
+  expiresAt: z.union([z.date(), z.string(), z.null()]).optional(),
+}).omit({
   id: true,
   createdAt: true,
 });

@@ -266,15 +266,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      console.log("Creating announcement with data:", JSON.stringify(req.body));
+
       const announcementData = insertAnnouncementSchema.parse({
         ...req.body,
         createdBy: req.user.id,
       });
 
+      console.log("Parsed announcement data:", JSON.stringify(announcementData));
+
       const announcement = await storage.createAnnouncement(announcementData);
       res.json(announcement);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Validation error:", error.message);
         return res.status(400).json({ message: error.message });
       }
       console.error("Error creating announcement:", error);
