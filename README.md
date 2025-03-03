@@ -3,14 +3,17 @@
 
 A comprehensive learning management system for instructors and students.
 
-## Accessing Your Private Deployment
+## For Clients: Getting Your Own Copy
 
-This LMS has been deployed privately for your organization. To access:
+To get your own copy of the LearnBruh LMS:
 
 1. Create a Replit account if you don't already have one
-2. Accept the team invitation sent to your email
-3. Visit the deployment URL provided to you
-4. Log in with your Replit credentials
+2. Request an invite from your vendor to join their Replit Team
+3. Once on the team, use the "Fork" button at the top of this Repl
+4. Follow the on-screen instructions to create your own copy
+5. Your data and users will be separate from other instances
+
+This process gives you a complete, independent copy of the LearnBruh LMS that you can customize and manage.
 
 ## Quick Start for New Users
 
