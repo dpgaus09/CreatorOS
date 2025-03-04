@@ -165,14 +165,16 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(courses)
-      .where(eq(courses.instructorId, instructorId));
+      .where(eq(courses.instructorId, instructorId))
+      .orderBy(courses.id);  // This ensures consistent ordering by course ID
   }
 
   async getPublishedCourses(): Promise<Course[]> {
     return db
       .select()
       .from(courses)
-      .where(eq(courses.published, true));
+      .where(eq(courses.published, true))
+      .orderBy(courses.id);  // This ensures consistent ordering by course ID
   }
 
   async createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment> {
@@ -256,7 +258,8 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(images)
-      .where(eq(images.courseId, courseId));
+      .where(eq(images.courseId, courseId))
+      .orderBy(desc(images.createdAt));  // Sort by creation date, newest first
   }
 
   async updateUser(id: number, updates: Partial<User>): Promise<User> {

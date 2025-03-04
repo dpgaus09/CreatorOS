@@ -31,11 +31,8 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
   // Select the latest image when images are loaded
   useEffect(() => {
     if (courseImages?.length) {
-      // Sort by createdAt date and get the most recent one
-      const latestImage = [...courseImages].sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      )[0];
-      setCourseImage(latestImage);
+      // We're now sorting by creation date on the server, so we can just take the first image
+      setCourseImage(courseImages[0]);
     }
   }, [courseImages]);
 
