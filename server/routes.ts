@@ -841,48 +841,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
           activeSessionCount: 0,
           avgSessionDuration: 0,
           completionRate: 0,
+          courseCount: 0,
+          publishedCourseCount: 0,
+          enrollmentCount: 0,
+          activeEnrollmentCount: 0,
+          newUserCount: 0,
         },
         deviceBreakdown: [],
         popularPages: [],
         mostViewedCourses: [],
       };
 
-      // First, get the basic stats that don't rely on analytics tables
+      // First, get all the basic stats
       try {
         // Count users
         const [userCountResult] = await db.select({ count: count() }).from(users);
         response.summary.userCount = userCountResult?.count || 0;
 
-        // Get published courses for mostViewedCourses
+        // Count courses and published courses
         const publishedCourses = await storage.getPublishedCourses();
-        response.mostViewedCourses = publishedCourses.map(course => ({
-          course,
-          totalViews: 0,
-          totalCompletions: 0,
-        }));
-      } catch (error) {
-        console.error("Error fetching basic stats:", error);
-      }
+        response.summary.courseCount = publishedCourses.length;
+        response.summary.publishedCourseCount = publishedCourses.filter(c => c.published).length;
 
-      // Now try to get analytics data if available
-      try {
-        response.summary.totalPageViews = await storage.getPageViewCount();
-        response.summary.activeSessionCount = await storage.getActiveSessionsCount();
-        response.summary.avgSessionDuration = await storage.getAverageSessionDuration();
-        response.deviceBreakdown = await storage.getDeviceBreakdown();
-        response.popularPages = await storage.getPopularPages(10);
+        // Count enrollments
+        const students = await storage.getStudentsWithEnrollments();
+        const allEnrollments = students.flatMap(s => s.enrollments);
+        response.summary.enrollmentCount = allEnrollments.length;
 
-        const analyticsViewedCourses = await storage.getMostViewedCourses(5);
-        if (analyticsViewedCourses.length > 0) {
-          response.mostViewedCourses = analyticsViewedCourses;
-        }
-
+        // Prepare course data with analytics
         const courseAnalytics = await storage.getAllCourseAnalytics();
+        const coursesWithAnalytics = publishedCourses.map(course => {
+          const analytics = courseAnalytics.find(a => a.courseId === course.id);
+          return {
+            course,
+            totalViews: analytics?.totalViews || 0,
+            totalCompletions: analytics?.totalCompletions || 0,
+          };
+        });
+
+        // Sort by views (descending)
+        response.mostViewedCourses = coursesWithAnalytics
+          .sort((a, b) => b.totalViews - a.totalViews)
+          .slice(0, 5);
+
+        // Calculate completion rate from real data
         const totalCompletions = courseAnalytics.reduce((sum, item) => sum + item.totalCompletions, 0);
         const totalViews = courseAnalytics.reduce((sum, item) => sum + item.totalViews, 0);
         response.summary.completionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
       } catch (error) {
-        console.error("Error fetching analytics data, using basic stats only:", error);
+        console.error("Error fetching basic stats:", error);
       }
 
       res.json(response);

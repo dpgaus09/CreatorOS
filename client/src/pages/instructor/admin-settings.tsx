@@ -1373,9 +1373,6 @@ export default function AdminSettings() {
                     <div className="text-2xl font-bold">
                       {analyticsData?.summary?.userCount || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {analyticsData?.summary?.newUserCount || 0} new in the last 30 days
-                    </p>
                   </CardContent>
                 </Card>
                 <Card>
@@ -1403,153 +1400,26 @@ export default function AdminSettings() {
                     <div className="text-2xl font-bold">
                       {analyticsData?.summary?.enrollmentCount || 0}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {analyticsData?.summary?.activeEnrollmentCount || 0} active enrollments
-                    </p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* User Activity Chart */}
+              {/* Course Completion Rate Card */}
               <Card>
                 <CardHeader>
-                  <CardTitle>User Activity</CardTitle>
+                  <CardTitle>Course Completion Rate</CardTitle>
                   <CardDescription>
-                    Daily views and unique users over time
+                    Percentage of course views that resulted in completions
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={formattedUserActivity}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line
-                          type="monotone"
-                          dataKey="views"
-                          stroke="#3b82f6"
-                          name="Page Views"
-                          strokeWidth={2}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="uniqueUsers"
-                          stroke="#10b981"
-                          name="Unique Users"
-                          strokeWidth={2}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                <CardContent className="flex justify-center items-center h-[120px]">
+                  <div className="text-5xl font-bold">
+                    {analyticsData?.summary?.completionRate || 0}%
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Pie Charts */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Course Completion</CardTitle>
-                    <CardDescription>
-                      Progress for all enrolled students
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={courseCompletionData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={2}
-                            dataKey="value"
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {courseCompletionData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Device Usage</CardTitle>
-                    <CardDescription>
-                      Devices used to access your platform
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={deviceUsageData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={80}
-                            paddingAngle={2}
-                            dataKey="value"
-                            label={({ name, value }) => `${name}: ${value}`}
-                          >
-                            {deviceUsageData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Popular pages */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Popular Pages</CardTitle>
-                  <CardDescription>
-                    Most visited pages in your platform
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-md border">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="py-3 px-4 text-left font-medium">URL Path</th>
-                          <th className="py-3 px-4 text-left font-medium">Visits</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {analyticsData?.mostVisitedPages?.map((item, index) => (
-                          <tr key={index} className={index !== (analyticsData?.mostVisitedPages?.length || 0) - 1 ? "border-b" : ""}>
-                            <td className="py-3 px-4">{item.path}</td>
-                            <td className="py-3 px-4">{item.count}</td>
-                          </tr>
-                        )) || (
-                          <tr>
-                            <td colSpan={2} className="py-4 text-center text-muted-foreground">No data available</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-
+              {/* Popular Courses */}
               <Card>
                 <CardHeader>
                   <CardTitle>Popular Courses</CardTitle>
