@@ -1,65 +1,162 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FaGoogle, FaGithub, FaTwitter } from "react-icons/fa";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RemixPage() {
+  const { toast } = useToast();
+  
+  const handleAuthClick = (provider: string) => {
+    toast({
+      title: "Authentication Required",
+      description: `Redirecting to ${provider} authentication...`,
+      duration: 3000,
+    });
+    
+    // In a real implementation, this would redirect to Replit's auth flow
+    setTimeout(() => {
+      window.open("https://replit.com/@dpgaus/LearnBruh", "_blank");
+    }, 1000);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-      <div className="w-full max-w-2xl mx-auto flex flex-col items-center justify-center py-20">
-        {/* Logo and title section */}
-        <div className="flex flex-col items-center justify-center mb-12">
-          {/* LearnBruh Logo */}
-          <img 
-            src="/book.png" 
-            alt="LearnBruh Logo" 
-            className="w-28 h-28 mb-5" 
-          />
-          
-          {/* App Name */}
-          <h1 className="text-4xl font-bold text-gray-900 tracking-tight">LearnBruh</h1>
-        </div>
-        
-        {/* Replit info card */}
-        <div className="w-full border border-gray-200 rounded-lg overflow-hidden">
-          {/* Header with Replit info */}
-          <div className="p-4 border-b border-gray-200 flex items-center">
-            <div className="flex items-center">
-              {/* Replit icon */}
-              <svg viewBox="0 0 16 16" fill="none" className="w-4 h-4 text-orange-500 mr-2">
-                <path d="M2 0H14L16 2V14L14 16H2L0 14V2L2 0Z" fill="#F26207"></path>
-                <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" fill="white"></path>
-                <path d="M8 4.5C4 4.5 3.5 8 3.5 8H12.5C12.5 8 12 4.5 8 4.5Z" fill="white"></path>
-                <path d="M8 11.5C12 11.5 12.5 8 12.5 8H3.5C3.5 8 4 11.5 8 11.5Z" fill="white"></path>
-              </svg>
-              {/* Username */}
-              <span className="text-gray-400 text-sm mr-1">@dpgaus</span>
-            </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md mx-auto">
+        {/* Sign up modal/card */}
+        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+          {/* Header */}
+          <div className="flex flex-col items-center justify-center p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">Sign up to fork this App</h2>
           </div>
           
-          {/* Button row */}
-          <div className="bg-gray-900 p-3 flex justify-center">
-            <a 
-              href="https://replit.com/@dpgaus/LearnBruh"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
+          {/* Auth buttons section */}
+          <div className="p-6 space-y-4">
+            {/* Google */}
+            <Button 
+              onClick={() => handleAuthClick("Google")}
+              className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2 h-11"
+              variant="outline"
             >
-              <svg 
-                className="w-4 h-4" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
+              <FaGoogle className="text-[#4285F4]" />
+              Continue with Google
+            </Button>
+            
+            {/* GitHub */}
+            <Button 
+              onClick={() => handleAuthClick("GitHub")}
+              className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2 h-11"
+              variant="outline"
+            >
+              <FaGithub className="text-black" />
+              Continue with GitHub
+            </Button>
+            
+            {/* Twitter/X */}
+            <Button 
+              onClick={() => handleAuthClick("X")}
+              className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-2 h-11"
+              variant="outline"
+            >
+              <FaTwitter className="text-[#1DA1F2]" />
+              Continue with X
+            </Button>
+            
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">OR</span>
+              </div>
+            </div>
+            
+            {/* Email & Password form */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" placeholder="Email" type="email" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" placeholder="Password" type="password" />
+              </div>
+              <Button 
+                className="w-full" 
+                onClick={() => handleAuthClick("Email")}
               >
-                <path d="M4 12V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 17L12 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M8 7L11.8 3.2C11.8545 3.13962 11.9221 3.09179 11.9978 3.05823C12.0735 3.02467 12.1553 3.00603 12.238 3.00321C12.3207 3.00039 12.4033 3.01342 12.4807 3.04148C12.558 3.06955 12.628 3.11207 12.686 3.168L16.686 7.168" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Open on Replit
+                Sign up
+              </Button>
+            </div>
+            
+            {/* Single sign-on */}
+            <Button 
+              onClick={() => handleAuthClick("SSO")}
+              className="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+              variant="outline"
+            >
+              Single sign-on (SSO)
+            </Button>
+          </div>
+          
+          {/* Terms and privacy policy */}
+          <div className="px-6 pb-4 text-xs text-center text-gray-500">
+            By continuing, you agree to Replit's<br />
+            <a href="https://replit.com/site/terms" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+              Terms of Service
+            </a>
+            {" and "}
+            <a href="https://replit.com/site/privacy" className="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">
+              Privacy Policy
             </a>
           </div>
           
-          {/* Mock README content */}
-          <div className="bg-gray-900 text-white p-6">
-            <h2 className="text-2xl font-bold mb-4">LearnBruh Learning Management System</h2>
-            <p className="text-gray-300 mb-6">A comprehensive learning management system for instructors and students.</p>
+          {/* Already have an account */}
+          <div className="px-6 pb-4 text-sm text-center">
+            <span className="text-gray-600">Already have an account?</span>{" "}
+            <a 
+              href="https://replit.com/login" 
+              className="text-blue-600 hover:underline" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              Log in
+            </a>
+          </div>
+          
+          {/* Get help & reCAPTCHA notice */}
+          <div className="px-6 pb-6 text-xs text-center space-y-2">
+            <a 
+              href="https://replit.com/help" 
+              className="text-blue-600 hover:underline block" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              Get help
+            </a>
+            <p className="text-gray-500">
+              This site is protected by reCAPTCHA Enterprise and the Google{" "}
+              <a 
+                href="https://policies.google.com/privacy" 
+                className="text-blue-600 hover:underline" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                Privacy Policy
+              </a>{" "}
+              and{" "}
+              <a 
+                href="https://policies.google.com/terms" 
+                className="text-blue-600 hover:underline" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                Terms of Service
+              </a>{" "}
+              apply.
+            </p>
           </div>
         </div>
       </div>
