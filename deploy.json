@@ -1,13 +1,13 @@
 {
-  "name": "LMS App",
+  "name": "CreatorOS App",
   "description": "Deploy this Learning Management System to Digital Ocean with one click.",
-  "repository": "https://github.com/dpgaus09/LMS",
+  "repository": "https://github.com/dpgaus09/CreatorOS",
   "services": [
     {
-      "name": "lms-app",
+      "name": "creatorOS-app",
       "github": {
         "branch": "main",
-        "repo": "LMS"
+        "repo": "CreatorOS"
       },
       "envs": [
         { "key": "NODE_ENV", "value": "production", "scope": "RUN_TIME" },
@@ -17,7 +17,7 @@
   ],
   "databases": [
     {
-      "name": "lms-db",
+      "name": "creatoros-db",
       "engine": "PG",
       "version": "14"
     }

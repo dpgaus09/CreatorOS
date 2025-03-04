@@ -1,37 +1,37 @@
 version: '3.8'
 
 services:
-  lms-app:
+  creatoros-app:
     build: .
-    container_name: lms-app
+    container_name: creatoros-app
     restart: always
     ports:
       - "3000:3000"
     depends_on:
-      - lms-db
+      - creatoros-db
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgres://postgres:postgres@lms-db:5432/lms
+      - DATABASE_URL=postgres://postgres:postgres@creatoros-db:5432/creatoros
     networks:
-      - lms-network
+      - creatoros-network
 
-  lms-db:
+  creatoros-db:
     image: postgres:14-alpine
-    container_name: lms-db
+    container_name: creatoros-db
     restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=lms
+      - POSTGRES_DB=creatoros
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
-      - lms-network
+      - creatoros-network
 
 networks:
-  lms-network:
+  creatoros-network:
     driver: bridge
 
 volumes:

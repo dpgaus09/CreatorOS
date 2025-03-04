@@ -7,7 +7,7 @@ A comprehensive learning management system for instructors and students.
 
 You can deploy this application to Digital Ocean with a single click:
 
-[![Deploy to DO](https://www.deploytodo.com/deploy-button.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/dpgaus09/LMS)
+[![Deploy to DO](https://www.deploytodo.com/deploy-button.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/dpgaus09/CreatorOS)
 
 ## For Clients: Getting Your Own Copy
 
@@ -81,8 +81,8 @@ You can deploy this application using Docker:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/dpgaus09/LMS.git
-cd LMS
+git clone https://github.com/dpgaus09/CreatorOS.git
+cd CreatorOS
 ```
 
 2. Start the application using Docker Compose:
