@@ -264,10 +264,10 @@ export default function StudentProfile() {
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" /> Password
           </CardTitle>
-          <CardDescription>Update your password or view your current one</CardDescription>
+          <CardDescription>View your current password</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Hidden Password Section */}
+          {/* Password Display Section */}
           <div className="mb-6">
             <div className="mb-2 font-medium">Current Password</div>
             <div className="relative">
@@ -297,79 +297,6 @@ export default function StudentProfile() {
                 : "Click the eye icon to reveal your password."}
             </p>
           </div>
-
-          {/* Password Change Form */}
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline">Change Password</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Change Password</DialogTitle>
-                <DialogDescription>
-                  Update your password. Make sure to use a strong password that's at least 6 characters long.
-                </DialogDescription>
-              </DialogHeader>
-
-              <Form {...passwordForm}>
-                <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                  <FormField
-                    control={passwordForm.control}
-                    name="currentPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={passwordForm.control}
-                    name="newPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={passwordForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm New Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <DialogFooter className="mt-6">
-                    <DialogClose asChild>
-                      <Button variant="outline" type="button">Cancel</Button>
-                    </DialogClose>
-                    <Button
-                      type="submit"
-                      disabled={updatePasswordMutation.isPending}
-                    >
-                      {updatePasswordMutation.isPending ? "Updating..." : "Update Password"}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
         </CardContent>
       </Card>
 
