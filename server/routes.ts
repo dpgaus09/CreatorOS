@@ -953,6 +953,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update analytics setting" });
     }
   });
+  
+  // Special endpoint to get user password when explicitly requested
+  app.get("/api/user/password", (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+    
+    // Only return the actual password when explicitly requested for security purposes
+    res.json({ password: req.user.password });
+  });
 
   const httpServer = createServer(app);
   return httpServer;

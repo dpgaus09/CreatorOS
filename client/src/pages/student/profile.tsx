@@ -73,6 +73,7 @@ export default function StudentProfile() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
+  const [actualPassword, setActualPassword] = useState("••••••••");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Profile update form
@@ -273,7 +274,7 @@ export default function StudentProfile() {
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
-                value={showPassword ? user.password : "••••••••"}
+                value={showPassword ? actualPassword : "••••••••"}
                 disabled
                 className="pr-10"
               />
@@ -282,7 +283,32 @@ export default function StudentProfile() {
                 size="icon"
                 type="button"
                 className="absolute right-0 top-0 h-full"
-                onClick={() => setShowPassword(!showPassword)}
+                onClick={async () => {
+                  if (!showPassword) {
+                    try {
+                      // Fetch the password from the server
+                      const response = await fetch('/api/user/password');
+                      if (response.ok) {
+                        const data = await response.json();
+                        setActualPassword(data.password);
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: "Failed to get password",
+                          variant: "destructive",
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Failed to fetch password:", error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to get password",
+                        variant: "destructive",
+                      });
+                    }
+                  }
+                  setShowPassword(!showPassword);
+                }}
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
