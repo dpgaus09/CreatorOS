@@ -49,6 +49,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register the analytics middleware
   app.use(analyticsMiddleware);
+  
+  // Get all instructors for student registration
+  app.get("/api/users/instructors", async (req, res) => {
+    try {
+      const instructors = await db
+        .select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+        })
+        .from(users)
+        .where(eq(users.role, "instructor"));
+      
+      res.json(instructors);
+    } catch (error) {
+      console.error("Error fetching instructors:", error);
+      res.status(500).json({ message: "Failed to fetch instructors" });
+    }
+  });
 
   // Create uploads directory if it doesn't exist
   if (!fs.existsSync('./uploads')) {

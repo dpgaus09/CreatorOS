@@ -33,12 +33,12 @@ export default function StudentRegister() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  const { data: settings } = useQuery({
+  const { data: settings } = useQuery<{value: string}>({
     queryKey: ["/api/settings/lms-name"],
   });
 
   // Get instructors for the dropdown
-  const { data: instructors, isLoading: isLoadingInstructors } = useQuery({
+  const { data: instructors = [], isLoading: isLoadingInstructors } = useQuery<{id: number, name: string, email: string}[]>({
     queryKey: ["/api/users/instructors"],
   });
 
