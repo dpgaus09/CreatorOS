@@ -961,6 +961,33 @@ export default function AdminSettings() {
                   </SelectContent>
                 </Select>
               </div>
+              
+              {/* Stripe Customer Portal URL */}
+              <div className="space-y-2 pt-6 border-t mt-6">
+                <Label htmlFor="stripe-portal-url">Stripe Customer Portal URL</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Enter your Stripe Customer Portal URL to allow students to manage their subscriptions.
+                  This can be found in your Stripe Dashboard under Customer Portal settings.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    id="stripe-portal-url"
+                    value={stripePortalUrl}
+                    onChange={(e) => setStripePortalUrl(e.target.value)}
+                    placeholder="Enter Stripe Customer Portal URL (e.g., https://billing.stripe.com/p/login/...)"
+                  />
+                  <Button
+                    onClick={handleSaveStripePortalUrl}
+                    disabled={updateStripePortalUrlMutation.isPending}
+                  >
+                    {updateStripePortalUrlMutation.isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

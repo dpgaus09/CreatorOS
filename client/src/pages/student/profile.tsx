@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff, ArrowLeft, User, Mail, Key, ShieldAlert } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, User, Mail, Key, ShieldAlert, CreditCard, ExternalLink } from "lucide-react";
 
 // Profile form schema
 const profileSchema = z.object({
@@ -75,6 +75,12 @@ export default function StudentProfile() {
   const [showPassword, setShowPassword] = useState(false);
   const [actualPassword, setActualPassword] = useState("••••••••");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  // Fetch the Stripe portal URL from settings
+  const { data: stripePortalUrlSetting } = useQuery({
+    queryKey: ["/api/settings/stripe-portal-url"],
+    enabled: !!user,
+  });
 
   // Profile update form
   const profileForm = useForm<ProfileFormValues>({
@@ -337,6 +343,35 @@ export default function StudentProfile() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Subscription Management Card */}
+      {stripePortalUrlSetting?.value && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5" /> Subscription Management
+            </CardTitle>
+            <CardDescription>
+              Manage your subscription and payment details
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p>
+                Access your Stripe Customer Portal to manage your subscription, update payment methods, 
+                view invoices, and more.
+              </p>
+              <Button 
+                className="flex items-center gap-2" 
+                onClick={() => window.open(stripePortalUrlSetting.value, '_blank')}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Manage Your Subscription
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Delete Account Card */}
       <Card className="border-destructive/20">
