@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
+import { setupAuth, comparePasswords, hashPassword } from "./auth";
 import { storage } from "./storage";
 import { insertCourseSchema, insertEnrollmentSchema, insertSettingSchema, insertImageSchema, users, insertAnnouncementSchema } from "@shared/schema";
 import { z } from "zod";
@@ -8,8 +8,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import express from 'express';
-import { scrypt, randomBytes } from "crypto";
-import { promisify } from "util";
+// Now importing password functions from auth.ts
 import { db } from "./db";
 import { eq, and, count } from "drizzle-orm";
 import { analyticsMiddleware, trackCourseView } from "./analytics-middleware";
@@ -36,13 +35,7 @@ const upload = multer({
   }
 });
 
-const scryptAsync = promisify(scrypt);
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
+// We're now importing hashPassword from auth.ts
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);

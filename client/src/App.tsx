@@ -19,6 +19,7 @@ import StudentsList from "@/pages/instructor/students-list";
 import { ProtectedRoute } from "./lib/protected-route";
 import PasswordReset from "@/pages/auth/password-reset";
 import AdminSettings from "@/pages/instructor/admin-settings";
+import StudentProfile from "@/pages/student/profile";
 import PublicCourseCatalog from "@/pages/public/course-catalog";
 import { AnnouncementBanner } from "@/components/announcement-banner";
 
@@ -98,6 +99,17 @@ function Router() {
           return (
             <Layout>
               <AdminSettings />
+            </Layout>
+          );
+        }}
+      />
+      <ProtectedRoute
+        path="/profile"
+        component={({ user }) => {
+          if (user?.role !== "student") return <NotFound />;
+          return (
+            <Layout>
+              <StudentProfile />
             </Layout>
           );
         }}
