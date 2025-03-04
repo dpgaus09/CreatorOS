@@ -11,7 +11,7 @@ import express from 'express';
 // Now importing password functions from auth.ts
 import { db } from "./db";
 import { eq, and, count } from "drizzle-orm";
-import { analyticsMiddleware, trackCourseView } from "./analytics-middleware";
+import { analyticsMiddleware, trackCourseView, trackCourseCompletion } from "./analytics-middleware";
 
 // Configure multer for handling file uploads
 const upload = multer({
@@ -742,6 +742,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.body
     );
     res.json(updatedEnrollment);
+  });
+  
+  // Route to track and record course completion
+  app.post("/api/courses/:courseId/complete", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "student") {
+      return res.sendStatus(401);
+    }
+
+    const courseId = parseInt(req.params.courseId);
+    if (isNaN(courseId)) {
+      return res.status(400).json({ message: "Invalid course ID" });
+    }
+
+    try {
+      // Track the course completion in analytics
+      await trackCourseCompletion(courseId);
+      
+      // Return success response
+      res.json({ 
+        success: true, 
+        message: "Course completion recorded successfully" 
+      });
+    } catch (error) {
+      console.error("Error recording course completion:", error);
+      res.status(500).json({ message: "Failed to record course completion" });
+    }
   });
 
   // Add this route after the existing user routes
