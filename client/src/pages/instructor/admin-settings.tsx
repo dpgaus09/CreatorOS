@@ -90,6 +90,7 @@ export default function AdminSettings() {
   const [announcementsEnabled, setAnnouncementsEnabled] = useState(true);
   const [showAnnouncementDialog, setShowAnnouncementDialog] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [stripePortalUrl, setStripePortalUrl] = useState("");
 
   // Settings query
   const { data: settings, isLoading } = useQuery({
@@ -109,6 +110,11 @@ export default function AdminSettings() {
   // Announcements settings query
   const { data: announcementsEnabledSetting } = useQuery({
     queryKey: ["/api/settings/announcements-enabled"],
+  });
+  
+  // Stripe portal URL query
+  const { data: stripePortalUrlSetting } = useQuery({
+    queryKey: ["/api/settings/stripe-portal-url"],
   });
 
   // Announcements query
@@ -214,6 +220,28 @@ export default function AdminSettings() {
       toast({
         title: "Settings updated",
         description: "Announcements settings have been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Update Stripe portal URL mutation
+  const updateStripePortalUrlMutation = useMutation({
+    mutationFn: async (value: string) => {
+      const res = await apiRequest("POST", "/api/settings/stripe-portal-url", { value });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/stripe-portal-url"] });
+      toast({
+        title: "Settings updated",
+        description: "Stripe customer portal URL has been updated successfully",
       });
     },
     onError: (error: Error) => {
@@ -505,6 +533,12 @@ export default function AdminSettings() {
       setAnnouncementsEnabled(announcementsEnabledSetting.value === "true");
     }
   }, [announcementsEnabledSetting]);
+  
+  useEffect(() => {
+    if (stripePortalUrlSetting?.value) {
+      setStripePortalUrl(stripePortalUrlSetting.value);
+    }
+  }, [stripePortalUrlSetting]);
 
   // Reset form when editing announcement changes
   useEffect(() => {
@@ -544,6 +578,10 @@ export default function AdminSettings() {
   const handleToggleAnnouncements = (enabled: boolean) => {
     setAnnouncementsEnabled(enabled);
     updateAnnouncementsEnabledMutation.mutate(enabled);
+  };
+  
+  const handleSaveStripePortalUrl = () => {
+    updateStripePortalUrlMutation.mutate(stripePortalUrl);
   };
 
   const handleDeleteStudent = (student: Student) => {

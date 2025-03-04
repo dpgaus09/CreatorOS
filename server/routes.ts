@@ -113,6 +113,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update enrollment URL" });
     }
   });
+  
+  // Stripe customer portal URL routes
+  app.get("/api/settings/stripe-portal-url", async (req, res) => {
+    try {
+      const setting = await storage.getSetting("stripe-portal-url");
+      res.json(setting || { value: "" });
+    } catch (error) {
+      console.error("Error fetching Stripe portal URL:", error);
+      res.status(500).json({ message: "Failed to fetch Stripe portal URL" });
+    }
+  });
+
+  app.post("/api/settings/stripe-portal-url", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.role !== "instructor") {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const settingData = insertSettingSchema.parse({
+        name: "stripe-portal-url",
+        value: req.body.value
+      });
+
+      const setting = await storage.updateSetting(settingData.name, settingData.value);
+      res.json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.message });
+      }
+      console.error("Error updating Stripe portal URL:", error);
+      res.status(500).json({ message: "Failed to update Stripe portal URL" });
+    }
+  });
 
   // Add the logo upload endpoint after existing settings endpoints
   app.post("/api/settings/logo", upload.single('logo'), async (req, res) => {
