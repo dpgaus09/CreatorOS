@@ -1,0 +1,25 @@
+{
+  "name": "LMS App",
+  "description": "Deploy this Learning Management System to Digital Ocean with one click.",
+  "repository": "https://github.com/dpgaus09/LMS",
+  "services": [
+    {
+      "name": "lms-app",
+      "github": {
+        "branch": "main",
+        "repo": "LMS"
+      },
+      "envs": [
+        { "key": "NODE_ENV", "value": "production", "scope": "RUN_TIME" },
+        { "key": "DATABASE_URL", "type": "SECRET", "scope": "RUN_TIME" }
+      ]
+    }
+  ],
+  "databases": [
+    {
+      "name": "lms-db",
+      "engine": "PG",
+      "version": "14"
+    }
+  ]
+}

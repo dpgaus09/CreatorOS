@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  lms-app:
+    build: .
+    container_name: lms-app
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - lms-db
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://postgres:postgres@lms-db:5432/lms
+    networks:
+      - lms-network
+
+  lms-db:
+    image: postgres:14-alpine
+    container_name: lms-db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=lms
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - lms-network
+
+networks:
+  lms-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

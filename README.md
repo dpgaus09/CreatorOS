@@ -3,6 +3,12 @@
 
 A comprehensive learning management system for instructors and students.
 
+## Deploy Your Own Instance
+
+You can deploy this application to Digital Ocean with a single click:
+
+[![Deploy to DO](https://www.deploytodo.com/deploy-button.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/dpgaus09/LMS)
+
 ## For Clients: Getting Your Own Copy
 
 To get your own copy of the LearnBruh LMS:
@@ -68,6 +74,25 @@ To customize the LMS for your organization:
 
 - Node.js (automatically provided by Replit)
 - PostgreSQL (automatically provided by Replit)
+
+### Docker Deployment
+
+You can deploy this application using Docker:
+
+1. Clone the repository:
+```bash
+git clone https://github.com/dpgaus09/LMS.git
+cd LMS
+```
+
+2. Start the application using Docker Compose:
+```bash
+docker compose up -d
+```
+
+This will start both the application and a PostgreSQL database in containers.
+
+3. Access the application at http://localhost:3000
 
 ### For Developers
 
