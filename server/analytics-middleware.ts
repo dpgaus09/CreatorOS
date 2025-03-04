@@ -37,21 +37,10 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
   // Prepare response interceptor to track after response is sent
   const originalEnd = res.end;
   res.end = function(chunk?: any, encoding?: BufferEncoding | undefined, callback?: (() => void) | undefined): Response<any, Record<string, any>> {
-    // Restore original end
-    res.end = originalEnd;
-
-    // Call original end with appropriate arguments
-    if (typeof chunk === 'function') {
-      return originalEnd.call(this, chunk);
-    } else if (typeof encoding === 'function') {
-      return originalEnd.call(this, chunk, encoding);
-    } else {
-      return originalEnd.call(this, chunk, encoding, callback);
-    }
-
-    // Track page view for GET requests
-    if (req.method === 'GET' && !req.path.startsWith('/api/')) {
-      try {
+    // Track analytics before completing the response
+    try {
+      // Track page view for GET requests to non-API paths
+      if (req.method === 'GET' && !req.path.startsWith('/api/')) {
         const pageViewData = {
           userId,
           path: req.path,
@@ -62,15 +51,13 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
           ipAddress: req.ip || null,
         };
 
-        storage.createPageView(pageViewData);
-      } catch (error) {
-        console.error("Error tracking page view:", error);
+        storage.createPageView(pageViewData).catch(err => {
+          console.error("Error tracking page view:", err);
+        });
       }
-    }
 
-    // Track API requests as user events
-    if (req.path.startsWith('/api/') && !req.path.startsWith('/api/analytics')) {
-      try {
+      // Track API requests as user events
+      if (req.path.startsWith('/api/') && !req.path.startsWith('/api/analytics')) {
         const eventData = {
           userId,
           eventType: `api_${req.method.toLowerCase()}`,
@@ -82,41 +69,54 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
           path: req.path,
         };
 
-        storage.createUserEvent(eventData);
-      } catch (error) {
-        console.error("Error tracking user event:", error);
+        storage.createUserEvent(eventData).catch(err => {
+          console.error("Error tracking user event:", err);
+        });
       }
-    }
 
-    // Update session data
-    if (sessionId) {
-      // Use Promise to handle async operations outside the sync response handler
-      Promise.resolve().then(async () => {
-        try {
-          const existingSession = await storage.getSessionBySessionId(sessionId);
+      // Temporarily disable session tracking to fix app crash
+      /*
+      // Update session data
+      if (sessionId) {
+        // Use Promise to handle async operations outside the sync response handler
+        Promise.resolve().then(async () => {
+          try {
+            const existingSession = await storage.getSessionBySessionId(sessionId);
 
-          if (existingSession) {
-            // Update existing session
-            storage.updateSession(existingSession.id, {
-              endTime: new Date(),
-              duration: Math.floor((Date.now() - existingSession.startTime.getTime()) / 1000),
-            });
-          } else if (userId) {
-            // Create new session
-            storage.createSession({
-              userId,
-              sessionId,
-              deviceType: getDeviceType(req.headers['user-agent'] || ''),
-              browserInfo: req.headers['user-agent'] || null,
-            });
+            if (existingSession) {
+              // Update existing session
+              storage.updateSession(existingSession.id, {
+                endTime: new Date(),
+                duration: Math.floor((Date.now() - existingSession.startTime.getTime()) / 1000),
+              });
+            } else if (userId) {
+              // Create new session
+              storage.createSession({
+                userId,
+                sessionId,
+                deviceType: getDeviceType(req.headers['user-agent'] || ''),
+                browserInfo: req.headers['user-agent'] || null,
+              });
+            }
+          } catch (error) {
+            console.error("Error tracking session:", error);
           }
-        } catch (error) {
-          console.error("Error tracking session:", error);
-        }
-      });
+        });
+      }
+      */
+    } catch (error) {
+      console.error("Error in analytics tracking:", error);
     }
 
-    return res;
+    // Restore original end and call it with appropriate arguments
+    res.end = originalEnd;
+    if (typeof chunk === 'function') {
+      return originalEnd.call(this, chunk);
+    } else if (typeof encoding === 'function') {
+      return originalEnd.call(this, chunk, encoding);
+    } else {
+      return originalEnd.call(this, chunk, encoding, callback);
+    }
   };
 
   next();

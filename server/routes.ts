@@ -641,8 +641,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.sendStatus(404);
       }
 
-      // Track course view for analytics
-      await trackCourseView(courseId, req.user.id);
+      // Track course view for analytics - only track student views, not instructor previews
+      if (req.user.role === "student") {
+        console.log(`Tracking course view for course ID: ${courseId}, user ID: ${req.user.id}`);
+        await trackCourseView(courseId, req.user.id);
+      }
 
       res.json(course);
     } catch (error) {
@@ -756,6 +759,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      console.log(`Recording course completion for course ID: ${courseId}`);
+      
       // Track the course completion in analytics
       await trackCourseCompletion(courseId);
       
