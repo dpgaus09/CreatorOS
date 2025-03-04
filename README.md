@@ -3,15 +3,23 @@
 
 A comprehensive learning management system for instructors and students.
 
-## For Clients: Getting Your Own Copy
+## For Non-Technical Users: Getting Your Own Copy (Easiest Method)
 
-To get your own copy of the LearnBruh LMS:
+Follow these step-by-step instructions to deploy your own copy of LearnBruh LMS:
 
-1. Create a Replit account if you don't already have one
-2. Request an invite from your vendor to join their Replit Team
-3. Once on the team, use the "Fork" button at the top of this Repl
-4. Follow the on-screen instructions to create your own copy
-5. Your data and users will be separate from other instances
+1. Create a [Replit account](https://replit.com/signup) if you don't already have one (it's free)
+2. Click the "Fork" button at the top right of this Repl
+   - This creates your own copy of the entire application
+3. Wait for your copy to be created (this takes about 1-2 minutes)
+4. Click the green "Run" button at the top of the screen to start your LMS
+5. That's it! Your LearnBruh LMS is now running
+
+Your copy will have:
+- Its own database
+- Separate user accounts
+- Complete independence from other instances
+
+No coding or technical knowledge required - just click "Fork" and "Run"!
 
 This process gives you a complete, independent copy of the LearnBruh LMS that you can customize and manage.
 
