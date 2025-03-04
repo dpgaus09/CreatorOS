@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { CourseCompletion } from "@/components/course-completion";
 
 function formatVideoUrl(url: string) {
   if (!url) return '';
@@ -61,6 +62,10 @@ export default function CourseView() {
   const { user } = useAuth();
   const { speak } = useAccessibility();
   const isInstructor = user?.role === "instructor";
+  
+  // State for course completion celebration
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [previousProgress, setPreviousProgress] = useState<number>(0);
 
   const { data: course, isLoading: loadingCourse } = useQuery<Course>({
     queryKey: [`/api/courses/${courseId}`],
@@ -82,6 +87,28 @@ export default function CourseView() {
     }
   }, [course]);
 
+  // Track the previous progress to detect course completion
+  useEffect(() => {
+    if (!loadingEnrollment && enrollment && course) {
+      const totalLessons = (course.modules as Module[]).reduce(
+        (acc, module) => acc + module.lessons.length, 0
+      );
+      const completedLessons = Object.keys(enrollment.progress || {}).length;
+      const currentProgress = Math.round((completedLessons / totalLessons) * 100);
+      
+      // If previously progress wasn't 100% but now it is, show celebration
+      if (previousProgress !== 100 && currentProgress === 100) {
+        setShowCelebration(true);
+        
+        // Track this course completion in analytics
+        apiRequest("POST", `/api/courses/${courseId}/complete`, {})
+          .catch(error => console.error("Failed to track course completion:", error));
+      }
+      
+      setPreviousProgress(currentProgress);
+    }
+  }, [enrollment, course, previousProgress, courseId, loadingEnrollment]);
+
   const completeLessonMutation = useMutation({
     mutationFn: async (lessonId: string) => {
       if (courseId <= 0) throw new Error("Invalid course ID");
@@ -91,7 +118,7 @@ export default function CourseView() {
         "PATCH",
         `/api/enrollments/${courseId}/progress`,
         {
-          ...enrollment?.progress,
+          ...(enrollment?.progress || {}),
           [lessonId]: true,
         }
       );
@@ -142,6 +169,14 @@ export default function CourseView() {
 
   return (
     <div className="container max-w-5xl mx-auto py-8 space-y-6">
+      {/* Course Completion Celebration */}
+      {showCelebration && (
+        <CourseCompletion 
+          courseName={course.title} 
+          onClose={() => setShowCelebration(false)} 
+        />
+      )}
+      
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
