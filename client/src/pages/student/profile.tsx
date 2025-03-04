@@ -72,8 +72,6 @@ export default function StudentProfile() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [showPassword, setShowPassword] = useState(false);
-  const [actualPassword, setActualPassword] = useState("••••••••");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Fetch the Stripe portal URL from settings
@@ -269,77 +267,23 @@ export default function StudentProfile() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Key className="h-5 w-5" /> Password
+            <Key className="h-5 w-5" /> Reset Password
           </CardTitle>
-          <CardDescription>Password security information</CardDescription>
+          <CardDescription>Change your account password</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Password Display Section */}
           <div className="mb-6">
-            <div className="mb-2 font-medium">Current Password</div>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                value={showPassword ? actualPassword : "••••••••"}
-                disabled
-                className="pr-10"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                className="absolute right-0 top-0 h-full"
-                onClick={async () => {
-                  if (!showPassword) {
-                    try {
-                      // Fetch the password from the server
-                      const response = await fetch('/api/user/password');
-                      if (response.ok) {
-                        const data = await response.json();
-                        
-                        // Use the placeholder password from the server
-                        if (data.password) {
-                          setActualPassword(data.password);
-                        }
-                        
-                        // Show a message about password security
-                        if (data.message) {
-                          toast({
-                            title: "Password Security",
-                            description: data.message,
-                          });
-                        }
-                      } else {
-                        toast({
-                          title: "Error",
-                          description: "Failed to get password",
-                          variant: "destructive",
-                        });
-                      }
-                    } catch (error) {
-                      console.error("Failed to fetch password:", error);
-                      toast({
-                        title: "Error",
-                        description: "Failed to get password",
-                        variant: "destructive",
-                      });
-                    }
-                  }
-                  setShowPassword(!showPassword);
-                }}
-              >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {showPassword
-                ? "For security reasons, we cannot display your actual password. If you need to change it, please use the reset password function."
-                : "Click the eye icon for password security information."}
+            <p className="mb-4 text-sm text-muted-foreground">
+              For security reasons, we don't display your current password. If you need to change your password,
+              please use our secure password reset functionality.
             </p>
+            <Button
+              className="flex items-center gap-2"
+              onClick={() => setLocation("/auth/reset-password")}
+            >
+              <Key className="h-4 w-4" />
+              Reset Password
+            </Button>
           </div>
         </CardContent>
       </Card>
