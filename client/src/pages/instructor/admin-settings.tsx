@@ -128,12 +128,32 @@ export default function AdminSettings() {
   });
 
   // Analytics data queries
-  const { data: analyticsData, isLoading: isLoadingAnalytics } = useQuery({
+  const { data: analyticsData, isLoading: isLoadingAnalytics } = useQuery<{
+    summary: {
+      userCount: number;
+      totalPageViews: number;
+      activeSessionCount: number;
+      avgSessionDuration: number;
+      completionRate: number;
+      courseCount: number;
+      publishedCourseCount: number;
+      enrollmentCount: number;
+      activeEnrollmentCount: number;
+      newUserCount: number;
+    };
+    deviceBreakdown: {deviceType: string, count: number}[];
+    popularPages: {path: string, count: number}[];
+    mostViewedCourses: {
+      course: Course;
+      totalViews: number;
+      totalCompletions: number;
+    }[];
+  }>({
     queryKey: ["/api/analytics/dashboard"],
     enabled: analyticsEnabled,
   });
 
-  const { data: userActivityData } = useQuery({
+  const { data: userActivityData } = useQuery<{date: string, views: number, uniqueUsers: number}[]>({
     queryKey: ["/api/analytics/user-activity"],
     enabled: analyticsEnabled,
   });

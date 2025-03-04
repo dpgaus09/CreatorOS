@@ -839,7 +839,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Initialize response object with default values
-      const response: any = {
+      const response = {
         summary: {
           userCount: 0,
           totalPageViews: 0,
@@ -852,9 +852,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           activeEnrollmentCount: 0,
           newUserCount: 0,
         },
-        deviceBreakdown: [],
-        popularPages: [],
-        mostViewedCourses: [],
+        deviceBreakdown: [] as {deviceType: string, count: number}[],
+        popularPages: [] as {path: string, count: number}[],
+        mostViewedCourses: [] as any[],
       };
 
       // First, get all the basic stats
@@ -873,23 +873,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const allEnrollments = students.flatMap(s => s.enrollments);
         response.summary.enrollmentCount = allEnrollments.length;
 
-        // Prepare course data with analytics
-        const courseAnalytics = await storage.getAllCourseAnalytics();
-        const coursesWithAnalytics = publishedCourses.map(course => {
-          const analytics = courseAnalytics.find(a => a.courseId === course.id);
-          return {
-            course,
-            totalViews: analytics?.totalViews || 0,
-            totalCompletions: analytics?.totalCompletions || 0,
-          };
-        });
+        // Get total page views
+        response.summary.totalPageViews = await storage.getPageViewCount();
 
-        // Sort by views (descending)
-        response.mostViewedCourses = coursesWithAnalytics
-          .sort((a, b) => b.totalViews - a.totalViews)
-          .slice(0, 5);
+        // Get active sessions count
+        try {
+          response.summary.activeSessionCount = await storage.getActiveSessionsCount();
+        } catch (error) {
+          console.error("Error getting active session count:", error);
+        }
+
+        // Get average session duration
+        try {
+          response.summary.avgSessionDuration = await storage.getAverageSessionDuration();
+        } catch (error) {
+          console.error("Error getting average session duration:", error);
+        }
+
+        // Get device breakdown
+        try {
+          response.deviceBreakdown = await storage.getDeviceBreakdown();
+        } catch (error) {
+          console.error("Error getting device breakdown:", error);
+        }
+
+        // Get popular pages
+        try {
+          response.popularPages = await storage.getPopularPages(5);
+        } catch (error) {
+          console.error("Error getting popular pages:", error);
+        }
+
+        // Get most viewed courses
+        try {
+          const mostViewedCourses = await storage.getMostViewedCourses(5);
+          
+          // Transform to expected format
+          response.mostViewedCourses = mostViewedCourses.map(item => ({
+            course: item.course,
+            totalViews: item.totalViews,
+            totalCompletions: item.totalCompletions,
+          }));
+        } catch (error) {
+          console.error("Error getting most viewed courses:", error);
+          
+          // Fallback for most viewed courses if the above fails
+          const courseAnalytics = await storage.getAllCourseAnalytics();
+          const coursesWithAnalytics = publishedCourses.map(course => {
+            const analytics = courseAnalytics.find(a => a.courseId === course.id);
+            return {
+              course,
+              totalViews: analytics?.totalViews || 0,
+              totalCompletions: analytics?.totalCompletions || 0,
+            };
+          });
+
+          // Sort by views (descending)
+          response.mostViewedCourses = coursesWithAnalytics
+            .sort((a, b) => b.totalViews - a.totalViews)
+            .slice(0, 5);
+        }
 
         // Calculate completion rate from real data
+        const courseAnalytics = await storage.getAllCourseAnalytics();
         const totalCompletions = courseAnalytics.reduce((sum, item) => sum + item.totalCompletions, 0);
         const totalViews = courseAnalytics.reduce((sum, item) => sum + item.totalViews, 0);
         response.summary.completionRate = totalViews > 0 ? Math.round((totalCompletions / totalViews) * 100) : 0;
