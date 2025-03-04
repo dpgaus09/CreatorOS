@@ -14,7 +14,6 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getAllStudents(): Promise<User[]>;
-  getStudentsByInstructor(instructorId: number): Promise<User[]>; // Get students for a specific instructor
   updateUser(id: number, updates: Partial<User>): Promise<User>;
   deleteStudent(id: number): Promise<void>; // Added this method
 
@@ -108,19 +107,6 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(users)
       .where(eq(users.role, "student"))
-      .orderBy(users.createdAt);
-  }
-  
-  async getStudentsByInstructor(instructorId: number): Promise<User[]> {
-    return db
-      .select()
-      .from(users)
-      .where(
-        and(
-          eq(users.role, "student"),
-          eq(users.instructorId, instructorId)
-        )
-      )
       .orderBy(users.createdAt);
   }
 

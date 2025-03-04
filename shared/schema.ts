@@ -20,7 +20,6 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["instructor", "student"] }).notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
-  instructorId: integer("instructor_id"), // Foreign key to self-reference instructors
   accessibility: jsonb("accessibility").notNull().default({
     highContrast: false,
     textToSpeech: false,
@@ -107,17 +106,11 @@ export const sessionData = pgTable("session_data", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many, one }) => ({
+export const usersRelations = relations(users, ({ many }) => ({
   enrollments: many(enrollments),
   pageViews: many(pageViews),
   userEvents: many(userEvents),
   sessions: many(sessionData),
-  instructor: one(users, {
-    fields: [users.instructorId],
-    references: [users.id],
-    relationName: "studentToInstructor",
-  }),
-  students: many(users, { relationName: "studentToInstructor" }),
 }));
 
 export const coursesRelations = relations(courses, ({ many }) => ({
