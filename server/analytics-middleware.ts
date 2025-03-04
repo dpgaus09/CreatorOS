@@ -36,7 +36,14 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
 
   // Prepare response interceptor to track after response is sent
   const originalEnd = res.end;
-  res.end = function(chunk?: any, encoding?: BufferEncoding | undefined, callback?: (() => void) | undefined): Response<any, Record<string, any>> {
+  
+  // @ts-ignore: We're intentionally overriding the end method with our own implementation
+  res.end = function(
+    this: Response, 
+    chunk?: any, 
+    encoding?: any, 
+    callback?: any
+  ) {
     // Track analytics before completing the response
     try {
       // Track page view for GET requests to non-API paths
@@ -108,12 +115,14 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
       console.error("Error in analytics tracking:", error);
     }
 
-    // Restore original end and call it with appropriate arguments
+    // Restore original end method
     res.end = originalEnd;
+    
+    // Handle different overloads of the end method
     if (typeof chunk === 'function') {
-      return originalEnd.call(this, chunk);
+      return originalEnd.call(this);
     } else if (typeof encoding === 'function') {
-      return originalEnd.call(this, chunk, encoding);
+      return originalEnd.call(this, chunk, undefined, encoding);
     } else {
       return originalEnd.call(this, chunk, encoding, callback);
     }
