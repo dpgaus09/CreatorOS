@@ -1,13 +1,14 @@
-import { Course, Enrollment, Module } from "@shared/schema";
+import { Course, Enrollment, Module, Image } from "@shared/schema";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Book, CheckCircle, Users, Clock, Edit, Eye } from "lucide-react";
+import { Book, CheckCircle, Users, Clock, Edit, Eye, ImageIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAccessibility } from "@/hooks/use-accessibility";
+import { useState, useEffect } from "react";
 
 interface CourseCardProps {
   course: Course;
@@ -19,6 +20,24 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { speak } = useAccessibility();
+  const [courseImage, setCourseImage] = useState<Image | null>(null);
+  
+  // Fetch course image
+  const { data: courseImages, isLoading: loadingImages } = useQuery<Image[]>({
+    queryKey: [`/api/courses/${course.id}/images`],
+    enabled: !!course.id,
+  });
+  
+  // Select the latest image when images are loaded
+  useEffect(() => {
+    if (courseImages?.length) {
+      // Sort by createdAt date and get the most recent one
+      const latestImage = [...courseImages].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
+      setCourseImage(latestImage);
+    }
+  }, [courseImages]);
 
   const enrollMutation = useMutation({
     mutationFn: async () => {
@@ -82,45 +101,60 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
   };
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card className="relative overflow-hidden flex flex-col h-full">
+      {/* Badge for instructor view (published/draft status) */}
       {role === "instructor" && (
-        <div className={`absolute top-0 right-0 p-2 rounded-bl-lg ${
-          course.published ? "bg-green-500/10" : "bg-yellow-500/10"
+        <div className={`absolute top-0 right-0 z-10 p-2 rounded-bl-lg ${
+          course.published ? "bg-green-500/80" : "bg-yellow-500/80"
         }`}>
-          <span className={`text-sm font-medium ${
-            course.published ? "text-green-600" : "text-yellow-600"
-          }`}
+          <span className={`text-sm font-medium text-white`}
             onMouseEnter={() => speak(course.published ? "Published" : "Draft")}
           >
             {course.published ? "Published" : "Draft"}
           </span>
         </div>
       )}
-
-      <CardHeader>
-        <CardTitle className="flex items-start justify-between">
-          <div className="space-y-1">
-            <h3 
-              className="text-xl font-bold"
-              onMouseEnter={() => speak(course.title)}
-              tabIndex={0}
-              onFocus={() => speak(course.title)}
-            >
-              {course.title}
-            </h3>
-            <p 
-              className="text-sm text-muted-foreground line-clamp-2"
-              onMouseEnter={() => speak(course.description)}
-              tabIndex={0}
-              onFocus={() => speak(course.description)}
-            >
-              {course.description}
-            </p>
+      
+      {/* Course background image with overlay */}
+      {courseImage ? (
+        <div 
+          className="absolute inset-0 w-full h-48 bg-cover bg-center"
+          style={{ backgroundImage: `url(${courseImage.url})` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent"></div>
+        </div>
+      ) : (
+        <div className="absolute inset-0 w-full h-48 bg-gradient-to-r from-primary/20 to-primary/40">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <ImageIcon className="h-12 w-12 text-primary/30" />
           </div>
-        </CardTitle>
-      </CardHeader>
+        </div>
+      )}
+      
+      {/* Add spacer to position content below the image */}
+      <div className="h-48"></div>
+      
+      {/* Course content positioned below the image */}
+      <div className="relative z-10 px-6 pb-4 pt-6 flex-grow flex flex-col">
+        <div className="mb-4">
+          <h3 
+            className="text-xl font-bold mb-1"
+            onMouseEnter={() => speak(course.title)}
+            tabIndex={0}
+            onFocus={() => speak(course.title)}
+          >
+            {course.title}
+          </h3>
+          <p 
+            className="text-sm text-muted-foreground line-clamp-2"
+            onMouseEnter={() => speak(course.description)}
+            tabIndex={0}
+            onFocus={() => speak(course.description)}
+          >
+            {course.description}
+          </p>
+        </div>
 
-      <CardContent>
         <div className="grid grid-cols-2 gap-4 text-sm mb-4">
           <div 
             className="flex items-center gap-2"
@@ -144,7 +178,7 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
 
         {enrollment && (
           <div 
-            className="space-y-2"
+            className="space-y-2 mt-auto"
             onMouseEnter={() => speak(`Progress: ${getProgress()}%`)}
             tabIndex={0}
             onFocus={() => speak(`Progress: ${getProgress()}%`)}
@@ -156,7 +190,7 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
             <Progress value={getProgress()} className="h-2" />
           </div>
         )}
-      </CardContent>
+      </div>
 
       <CardFooter className="flex gap-2">
         {role === "instructor" ? (

@@ -414,6 +414,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Serve uploaded files
   app.use('/uploads', express.static('uploads'));
+  
+  // Get images for a course
+  app.get("/api/courses/:courseId/images", async (req, res) => {
+    const courseId = parseInt(req.params.courseId);
+    if (isNaN(courseId)) {
+      return res.status(400).json({ message: "Invalid course ID" });
+    }
+    
+    try {
+      const images = await storage.getImagesByCourse(courseId);
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching course images:", error);
+      res.status(500).json({ message: "Failed to fetch images" });
+    }
+  });
 
   // Student routes
   app.get("/api/students", async (req, res) => {
