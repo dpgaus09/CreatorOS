@@ -404,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add a DELETE endpoint for students
+  // Add a DELETE endpoint for students (admin use)
   app.delete("/api/students/:id", async (req, res) => {
     if (!req.isAuthenticated() || req.user.role !== "instructor") {
       return res.sendStatus(401);
@@ -428,6 +428,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting student:", error);
       res.status(500).json({ message: "Failed to delete student" });
+    }
+  });
+  
+  // Add endpoint for users to update their profile
+  app.patch("/api/user/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { name, email } = req.body;
+      
+      // Update user profile (name and email only)
+      const updatedUser = await storage.updateUser(req.user.id, {
+        name,
+        email
+      });
+
+      // Don't send password back to client
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+  
+  // Add endpoint for user to update their password
+  app.patch("/api/user/password", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { currentPassword, newPassword } = req.body;
+      
+      // Get current user
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Verify current password
+      const passwordMatch = await comparePasswords(currentPassword, user.password);
+      if (!passwordMatch) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+      
+      // Hash and update new password
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUser(req.user.id, {
+        password: hashedPassword
+      });
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+  
+  // Add endpoint for user to delete their own account
+  app.delete("/api/user/account", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      // Only students can delete their own accounts through this endpoint
+      if (req.user.role === "student") {
+        await storage.deleteStudent(req.user.id);
+        // Destroy session
+        req.logout((err) => {
+          if (err) {
+            console.error("Error logging out:", err);
+            return res.status(500).json({ message: "Error during logout" });
+          }
+          res.json({ message: "Account deleted successfully" });
+        });
+      } else {
+        res.status(403).json({ message: "Only students can delete their accounts" });
+      }
+    } catch (error) {
+      console.error("Error deleting account:", error);
+      res.status(500).json({ message: "Failed to delete account" });
     }
   });
 
