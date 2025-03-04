@@ -72,6 +72,16 @@ export default function CourseView() {
     enabled: courseId > 0 && !isInstructor, // Don't fetch enrollment for instructor preview
   });
 
+  // State to track which module is open
+  const [openModule, setOpenModule] = useState<string | undefined>(undefined);
+
+  // Set the first module to be open when course data is loaded
+  useEffect(() => {
+    if (course && course.modules && (course.modules as Module[]).length > 0) {
+      setOpenModule((course.modules as Module[])[0].id);
+    }
+  }, [course]);
+
   const completeLessonMutation = useMutation({
     mutationFn: async (lessonId: string) => {
       if (courseId <= 0) throw new Error("Invalid course ID");
@@ -206,7 +216,7 @@ export default function CourseView() {
         </Card>
       )}
 
-      <Accordion type="single" collapsible className="w-full">
+      <Accordion type="single" collapsible className="w-full" value={openModule} onValueChange={setOpenModule}>
         {modules.map((module) => (
           <AccordionItem key={module.id} value={module.id}>
             <AccordionTrigger
