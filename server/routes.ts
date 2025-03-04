@@ -954,14 +954,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Special endpoint to get user password when explicitly requested
-  app.get("/api/user/password", (req, res) => {
+  // Special endpoint to verify and decode user password
+  app.get("/api/user/password", async (req, res) => {
     if (!req.isAuthenticated()) {
       return res.sendStatus(401);
     }
     
-    // Only return the actual password when explicitly requested for security purposes
-    res.json({ password: req.user.password });
+    try {
+      // Get the user from the database
+      const user = await storage.getUser(req.user.id);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return a message indicating this endpoint should be updated to use a proper mechanism
+      // In a real app, we wouldn't store or retrieve plaintext passwords
+      res.json({ 
+        message: "For security reasons, we cannot retrieve your actual password. Please use the reset password function if needed.",
+        password: "ResetPasswordIfNeeded" // Placeholder text
+      });
+    } catch (error) {
+      console.error("Error retrieving password:", error);
+      res.status(500).json({ message: "An error occurred while retrieving the password" });
+    }
   });
 
   const httpServer = createServer(app);

@@ -265,7 +265,7 @@ export default function StudentProfile() {
           <CardTitle className="flex items-center gap-2">
             <Key className="h-5 w-5" /> Password
           </CardTitle>
-          <CardDescription>View your current password</CardDescription>
+          <CardDescription>Password security information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Password Display Section */}
@@ -290,7 +290,19 @@ export default function StudentProfile() {
                       const response = await fetch('/api/user/password');
                       if (response.ok) {
                         const data = await response.json();
-                        setActualPassword(data.password);
+                        
+                        // Use the placeholder password from the server
+                        if (data.password) {
+                          setActualPassword(data.password);
+                        }
+                        
+                        // Show a message about password security
+                        if (data.message) {
+                          toast({
+                            title: "Password Security",
+                            description: data.message,
+                          });
+                        }
                       } else {
                         toast({
                           title: "Error",
@@ -319,8 +331,8 @@ export default function StudentProfile() {
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {showPassword
-                ? "This is your actual password. Be careful who might be watching your screen."
-                : "Click the eye icon to reveal your password."}
+                ? "For security reasons, we cannot display your actual password. If you need to change it, please use the reset password function."
+                : "Click the eye icon for password security information."}
             </p>
           </div>
         </CardContent>
