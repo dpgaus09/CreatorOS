@@ -20,7 +20,6 @@ import { ProtectedRoute } from "./lib/protected-route";
 import PasswordReset from "@/pages/auth/password-reset";
 import AdminSettings from "@/pages/instructor/admin-settings";
 import PublicCourseCatalog from "@/pages/public/course-catalog";
-import RemixPage from "@/pages/public/remix";
 import { AnnouncementBanner } from "@/components/announcement-banner";
 
 function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
@@ -43,7 +42,6 @@ function Router() {
       <Route path="/auth/register/student" component={StudentRegister} />
       <Route path="/auth/reset-password" component={PasswordReset} />
       <Route path="/courses" component={PublicCourseCatalog} />
-      <Route path="/remix" component={RemixPage} />
       <ProtectedRoute 
         path="/" 
         component={({ user }) => (
