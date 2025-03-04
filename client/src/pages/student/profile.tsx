@@ -269,7 +269,7 @@ export default function StudentProfile() {
         <CardContent className="space-y-6">
           {/* Hidden Password Section */}
           <div className="mb-6">
-            <FormLabel className="mb-2 block">Current Password</FormLabel>
+            <div className="mb-2 font-medium">Current Password</div>
             <div className="relative">
               <Input
                 type={showPassword ? "text" : "password"}
