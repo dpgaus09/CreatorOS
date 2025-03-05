@@ -25,7 +25,11 @@ const __dirname = path.dirname(__filename);
 // Detect if we're running in Digital Ocean App Platform
 const isDigitalOcean = process.env.DIGITAL_OCEAN_APP_PLATFORM === 'true' || 
                      process.env.DYNO || 
-                     process.env.AWS_EXECUTION_ENV?.includes('DO_App_Platform');
+                     process.env.AWS_EXECUTION_ENV?.includes('DO_App_Platform') ||
+                     // Additional checks for DO environment
+                     process.env._?.includes('/do/bin') ||
+                     fs.existsSync('/var/run/s6/services') ||  // DO uses s6 supervisor
+                     fs.existsSync('/.dockerenv');  // Check for Docker environment
 
 // Possible locations for our application, in priority order
 const possibleLocations = [
@@ -34,11 +38,21 @@ const possibleLocations = [
   // Digital Ocean App Platform locations
   path.join('/workspace', 'dist', 'index.js'),
   path.join('/app', 'dist', 'index.js'),
+  path.join('/srv', 'dist', 'index.js'),
   // Fallback directory checks
   path.join(__dirname, 'dist', 'index.js'),
+  path.join(__dirname, '..', 'dist', 'index.js'),
   // Build output directly in root directory
   path.join(process.cwd(), 'index.js'),
   path.join('/workspace', 'index.js'),
+  path.join('/app', 'index.js'),
+  path.join('/srv', 'index.js'),
+  // Handle Digital Ocean file structure variations
+  path.join('/workspace/dist', 'index.js'),
+  path.join('/app/dist', 'index.js'),
+  // Typical Docker locations
+  path.join('/home/node/app/dist', 'index.js'),
+  path.join('/home/node/app', 'index.js')
 ];
 
 // Log environment info
