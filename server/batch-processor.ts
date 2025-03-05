@@ -6,6 +6,7 @@
  */
 
 import { storage } from "./storage";
+import { InsertPageView, InsertUserEvent } from "@shared/schema";
 
 /**
  * Generic interface for batch operations
@@ -124,8 +125,8 @@ export function createBatchProcessor<T>(
 /**
  * Page view batch processor
  */
-export const pageViewProcessor = createBatchProcessor(
-  async (pageViews) => {
+export const pageViewProcessor = createBatchProcessor<InsertPageView>(
+  async (pageViews: InsertPageView[]) => {
     // Process all page views in the batch individually
     // (Could be optimized with bulk inserts if DB supports it)
     for (const pageView of pageViews) {
@@ -143,8 +144,8 @@ export const pageViewProcessor = createBatchProcessor(
 /**
  * User event batch processor
  */
-export const userEventProcessor = createBatchProcessor(
-  async (userEvents) => {
+export const userEventProcessor = createBatchProcessor<InsertUserEvent>(
+  async (userEvents: InsertUserEvent[]) => {
     // Process all user events in the batch individually
     for (const userEvent of userEvents) {
       await storage.createUserEvent(userEvent);

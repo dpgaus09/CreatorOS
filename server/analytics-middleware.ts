@@ -1,62 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import { UAParser } from "ua-parser-js";
+import { pageViewProcessor, userEventProcessor } from "./batch-processor";
 
 // Cache for analytics settings to avoid repeated DB lookups
 let analyticsEnabledCache: { value: string; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
-// Batch processing queue for analytics events
-const analyticsQueue: {
-  type: 'pageView' | 'userEvent';
-  data: any;
-  timestamp: number;
-}[] = [];
-
-// Process size and interval for batch processing
-const BATCH_SIZE = 20;
-const BATCH_INTERVAL = 30 * 1000; // 30 seconds
-
-// Setup batch processing interval
-setInterval(() => {
-  processBatchAnalytics();
-}, BATCH_INTERVAL);
-
-// Process the analytics queue in batches
-async function processBatchAnalytics() {
-  if (analyticsQueue.length === 0) return;
-  
-  // Take items from the queue up to batch size
-  const batch = analyticsQueue.splice(0, BATCH_SIZE);
-  
-  // Group by type
-  const pageViews = batch.filter(item => item.type === 'pageView').map(item => item.data);
-  const userEvents = batch.filter(item => item.type === 'userEvent').map(item => item.data);
-  
-  // Process page views in bulk if implemented
-  if (pageViews.length > 0) {
-    try {
-      // For now, process them individually since we don't have bulk insert
-      for (const pageView of pageViews) {
-        await storage.createPageView(pageView);
-      }
-    } catch (error) {
-      console.error("Error processing page view batch:", error);
-    }
-  }
-  
-  // Process user events in bulk if implemented
-  if (userEvents.length > 0) {
-    try {
-      // For now, process them individually since we don't have bulk insert
-      for (const userEvent of userEvents) {
-        await storage.createUserEvent(userEvent);
-      }
-    } catch (error) {
-      console.error("Error processing user event batch:", error);
-    }
-  }
-}
 
 // Identify device type from user agent - memoize results to avoid repeated parsing
 const deviceTypeCache = new Map<string, string>();
@@ -160,12 +109,8 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
             ipAddress: req.ip || null,
           };
 
-          // Add to batch processing queue
-          analyticsQueue.push({
-            type: 'pageView',
-            data: pageViewData,
-            timestamp: Date.now()
-          });
+          // Use the batch processor
+          pageViewProcessor.add(pageViewData);
         }
 
         // Track API requests as user events
@@ -181,12 +126,8 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
             path: req.path,
           };
 
-          // Add to batch processing queue
-          analyticsQueue.push({
-            type: 'userEvent',
-            data: eventData,
-            timestamp: Date.now()
-          });
+          // Use the batch processor
+          userEventProcessor.add(eventData);
         }
       } catch (error: unknown) {
         console.error("Error in analytics tracking:", error instanceof Error ? error.message : error);
