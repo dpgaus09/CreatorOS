@@ -1,0 +1,474 @@
+[web] [2025-03-05 02:43:33] 
+[web] [2025-03-05 02:43:33] > rest-express@1.0.0 start
+[web] [2025-03-05 02:43:33] > NODE_ENV=production node dist/index.js
+[web] [2025-03-05 02:43:33] 
+[web] [2025-03-05 02:43:35] Neon WebSocket configured successfully
+[web] [2025-03-05 02:43:35] Initializing database connection
+[web] [2025-03-05 02:43:35] Database pool created successfully
+[web] [2025-03-05 02:43:35] Database ORM initialized successfully
+[web] [2025-03-05 02:43:36] Starting production server initialization...
+[web] [2025-03-05 02:43:36] Attempting to import init.js...
+[web] [2025-03-05 02:43:36] Successfully imported initialization module
+[web] [2025-03-05 02:43:36] Starting production server initialization...
+[web] [2025-03-05 02:43:45] Caught Neon WebSocket error (safe to ignore): Cannot set property message of #<ErrorEvent> which has only a getter
+[web] [2025-03-05 02:43:46] Caught Neon WebSocket error (safe to ignore): Cannot set property message of #<ErrorEvent> which has only a getter
+[web] [2025-03-05 02:43:51] ⚠️ Initialization function timed out, assuming success and continuing...
+[web] [2025-03-05 02:43:51] Production initialization completed with result: true
+[web] [2025-03-05 02:43:51] Setting up static file serving for production...
+[web] [2025-03-05 02:43:51] Static file serving initialized
+[web] [2025-03-05 02:43:51] Server environment: {
+[web] [2025-03-05 02:43:51]   NODE_ENV: 'production',
+[web] [2025-03-05 02:43:51]   PORT: '8080',
+[web] [2025-03-05 02:43:51]   DATABASE_URL: 'set (value hidden)'
+[web] [2025-03-05 02:43:51] }
+[web] [2025-03-05 02:43:51] 2:43:51 AM [express] Server listening on http://0.0.0.0:8080
+[web] [2025-03-05 02:43:51] ✅ Server started successfully!
+[web] [2025-03-05 02:43:51] Available routes: 47 endpoints registered
+[web] [2025-03-05 02:44:08] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:44:08]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:44:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:08]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:44:08]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:44:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:08]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:44:08]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:44:08]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:44:08]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:44:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:08] 2:44:08 AM [express] GET /api/health 200 in 11ms :: {"status":"minimal","timestamp":"2025-03-05T02:4…
+[web] [2025-03-05 02:44:18] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:44:18]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:44:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:18]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:44:18]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:44:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:18]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:44:18]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:44:18]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:44:18]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:44:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:18] 2:44:18 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:44…
+[web] [2025-03-05 02:44:28] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:44:28]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:44:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:28]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:44:28]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:44:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:28]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:44:28]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:44:28]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:44:28]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:44:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:28] 2:44:28 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:44…
+[web] [2025-03-05 02:44:38] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:44:38]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:44:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:38]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:44:38]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:44:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:38]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:44:38]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:44:38]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:44:38]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:44:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:38] 2:44:38 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:44…
+[web] [2025-03-05 02:44:48] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:44:48]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:44:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:48]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:44:48]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:44:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:48]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:44:48]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:44:48]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:44:48]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:44:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:48] 2:44:48 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:44…
+[web] [2025-03-05 02:44:58] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:44:58]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:44:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:58]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:44:58]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:44:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:58]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:44:58]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:44:58]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:44:58]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:44:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:44:58] 2:44:58 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:44…
+[web] [2025-03-05 02:45:08] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:45:08]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:45:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:08]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:45:08]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:45:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:08]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:45:08]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:45:08]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:45:08]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:45:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:08] 2:45:08 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:45…
+[web] [2025-03-05 02:45:18] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:45:18]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:45:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:18]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:45:18]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:45:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:18]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:45:18]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:45:18]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:45:18]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:45:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:18] 2:45:18 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:45…
+[web] [2025-03-05 02:45:28] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:45:28]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:45:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:28]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:45:28]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:45:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:28]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:45:28]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:45:28]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:45:28]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:45:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:28] 2:45:28 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:45…
+[web] [2025-03-05 02:45:38] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:45:38]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:45:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:38]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:45:38]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:45:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:38]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:45:38]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:45:38]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:45:38]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:45:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:38] 2:45:38 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:45…
+[web] [2025-03-05 02:45:45] Caught Neon WebSocket error (safe to ignore): Cannot set property message of #<ErrorEvent> which has only a getter
+[web] [2025-03-05 02:45:48] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:45:48]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:45:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:48]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:45:48]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:45:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:48]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:45:48]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:45:48]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:45:48]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:45:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:48] 2:45:48 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:45…
+[web] [2025-03-05 02:45:58] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:45:58]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:45:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:58]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:45:58]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:45:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:58]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:45:58]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:45:58]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:45:58]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:45:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:45:58] 2:45:58 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:45…
+[web] [2025-03-05 02:46:08] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:46:08]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:46:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:08]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:46:08]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:46:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:08]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:46:08]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:46:08]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:46:08]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:46:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:08] 2:46:08 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:46…
+[web] [2025-03-05 02:46:18] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:46:18]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:46:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:18]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:46:18]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:46:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:18]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:46:18]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:46:18]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:46:18]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:46:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:18] 2:46:18 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:46…
+[web] [2025-03-05 02:46:28] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:46:28]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:46:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:28]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:46:28]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:46:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:28]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:46:28]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:46:28]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:46:28]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:46:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:28] 2:46:28 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:46…
+[web] [2025-03-05 02:46:38] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:46:38]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:46:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:38]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:46:38]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:46:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:38]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:46:38]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:46:38]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:46:38]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:46:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:38] 2:46:38 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:46…
+[web] [2025-03-05 02:46:48] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:46:48]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:46:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:48]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:46:48]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:46:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:48]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:46:48]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:46:48]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:46:48]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:46:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:48] 2:46:48 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:46…
+[web] [2025-03-05 02:46:58] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:46:58]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:46:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:58]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:46:58]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:46:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:58]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:46:58]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:46:58]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:46:58]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:46:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:46:58] 2:46:58 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:46…
+[web] [2025-03-05 02:47:08] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:47:08]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:47:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:08]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:47:08]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:47:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:08]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:47:08]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:47:08]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:47:08]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:47:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:08] 2:47:08 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:47…
+[web] [2025-03-05 02:47:18] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:47:18]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:47:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:18]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:47:18]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:47:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:18]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:47:18]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:47:18]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:47:18]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:47:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:18] 2:47:18 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:47…
+[web] [2025-03-05 02:47:25] Caught Neon WebSocket error (safe to ignore): Cannot set property message of #<ErrorEvent> which has only a getter
+[web] [2025-03-05 02:47:26] Caught Neon WebSocket error (safe to ignore): Cannot set property message of #<ErrorEvent> which has only a getter
+[web] [2025-03-05 02:47:28] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:47:28]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:47:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:28]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:47:28]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:47:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:28]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:47:28]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:47:28]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:47:28]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:47:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:28] 2:47:28 AM [express] GET /api/health 200 in 0ms :: {"status":"minimal","timestamp":"2025-03-05T02:47…
+[web] [2025-03-05 02:47:38] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:47:38]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:47:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:38]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:47:38]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:47:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:38]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:47:38]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:47:38]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:47:38]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:47:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:38] 2:47:38 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:47…
+[web] [2025-03-05 02:47:48] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:47:48]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:47:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:48]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:47:48]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:47:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:48]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:47:48]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:47:48]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:47:48]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:47:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:48] 2:47:48 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:47…
+[web] [2025-03-05 02:47:58] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:47:58]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:47:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:58]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:47:58]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:47:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:58]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:47:58]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:47:58]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:47:58]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:47:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:47:58] 2:47:58 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:47…
+[web] [2025-03-05 02:48:08] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:48:08]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:48:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:08]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:48:08]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:48:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:08]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:48:08]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:48:08]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:48:08]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:48:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:08] 2:48:08 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:48…
+[web] [2025-03-05 02:48:18] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:48:18]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:48:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:18]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:48:18]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:48:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:18]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:48:18]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:48:18]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:48:18]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:48:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:18] 2:48:18 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:48…
+[web] [2025-03-05 02:48:28] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:48:28]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:48:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:28]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:48:28]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:48:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:28]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:48:28]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:48:28]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:48:28]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:48:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:28] 2:48:28 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:48…
+[web] [2025-03-05 02:48:38] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:48:38]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:48:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:38]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:48:38]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:48:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:38]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:48:38]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:48:38]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:48:38]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:48:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:38] 2:48:38 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:48…
+[web] [2025-03-05 02:48:48] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:48:48]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:48:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:48]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:48:48]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:48:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:48]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:48:48]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:48:48]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:48:48]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:48:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:48] 2:48:48 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:48…
+[web] [2025-03-05 02:48:58] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:48:58]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:48:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:58]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:48:58]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:48:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:58]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:48:58]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:48:58]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:48:58]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:48:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:48:58] 2:48:58 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:48…
+[web] [2025-03-05 02:49:08] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:49:08]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:49:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:08]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:49:08]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:49:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:08]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:49:08]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:49:08]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:49:08]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:49:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:08] 2:49:08 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:49…
+[web] [2025-03-05 02:49:18] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:49:18]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:49:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:18]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:49:18]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:49:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:18]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:49:18]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:49:18]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:49:18]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:49:18]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:18] 2:49:18 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:49…
+[web] [2025-03-05 02:49:28] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:49:28]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:49:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:28]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:49:28]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:49:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:28]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:49:28]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:49:28]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:49:28]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:49:28]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:28] 2:49:28 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:49…
+[web] [2025-03-05 02:49:38] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:49:38]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:49:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:38]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:49:38]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:49:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:38]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:49:38]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:49:38]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:49:38]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:49:38]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:38] 2:49:38 AM [express] GET /api/health 200 in 2ms :: {"status":"minimal","timestamp":"2025-03-05T02:49…
+[web] [2025-03-05 02:49:48] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:49:48]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:49:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:48]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:49:48]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:49:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:48]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:49:48]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:49:48]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:49:48]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:49:48]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:48] 2:49:48 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:49…
+[web] [2025-03-05 02:49:58] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:49:58]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:49:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:58]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:49:58]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:49:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:58]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:49:58]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:49:58]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:49:58]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:49:58]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:49:58] 2:49:58 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:49…
+[web] [2025-03-05 02:50:08] Health check error: ReferenceError: sql is not defined
+[web] [2025-03-05 02:50:08]     at file:///workspace/dist/index.js:1089:28
+[web] [2025-03-05 02:50:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:50:08]     at next (/workspace/node_modules/express/lib/router/route.js:149:13)
+[web] [2025-03-05 02:50:08]     at Route.dispatch (/workspace/node_modules/express/lib/router/route.js:119:3)
+[web] [2025-03-05 02:50:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:50:08]     at /workspace/node_modules/express/lib/router/index.js:284:15
+[web] [2025-03-05 02:50:08]     at Function.process_params (/workspace/node_modules/express/lib/router/index.js:346:12)
+[web] [2025-03-05 02:50:08]     at next (/workspace/node_modules/express/lib/router/index.js:280:10)
+[web] [2025-03-05 02:50:08]     at file:///workspace/dist/index.js:2106:3
+[web] [2025-03-05 02:50:08]     at Layer.handle [as handle_request] (/workspace/node_modules/express/lib/router/layer.js:95:5)
+[web] [2025-03-05 02:50:08] 2:50:08 AM [express] GET /api/health 200 in 1ms :: {"status":"minimal","timestamp":"2025-03-05T02:50…
+[web] [2025-0

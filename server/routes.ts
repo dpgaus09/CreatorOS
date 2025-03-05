@@ -9,7 +9,7 @@ import path from "path";
 import fs from "fs";
 import express from 'express';
 // Now importing password functions from auth.ts
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, and, count } from "drizzle-orm";
 import { analyticsMiddleware, trackCourseView, trackCourseCompletion } from "./analytics-middleware";
 
@@ -43,7 +43,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Check database connection if possible
     try {
       // Use a quick query with timeout to check database status
-      const dbPromise = db.execute(sql`SELECT 1`);
+      const dbPromise = pool.query('SELECT 1');
       const timeoutPromise = new Promise((_resolve, reject) => {
         setTimeout(() => reject(new Error("Database query timeout")), 3000);
       });

@@ -124,5 +124,22 @@ try {
   console.error('Error during connection test setup:', error);
 }
 
+// Add this safety net for production deployments
+process.on('exit', (code) => {
+  // Log graceful shutdown
+  console.log(`Server exiting with code: ${code}`);
+  
+  // Try to close the pool cleanly if possible
+  if (pool && typeof pool.end === 'function') {
+    try {
+      pool.end().catch(err => {
+        console.error('Error closing database pool during shutdown:', err);
+      });
+    } catch (e) {
+      console.error('Exception while closing the database pool:', e);
+    }
+  }
+});
+
 // Export the instances after setup
 export { pool, db };
