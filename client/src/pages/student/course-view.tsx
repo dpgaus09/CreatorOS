@@ -90,11 +90,25 @@ export default function CourseView() {
   // Track the previous progress to detect course completion
   useEffect(() => {
     if (!loadingEnrollment && enrollment && course) {
-      const totalLessons = (course.modules as Module[]).reduce(
+      const modules = course.modules as Module[];
+      const totalLessons = modules.reduce(
         (acc, module) => acc + module.lessons.length, 0
       );
-      const completedLessons = Object.keys(enrollment.progress || {}).length;
-      const currentProgress = Math.round((completedLessons / totalLessons) * 100);
+      
+      // Only count valid lesson IDs that exist in the course
+      const enrollmentProgress = enrollment.progress ? 
+        (enrollment.progress as Record<string, boolean>) : 
+        {};
+        
+      const validCompletedLessons = Object.keys(enrollmentProgress).filter(lessonId => 
+        modules.some(module => module.lessons.some(lesson => lesson.id === lessonId))
+      );
+      
+      const completedLessons = validCompletedLessons.length;
+      // Ensure progress is calculated correctly and capped at 100%
+      const currentProgress = totalLessons > 0 
+        ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
+        : 0;
       
       // If previously progress wasn't 100% but now it is, show celebration
       if (previousProgress !== 100 && currentProgress === 100) {
@@ -164,8 +178,25 @@ export default function CourseView() {
     0
   );
 
-  const completedLessons = Object.keys(enrollment?.progress || {}).length;
-  const progress = Math.round((completedLessons / totalLessons) * 100);
+  // Safely access the progress object and calculate completed lessons
+  // Use type assertion to handle the progress object as a Record<string, boolean>
+  const enrollmentProgress = enrollment?.progress ? 
+    (enrollment.progress as Record<string, boolean>) : 
+    {};
+  
+  // Filter valid lesson IDs by checking if they exist in the course modules
+  const validCompletedLessons = Object.keys(enrollmentProgress).filter(lessonId => {
+    // Check if this lessonId exists in any module of the course
+    return modules.some(module => 
+      module.lessons.some(lesson => lesson.id === lessonId)
+    );
+  });
+  
+  const completedLessons = validCompletedLessons.length;
+  // Ensure we don't divide by zero and cap progress at 100%
+  const progress = totalLessons > 0 
+    ? Math.min(100, Math.round((completedLessons / totalLessons) * 100)) 
+    : 0;
 
   return (
     <div className="container max-w-5xl mx-auto py-8 space-y-6">
@@ -276,7 +307,9 @@ export default function CourseView() {
                         <div className="flex items-center gap-3">
                           <CheckCircle
                             className={`h-5 w-5 ${
-                              (!isInstructor && enrollment?.progress?.[lesson.id])
+                              (!isInstructor && 
+                               enrollment?.progress && 
+                               (enrollment.progress as Record<string, boolean>)[lesson.id])
                                 ? "text-green-500"
                                 : "text-muted-foreground"
                             }`}
@@ -293,11 +326,27 @@ export default function CourseView() {
                         <Button
                           onClick={() => completeLessonMutation.mutate(lesson.id)}
                           disabled={completeLessonMutation.isPending}
-                          variant={enrollment?.progress?.[lesson.id] ? "outline" : "default"}
-                          onMouseEnter={() => speak(enrollment?.progress?.[lesson.id] ? "Completed" : "Complete Lesson")}
-                          onFocus={() => speak(enrollment?.progress?.[lesson.id] ? "Completed" : "Complete Lesson")}
+                          variant={
+                            enrollment?.progress && 
+                            (enrollment.progress as Record<string, boolean>)[lesson.id] 
+                              ? "outline" 
+                              : "default"
+                          }
+                          onMouseEnter={() => speak(
+                            enrollment?.progress && 
+                            (enrollment.progress as Record<string, boolean>)[lesson.id]
+                              ? "Completed" 
+                              : "Complete Lesson"
+                          )}
+                          onFocus={() => speak(
+                            enrollment?.progress && 
+                            (enrollment.progress as Record<string, boolean>)[lesson.id]
+                              ? "Completed" 
+                              : "Complete Lesson"
+                          )}
                         >
-                          {enrollment?.progress?.[lesson.id] ? (
+                          {enrollment?.progress && 
+                           (enrollment.progress as Record<string, boolean>)[lesson.id] ? (
                             "Completed"
                           ) : (
                             <>

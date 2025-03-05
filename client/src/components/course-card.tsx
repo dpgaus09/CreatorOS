@@ -93,8 +93,17 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
 
   const getProgress = () => {
     if (!enrollment?.progress) return 0;
-    const completedLessons = Object.keys(enrollment.progress).length;
-    return Math.round((completedLessons / totalLessons) * 100);
+    
+    // Filter valid lesson IDs by checking if they exist in the course modules
+    const validCompletedLessons = Object.keys(enrollment.progress).filter(lessonId => 
+      modules.some(module => module.lessons.some(lesson => lesson.id === lessonId))
+    );
+    
+    const completedLessons = validCompletedLessons.length;
+    // Cap progress at 100% and handle divide by zero case
+    return totalLessons > 0 
+      ? Math.min(100, Math.round((completedLessons / totalLessons) * 100))
+      : 0;
   };
 
   return (

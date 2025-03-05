@@ -13,14 +13,21 @@ export const images = pgTable("images", {
 });
 
 // Define type for enrollment progress tracking
-export const progressSchema = z.object({
-  completedModules: z.array(z.number()).default([]),
-  currentModule: z.number().optional(),
-  lastAccessedAt: z.string().optional(),
-  quizScores: z.record(z.string(), z.number()).default({}),
-  notes: z.record(z.string(), z.string()).default({}),
-  timeSpent: z.number().default(0)
-});
+// The progress tracking can be either the complex schema (below) or
+// a simple record of lesson IDs and completion status
+export const progressSchema = z.union([
+  // Advanced progress schema with detailed tracking
+  z.object({
+    completedModules: z.array(z.number()).default([]),
+    currentModule: z.number().optional(),
+    lastAccessedAt: z.string().optional(),
+    quizScores: z.record(z.string(), z.number()).default({}),
+    notes: z.record(z.string(), z.string()).default({}),
+    timeSpent: z.number().default(0)
+  }),
+  // Simple progress schema (currently in use)
+  z.record(z.string(), z.boolean())
+]);
 
 export type EnrollmentProgress = z.infer<typeof progressSchema>;
 
