@@ -24,7 +24,7 @@ export default function AuthPage() {
     queryKey: ["/api/settings/lms-name"],
   });
 
-  const lmsName = settings?.value || "LearnBruh";
+  const lmsName = settings?.value || "CreatorOS";
 
   const loginForm = useForm<LoginData>({
     resolver: zodResolver(loginSchema),

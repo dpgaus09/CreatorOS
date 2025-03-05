@@ -79,7 +79,7 @@ export default function AdminSettings() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [lmsName, setLmsName] = useState("LearnBruh");
+  const [lmsName, setLmsName] = useState("CreatorOS");
   const [enrollmentUrl, setEnrollmentUrl] = useState("/auth/login");
   const [activeTab, setActiveTab] = useState("general");
   const [analyticsEnabled, setAnalyticsEnabled] = useState(true);

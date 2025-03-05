@@ -70,7 +70,7 @@ export default function Navbar() {
 
   const isInstructor = user?.role === "instructor";
   const isInstructorDashboard = location === "/";
-  const lmsName = settings?.value || "LearnBruh";
+  const lmsName = settings?.value || "CreatorOS";
   // Get logo URL from settings
   const logoUrl = logoSettings?.value || "";
 

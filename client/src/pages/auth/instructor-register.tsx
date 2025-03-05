@@ -34,7 +34,7 @@ export default function InstructorRegister() {
     queryKey: ["/api/settings/lms-name"],
   });
 
-  const lmsName = settings?.value || "LearnBruh";
+  const lmsName = settings?.value || "CreatorOS";
 
   // Redirect if already logged in
   if (user) {
