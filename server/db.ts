@@ -20,9 +20,12 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Configure Neon database with WebSocket support
 try {
-  // Set global timeout for connection attempts
-  neonConfig.connectionTimeoutMillis = 10000;
+  // Set WebSocket constructor for Neon
   neonConfig.webSocketConstructor = ws;
+  
+  // Set custom options for Neon connection
+  // Note: We don't use connectionTimeoutMillis directly as it's not officially
+  // part of the NeonConfig interface, but we'll set similar options on the Pool
   console.log('Neon WebSocket configured successfully');
 } catch (error) {
   console.error('Error configuring Neon WebSocket:', error);
@@ -48,67 +51,21 @@ const connectionOptions = {
   allowExitOnIdle: false, // Don't exit on idle in production
 };
 
-// Initialize the connection pool with more robust error handling
-let pool;
-try {
-  // Create the pool with a timeout guard
-  const poolPromise = new Pool(connectionOptions);
-  
-  // Set a timeout to prevent hanging on pool creation
-  const timeoutPromise = new Promise<any>((_, reject) => {
-    setTimeout(() => reject(new Error('Database pool creation timed out')), 5000);
-  });
-  
-  // Use Promise.race to handle potential hanging
-  pool = await Promise.race([poolPromise, timeoutPromise]).catch(err => {
-    console.error('Error during pool creation:', err.message);
-    console.log('Using fallback pool configuration');
-    return new Pool({ 
-      connectionString: process.env.DATABASE_URL,
-      max: 3, // Reduced pool size for fallback
-      connectionTimeoutMillis: 5000,
-    });
-  });
-  
-  // Register pool error handler
-  pool.on('error', (err) => {
-    console.error('Unexpected database pool error:', err);
-    // Don't crash the application
-  });
-  
-  console.log('Database pool created successfully');
-} catch (error) {
-  console.error('Error creating database pool:', error);
-  // Create a minimal pool that will be replaced later
-  pool = new Pool({ 
-    connectionString: process.env.DATABASE_URL,
-    max: 2 // Minimal connections
-  });
-  console.log('Created fallback database pool');
-}
+// Create a synchronous initial pool instance
+const pool = new Pool(connectionOptions);
+
+// Register pool error handler
+pool.on('error', (err: Error) => {
+  console.error('Unexpected database pool error:', err);
+  // Don't crash the application
+});
 
 // Initialize Drizzle ORM with the connection pool and schema
-let db;
-try {
-  // Include a timeout here as well
-  const dbPromise = drizzle({ client: pool, schema });
-  const timeoutPromise = new Promise<any>((_, reject) => {
-    setTimeout(() => reject(new Error('Drizzle ORM initialization timed out')), 5000);
-  });
-  
-  db = await Promise.race([dbPromise, timeoutPromise]).catch(err => {
-    console.error('Error during ORM initialization:', err.message);
-    console.log('Using fallback ORM configuration');
-    return drizzle({ client: pool }); // Minimal instance
-  });
-  
-  console.log('Database ORM initialized successfully');
-} catch (error) {
-  console.error('Error initializing Drizzle ORM:', error);
-  // Create a minimal db instance
-  db = drizzle({ client: pool });
-  console.log('Created fallback Drizzle ORM instance');
-}
+// Define the DrizzleInstance type for better typing
+type DrizzleInstance = ReturnType<typeof drizzle<typeof schema>>;
+
+// Create the initial drizzle instance
+const db = drizzle({ client: pool, schema });
 
 // Perform a test query to validate connection
 try {
@@ -116,7 +73,7 @@ try {
     .then(() => {
       console.log('Database connection test successful');
     })
-    .catch((err) => {
+    .catch((err: Error) => {
       console.error('Database connection test failed:', err);
       // Log but don't throw - allow server to start anyway
     });

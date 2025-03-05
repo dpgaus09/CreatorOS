@@ -40,51 +40,34 @@ const upload = multer({
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint for deployment monitoring - serves both /health and /api/health
   app.get(['/health', '/api/health'], (req, res) => {
-    // Check database connection if possible
+    // Prepare the response object
+    const response = {
+      status: "minimal",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'unknown',
+      version: process.version,
+      database: "unknown",
+      message: "Application running"
+    };
+    
+    // Always send a 200 response
+    res.status(200).json(response);
+    
+    // Attempt a database check in the background
+    // This won't block the response but logs status
     try {
-      // Use db.query to verify database connection
-      // Use a try-catch statement with simpler logic to avoid undefined sql reference
-      const response = {
-        status: "minimal",
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'unknown',
-        version: process.version,
-        database: "unknown",
-        message: "Application running"
-      };
-      
-      // Simplified check - no SQL reference that could cause problems
       if (pool && typeof pool.query === 'function') {
         pool.query('SELECT 1')
           .then(() => {
-            response.status = "healthy";
-            response.database = "connected";
-            response.message = "All systems operational";
-            res.status(200).json(response);
+            console.log("Health check: Database connected");
           })
-          .catch(err => {
-            console.warn("Health check database connectivity issue:", err.message);
-            response.status = "degraded";
-            response.database = "disconnected";
-            response.message = "App running with database connectivity issues";
-            res.status(200).json(response);
+          .catch((err: Error) => {
+            console.warn("Health check: Database connectivity issue:", err.message);
           });
-      } else {
-        res.status(200).json(response);
       }
     } catch (error) {
-      // Something went wrong with even setting up the query
-      console.warn("Health check error:", error);
-      res.status(200).json({
-        status: "minimal",
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV || 'unknown',
-        version: process.version,
-        database: "unknown",
-        message: "Application running but database status unknown"
-      });
+      console.warn("Health check background check error:", error);
     }
   });
   setupAuth(app);
