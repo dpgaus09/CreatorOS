@@ -79,12 +79,37 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-
+  // Cache to store frequently accessed data
+  private cache: {
+    settings: Map<string, { value: Setting, timestamp: number }>,
+    courses: Map<number, { value: Course, timestamp: number }>,
+    users: Map<number, { value: User, timestamp: number }>,
+    publishedCourses: { value: Course[], timestamp: number, instructorId?: number } | null,
+    activeAnnouncements: { value: Announcement[], timestamp: number } | null
+  };
+  
+  // Cache TTL in milliseconds (5 minutes)
+  private readonly CACHE_TTL = 5 * 60 * 1000;
+  
   constructor() {
     this.sessionStore = new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
     });
+    
+    // Initialize the cache
+    this.cache = {
+      settings: new Map(),
+      courses: new Map(),
+      users: new Map(),
+      publishedCourses: null,
+      activeAnnouncements: null
+    };
+  }
+  
+  // Helper method to check if cache is valid
+  private isCacheValid(timestamp: number): boolean {
+    return Date.now() - timestamp < this.CACHE_TTL;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -176,6 +201,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getPublishedCourses(instructorId?: number): Promise<Course[]> {
+    // Check if we have a valid cached result for this specific instructorId
+    if (this.cache.publishedCourses && 
+        this.isCacheValid(this.cache.publishedCourses.timestamp) &&
+        this.cache.publishedCourses.instructorId === instructorId) {
+      return this.cache.publishedCourses.value;
+    }
+    
     // Base query for published courses
     let query = db
       .select()
@@ -187,8 +219,18 @@ export class DatabaseStorage implements IStorage {
       query = query.where(eq(courses.instructorId, instructorId));
     }
     
-    // Apply ordering and return results
-    return query.orderBy(courses.id);  // This ensures consistent ordering by course ID
+    // Apply ordering and get results
+    const result = await query.orderBy(courses.id);
+    
+    // Update the cache
+    this.cache.publishedCourses = {
+      value: result,
+      timestamp: Date.now(),
+      instructorId
+    };
+    
+    console.log(`Published courses count: ${result.length}`);
+    return result;
   }
 
   async createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment> {
@@ -305,10 +347,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getSetting(name: string): Promise<Setting | undefined> {
+    // Check the cache first
+    const cachedSetting = this.cache.settings.get(name);
+    if (cachedSetting && this.isCacheValid(cachedSetting.timestamp)) {
+      return cachedSetting.value;
+    }
+
+    // If not in cache or cache is invalid, fetch from database
     const [setting] = await db
       .select()
       .from(settings)
       .where(eq(settings.name, name));
+    
+    // Update the cache if setting exists
+    if (setting) {
+      this.cache.settings.set(name, { value: setting, timestamp: Date.now() });
+    }
+    
     return setting;
   }
 
@@ -319,21 +374,28 @@ export class DatabaseStorage implements IStorage {
       .from(settings)
       .where(eq(settings.name, name));
 
+    let result: Setting;
+    
     if (existing) {
       const [updated] = await db
         .update(settings)
         .set({ value, updatedAt: new Date() })
         .where(eq(settings.name, name))
         .returning();
-      return updated;
+      result = updated;
+    } else {
+      // If setting doesn't exist, create it
+      const [newSetting] = await db
+        .insert(settings)
+        .values({ name, value })
+        .returning();
+      result = newSetting;
     }
-
-    // If setting doesn't exist, create it
-    const [newSetting] = await db
-      .insert(settings)
-      .values({ name, value })
-      .returning();
-    return newSetting;
+    
+    // Update the cache
+    this.cache.settings.set(name, { value: result, timestamp: Date.now() });
+    
+    return result;
   }
 
   async createImage(image: InsertImage): Promise<Image> {
@@ -388,11 +450,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActiveAnnouncements(): Promise<Announcement[]> {
-    return db
+    // Check if we have a valid cached result
+    if (this.cache.activeAnnouncements && this.isCacheValid(this.cache.activeAnnouncements.timestamp)) {
+      return this.cache.activeAnnouncements.value;
+    }
+    
+    // If not in cache or cache is invalid, fetch from database
+    const result = await db
       .select()
       .from(announcements)
       .where(eq(announcements.active, true))
       .orderBy(desc(announcements.createdAt));
+    
+    // Update the cache
+    this.cache.activeAnnouncements = {
+      value: result,
+      timestamp: Date.now()
+    };
+    
+    return result;
   }
 
   async getAnnouncement(id: number): Promise<Announcement | undefined> {
