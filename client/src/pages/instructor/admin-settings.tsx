@@ -631,8 +631,9 @@ export default function AdminSettings() {
       registrationLinkRef.current.select();
       document.execCommand('copy');
       toast({
-        title: "Registration link copied",
-        description: "You can now share this link with your students"
+        title: "Student registration link copied!",
+        description: "Share this link with students to onboard them to your platform",
+        variant: "success"
       });
     }
   };
@@ -883,23 +884,32 @@ export default function AdminSettings() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="registration-link">Registration URL</Label>
+                <div className="space-y-2 border p-4 rounded-lg bg-muted/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    <Label htmlFor="registration-link" className="text-lg font-medium">Student Registration Link</Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Share this link with students to register them directly under your account. Students who register through this link will only see your courses.
+                  </p>
                   <div className="flex gap-2">
                     <Input
                       id="registration-link"
                       value={registrationUrl}
                       readOnly
                       ref={registrationLinkRef}
-                      className="bg-muted"
+                      className="bg-muted font-mono text-sm"
                     />
-                    <Button onClick={copyRegistrationLink}>
+                    <Button onClick={copyRegistrationLink} className="whitespace-nowrap" variant="default">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
                       Copy Link
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">
-                    Students who register using this link will automatically be assigned to your tenant
-                    and will only be able to access your courses.
+                    Tip: You can include this link in your emails, website, or other communication channels to streamline student onboarding.
                   </p>
                 </div>
               </CardContent>
