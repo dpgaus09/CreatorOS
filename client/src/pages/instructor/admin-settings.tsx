@@ -632,8 +632,7 @@ export default function AdminSettings() {
       document.execCommand('copy');
       toast({
         title: "Student registration link copied!",
-        description: "Share this link with students to onboard them to your platform",
-        variant: "success"
+        description: "Share this link with students to onboard them to your platform"
       });
     }
   };

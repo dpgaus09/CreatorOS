@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
@@ -51,12 +51,6 @@ export default function StudentRegister() {
   const lmsName = settings?.value || "CreatorOS";
   const instructorName = instructor?.name;
 
-  // Redirect if already logged in
-  if (user) {
-    setLocation("/");
-    return null;
-  }
-
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
     defaultValues: {
@@ -68,6 +62,13 @@ export default function StudentRegister() {
       instructorId: instructorId
     }
   });
+  
+  // Redirect if already logged in - using useEffect to follow React rules
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   const onSubmit = (data: StudentFormData) => {
     registerMutation.mutate({
