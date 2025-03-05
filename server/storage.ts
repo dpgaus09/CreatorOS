@@ -102,12 +102,18 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getAllStudents(): Promise<User[]> {
-    return db
+  async getAllStudents(instructorId?: number): Promise<User[]> {
+    let query = db
       .select()
       .from(users)
-      .where(eq(users.role, "student"))
-      .orderBy(users.createdAt);
+      .where(eq(users.role, "student"));
+      
+    // If instructorId is provided, filter students by that instructor
+    if (instructorId) {
+      query = query.where(eq(users.instructorId, instructorId));
+    }
+      
+    return query.orderBy(users.createdAt);
   }
 
   async getStudentsWithEnrollments(): Promise<(User & { enrollments: (Enrollment & { course?: Course })[] })[]> {

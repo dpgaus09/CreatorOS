@@ -39,6 +39,7 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["instructor", "student"] }).notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
+  instructorId: integer("instructor_id").references(() => users.id, { onDelete: "set null" }),
   accessibility: jsonb("accessibility").notNull().default({
     highContrast: false,
     textToSpeech: false,
@@ -125,11 +126,19 @@ export const sessionData = pgTable("session_data", {
 });
 
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   enrollments: many(enrollments),
   pageViews: many(pageViews),
   userEvents: many(userEvents),
   sessions: many(sessionData),
+  instructor: one(users, {
+    fields: [users.instructorId],
+    references: [users.id],
+    relationName: "instructorStudents"
+  }),
+  students: many(users, {
+    relationName: "instructorStudents"
+  }),
 }));
 
 export const coursesRelations = relations(courses, ({ many }) => ({

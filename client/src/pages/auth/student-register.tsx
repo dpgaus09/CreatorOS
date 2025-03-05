@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
 const studentSchema = z.object({
@@ -16,19 +16,23 @@ const studentSchema = z.object({
   email: z.string().email("Invalid email"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string()
+  confirmPassword: z.string(),
+  instructorId: z.number().optional()
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
 
 type StudentFormData = z.infer<typeof studentSchema>;
+type Instructor = { id: number, name: string, username: string };
 
 export default function StudentRegister() {
   const { user, registerMutation } = useAuth();
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [match, params] = useRoute("/auth/register/student/:instructorId");
+  const instructorId = match ? parseInt(params.instructorId, 10) : undefined;
   
   // Define setting type
   type Setting = { id?: number; name?: string; value: string };
@@ -38,7 +42,14 @@ export default function StudentRegister() {
     placeholderData: { value: "CreatorOS" } as Setting,
   });
 
+  // Fetch instructor info if instructorId is provided
+  const { data: instructor } = useQuery<Instructor>({
+    queryKey: ["/api/users/instructor", instructorId],
+    enabled: !!instructorId,
+  });
+
   const lmsName = settings?.value || "CreatorOS";
+  const instructorName = instructor?.name;
 
   // Redirect if already logged in
   if (user) {
@@ -53,14 +64,16 @@ export default function StudentRegister() {
       email: "",
       username: "",
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
+      instructorId: instructorId
     }
   });
 
   const onSubmit = (data: StudentFormData) => {
     registerMutation.mutate({
       ...data,
-      role: "student"
+      role: "student",
+      instructorId: instructorId
     });
   };
 
@@ -72,7 +85,17 @@ export default function StudentRegister() {
             <CardTitle className="text-2xl font-bold">Student Registration</CardTitle>
           </CardHeader>
           <div className="prose dark:prose-invert">
-            <p>Create your student account for {lmsName} and start learning.</p>
+            {instructorName ? (
+              <p>Create your student account for {instructorName}'s courses on {lmsName}.</p>
+            ) : (
+              <p>Create your student account for {lmsName} and start learning.</p>
+            )}
+            {instructorId && (
+              <div className="mt-2 p-2 bg-muted rounded-md text-sm">
+                <p className="font-medium">You're registering as a student of {instructorName}</p>
+                <p>You'll only have access to courses by this instructor.</p>
+              </div>
+            )}
           </div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
