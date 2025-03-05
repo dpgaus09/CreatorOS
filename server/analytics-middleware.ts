@@ -37,12 +37,13 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
   // Prepare response interceptor to track after response is sent
   const originalEnd = res.end;
   
-  // @ts-ignore: We're intentionally overriding the end method with our own implementation
+  // We need to override the end method with a custom implementation that tracks analytics
+  // @ts-ignore: This intentional override requires ignoring type checking
   res.end = function(
     this: Response, 
-    chunk?: any, 
-    encoding?: any, 
-    callback?: any
+    chunk?: string | Buffer | Uint8Array,
+    encoding?: BufferEncoding,
+    callback?: () => void
   ) {
     // Track analytics before completing the response
     try {
@@ -120,10 +121,13 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
     
     // Handle different overloads of the end method
     if (typeof chunk === 'function') {
-      return originalEnd.call(this);
+      // @ts-ignore: This is a valid Express.js pattern for handling response end
+      return originalEnd.call(this, null, null, chunk);
     } else if (typeof encoding === 'function') {
-      return originalEnd.call(this, chunk, undefined, encoding);
+      // @ts-ignore: This is a valid Express.js pattern for handling response end
+      return originalEnd.call(this, chunk, null, encoding);
     } else {
+      // @ts-ignore: This is a valid Express.js pattern for handling response end
       return originalEnd.call(this, chunk, encoding, callback);
     }
   };

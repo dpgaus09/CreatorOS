@@ -488,9 +488,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSession(data: InsertSessionData): Promise<SessionData> {
-    // @ts-ignore: Drizzle ORM sometimes has type issues with jsonb fields
-    const [newSession] = await db.insert(sessionData).values(data).returning();
-    return newSession;
+    try {
+      // @ts-ignore: Drizzle ORM sometimes has type issues with complex inserts
+      const [newSession] = await db.insert(sessionData).values(data).returning();
+      return newSession;
+    } catch (error) {
+      console.error("Error creating session:", error instanceof Error ? error.message : String(error));
+      throw error;
+    }
   }
 
   async getSessionBySessionId(sessionId: string): Promise<SessionData | undefined> {
