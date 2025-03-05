@@ -581,8 +581,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         instructorId: req.user.id,
       });
 
+      // Ensure all required fields have appropriate values
       const course = await storage.createCourse({
         ...courseData,
+        published: courseData.published || false,
+        modules: courseData.modules || [],
         createdAt: new Date(),
       });
       res.json(course);

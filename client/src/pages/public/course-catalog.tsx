@@ -27,14 +27,19 @@ export default function PublicCourseCatalog() {
     queryKey: ["/api/courses/public"],
   });
 
+  // Define setting type
+  type Setting = { id?: number; name?: string; value: string };
+
   // Fetch LMS name
-  const { data: lmsSettings } = useQuery({
+  const { data: lmsSettings } = useQuery<Setting>({
     queryKey: ["/api/settings/lms-name"],
+    placeholderData: { value: "CreatorOS" } as Setting,
   });
 
   // Fetch enrollment URL setting
-  const { data: enrollmentUrlSetting } = useQuery({
+  const { data: enrollmentUrlSetting } = useQuery<Setting>({
     queryKey: ["/api/settings/enrollment-url"],
+    placeholderData: { value: "/auth/login" } as Setting,
   });
 
   const lmsName = lmsSettings?.value || "CreatorOS";
