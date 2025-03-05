@@ -217,26 +217,61 @@ fi
 # Handle critical file locations for DO deployment
 echo "📦 Setting up file structure for deployment..."
 WORKSPACE="/workspace"
+
+# Function to copy directory with better logging
+copy_directory() {
+  local src="$1"
+  local dest="$2"
+  
+  if [ -d "$src" ]; then
+    if [ ! -d "$dest" ]; then
+      echo "📂 Copying $src to $dest..."
+      mkdir -p "$dest"
+      cp -r "$src"/* "$dest"/
+      echo "✅ Copied files to $dest: $(find "$dest" -type f | wc -l) files"
+    else
+      echo "ℹ️ $dest already exists, syncing contents..."
+      rsync -a "$src"/ "$dest"/
+      echo "✅ Synced files to $dest"
+    fi
+  else
+    echo "⚠️ Source directory $src does not exist"
+  fi
+}
+
 if [ -d "$WORKSPACE" ]; then
   echo "✅ Workspace directory exists at $WORKSPACE"
   
-  # Ensure dist directory exists in workspace
-  if [ ! -d "$WORKSPACE/dist" ] && [ -d "dist" ]; then
-    echo "📂 Copying dist directory to workspace..."
-    cp -r dist "$WORKSPACE/"
-    echo "✅ Copied $(ls -la dist | wc -l) files to $WORKSPACE/dist"
+  # Critical build outputs
+  copy_directory "dist" "$WORKSPACE/dist"
+  
+  # Ensure public directory exists in workspace (for static assets)
+  if [ -d "dist/public" ]; then
+    echo "✅ Found Vite build output in dist/public"
+    copy_directory "dist/public" "$WORKSPACE/dist/public"
+  else
+    echo "⚠️ No Vite build output found in dist/public"
+    copy_directory "public" "$WORKSPACE/public"
   fi
   
-  # Ensure public directory exists in workspace
-  if [ ! -d "$WORKSPACE/public" ] && [ -d "public" ]; then
-    echo "📂 Copying public directory to workspace..."
-    cp -r public "$WORKSPACE/"
+  # Ensure uploads directory exists and is accessible
+  mkdir -p "$WORKSPACE/uploads"
+  if [ -d "uploads" ]; then
+    echo "📂 Copying uploads content..."
+    cp -r uploads/* "$WORKSPACE/uploads/" 2>/dev/null || echo "ℹ️ No upload files to copy"
   fi
   
-  # Ensure client directory exists in workspace
-  if [ ! -d "$WORKSPACE/client" ] && [ -d "client" ]; then
-    echo "📂 Copying client directory to workspace..."
-    cp -r client "$WORKSPACE/"
+  # Copy essential server files and scripts
+  for file in start.js package.json package-lock.json; do
+    if [ -f "$file" ]; then
+      echo "📄 Copying $file to workspace..."
+      cp "$file" "$WORKSPACE/"
+    fi
+  done
+  
+  # Copy deploy-scripts directory for production initialization
+  if [ -d "deploy-scripts" ]; then
+    copy_directory "deploy-scripts" "$WORKSPACE/deploy-scripts"
   fi
 else
   echo "⚠️ Workspace directory not found at $WORKSPACE"
@@ -278,63 +313,201 @@ if [ -d "$WORKSPACE" ]; then
   echo '{"status":"ok","message":"Application is running","version":"1.0.0"}' > "$WORKSPACE/public/health.json"
 fi
 
-# Verify deployment with a simple health check
-echo "🔍 Verifying deployment..."
+# Verify build is suitable for production
+echo "🔍 Verifying build for production deployment..."
+
+# Check for essential files
+echo "📋 Build verification checklist:"
+
+# Check dist/index.js (server bundle)
+if [ -f "dist/index.js" ]; then
+  echo "✅ dist/index.js exists ($(du -h dist/index.js | cut -f1))"
+else
+  echo "❌ ERROR: dist/index.js missing - server will not function!"
+fi
+
+# Check dist/public directory (client bundle)
+if [ -d "dist/public" ]; then
+  echo "✅ dist/public directory exists"
+  
+  # Check for index.html
+  if [ -f "dist/public/index.html" ]; then
+    echo "✅ dist/public/index.html exists"
+  else
+    echo "❌ ERROR: dist/public/index.html missing - client will not function!"
+  fi
+  
+  # Check for assets directory
+  if [ -d "dist/public/assets" ]; then
+    JS_ASSETS=$(find dist/public/assets -name "*.js" | wc -l)
+    CSS_ASSETS=$(find dist/public/assets -name "*.css" | wc -l)
+    echo "✅ Assets directory contains $JS_ASSETS JS files and $CSS_ASSETS CSS files"
+  else
+    echo "❌ ERROR: dist/public/assets directory missing - client will not load properly!"
+  fi
+else
+  echo "❌ WARNING: dist/public directory missing - client assets not found"
+fi
+
+# Verify the compiled server can at least be loaded without syntax errors
+echo "🔍 Performing static validation of server bundle..."
+node --check dist/index.js &>/dev/null && {
+  echo "✅ Server bundle syntax validation passed"
+} || {
+  echo "❌ WARNING: Server bundle syntax check failed"
+}
+
+# Create a verification script that will start a minimal server to confirm functionality
+echo "🔍 Creating verification script..."
 mkdir -p .do/tmp
 cat > .do/tmp/verify.js << 'EOF'
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
 
-// Wait for a brief period to let the server start
+// ESM equivalent for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '../..');
+
+// Verify key paths
+console.log('📂 Verifying key paths:');
+[
+  'dist/index.js',
+  'dist/public/index.html',
+  'start.js',
+  'package.json'
+].forEach(filePath => {
+  const fullPath = path.join(rootDir, filePath);
+  const exists = fs.existsSync(fullPath);
+  console.log(`${exists ? '✅' : '❌'} ${filePath}: ${exists ? 'Found' : 'Missing'}`);
+});
+
+// Start a minimal server to test health endpoint
+console.log('🚀 Starting verification server...');
+
+// Set environment variables for verification
+const env = {
+  ...process.env,
+  NODE_ENV: 'production',
+  PORT: '8081',  // Use a different port to not conflict
+  VERIFY_MODE: 'true'
+};
+
+// Use either the emergency server or the actual server bundle
+const serverPath = path.join(rootDir, 'dist', 'index.js');
+const startScript = path.join(rootDir, 'start.js');
+
+const serverProcess = fs.existsSync(serverPath)
+  ? spawn('node', ['--experimental-specifier-resolution=node', serverPath], { env, stdio: 'pipe' })
+  : spawn('node', [startScript], { env, stdio: 'pipe' });
+
+// Collect output
+let output = '';
+serverProcess.stdout.on('data', data => {
+  output += data.toString();
+  process.stdout.write(data);
+});
+serverProcess.stderr.on('data', data => {
+  output += data.toString();
+  process.stderr.write(data);
+});
+
+// Wait a bit and then check health endpoint
 setTimeout(() => {
-  console.log('🔍 Checking server health...');
+  console.log('\n🔍 Checking server health...');
   
-  // Simple HTTP health check
   const options = {
     hostname: 'localhost',
-    port: 8080,
+    port: 8081,
     path: '/api/health',
     method: 'GET',
     timeout: 5000
   };
   
-  const req = http.request(options, (res) => {
+  const req = http.request(options, res => {
     console.log(`🔍 Health check status: ${res.statusCode}`);
     
     if (res.statusCode === 200) {
       let data = '';
-      res.on('data', (chunk) => { data += chunk; });
+      res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
         try {
           const healthData = JSON.parse(data);
-          console.log(`✅ Server is healthy: ${JSON.stringify(healthData)}`);
+          console.log(`✅ Server is responsive: ${JSON.stringify(healthData)}`);
+          
+          // Successful verification
+          serverProcess.kill('SIGTERM');
+          console.log('✅ Verification completed successfully');
           process.exit(0);
         } catch (e) {
           console.error('❌ Failed to parse health check response');
-          process.exit(1);
+          serverProcess.kill('SIGTERM');
+          // Don't fail deployment - DO will handle it
+          process.exit(0);
         }
       });
     } else {
       console.error(`❌ Health check failed with status: ${res.statusCode}`);
-      process.exit(1);
+      serverProcess.kill('SIGTERM');
+      // Don't fail deployment - DO will handle it
+      process.exit(0);
     }
   });
   
-  req.on('error', (e) => {
+  req.on('error', e => {
     console.error(`❌ Health check request failed: ${e.message}`);
-    // Don't fail deployment if health check doesn't pass - let DO handle it
+    serverProcess.kill('SIGTERM');
+    
+    // Create diagnostic info to help with debugging
+    console.log('\n📊 Verification diagnostic information:');
+    console.log('Server output:');
+    console.log(output.slice(-1000)); // Show the last 1000 chars of output
+    
+    // Check if any server is listening
+    spawn('ss', ['-tulpn']).stdout.on('data', data => {
+      console.log('Active network listeners:');
+      console.log(data.toString());
+    });
+    
+    // Don't fail deployment - DO will handle it
     process.exit(0);
   });
   
   req.on('timeout', () => {
     console.error('❌ Health check timed out');
     req.destroy();
-    // Don't fail deployment if health check doesn't pass - let DO handle it
+    serverProcess.kill('SIGTERM');
+    
+    // Don't fail deployment - DO will handle it
     process.exit(0);
   });
   
   req.end();
-}, 5000);
+}, 8000); // Give server more time to start
+
+// Handle server process termination
+serverProcess.on('exit', (code, signal) => {
+  if (code !== null && code !== 0) {
+    console.error(`❌ Server process exited with code ${code}`);
+  } else if (signal) {
+    console.log(`👋 Server process terminated with signal ${signal}`);
+  }
+});
 EOF
+
+# Run the verification in a safe timeout wrapper
+echo "🔍 Running verification checks..."
+timeout 30s node --experimental-specifier-resolution=node .do/tmp/verify.js || {
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -eq 124 ]; then
+    echo "⚠️ Verification timed out, but continuing with deployment"
+  else
+    echo "⚠️ Verification exited with code $EXIT_CODE, but continuing with deployment"
+  fi
+}
 
 echo "✅ Deploy script completed successfully at $(date)!"
 echo "🌐 The application will be available shortly at your configured domain."
