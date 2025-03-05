@@ -47,20 +47,23 @@ app.use((req, res, next) => {
       res.status(status).json({ message });
     });
 
-    if (app.get("env") === "development") {
+    // Check for environment
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    if (!isProduction) {
       await setupVite(app, server);
     } else {
       serveStatic(app);
     }
 
-    let port = 5000;
-    const host = "0.0.0.0";
+    // Get port from env or use default
+    const port = parseInt(process.env.PORT || '5000', 10);
+    const host = process.env.HOST || "0.0.0.0";
 
     const startServer = (attemptPort: number) => {
       server.listen(attemptPort, host)
         .on('listening', () => {
-          port = attemptPort;
-          log(`Server listening on http://${host}:${port}`);
+          log(`Server listening on http://${host}:${attemptPort}`);
         })
         .on('error', (error: any) => {
           if (error.code === 'EADDRINUSE' && attemptPort < 5010) {
@@ -74,6 +77,7 @@ app.use((req, res, next) => {
         });
     };
 
+    // Start the server with configured port
     startServer(port);
   } catch (error) {
     console.error('Critical server error:', error);
