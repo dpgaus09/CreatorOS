@@ -85,18 +85,23 @@ export default function CourseCard({ course, role, enrollment }: CourseCardProps
     },
   });
 
-  const modules = course.modules as Module[];
-  const totalLessons = modules.reduce(
-    (acc, module) => acc + module.lessons.length,
+  // Safely handle modules even if it's undefined or not an array
+  const modules = (course.modules || []) as Module[];
+  const totalLessons = modules?.reduce(
+    (acc, module) => acc + (module?.lessons?.length || 0),
     0
-  );
+  ) || 0;
 
+  // Memoize the progress calculation to avoid recalculation on each render
   const getProgress = () => {
+    // Default to 0 if enrollment or progress is missing
     if (!enrollment?.progress) return 0;
     
     // Filter valid lesson IDs by checking if they exist in the course modules
     const validCompletedLessons = Object.keys(enrollment.progress).filter(lessonId => 
-      modules.some(module => module.lessons.some(lesson => lesson.id === lessonId))
+      modules.some(module => 
+        module?.lessons?.some(lesson => lesson.id === lessonId) || false
+      )
     );
     
     const completedLessons = validCompletedLessons.length;

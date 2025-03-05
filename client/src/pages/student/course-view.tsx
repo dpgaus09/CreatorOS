@@ -66,6 +66,8 @@ export default function CourseView() {
   // State for course completion celebration
   const [showCelebration, setShowCelebration] = useState(false);
   const [previousProgress, setPreviousProgress] = useState<number>(0);
+  // State to track which module is open
+  const [openModule, setOpenModule] = useState<string | undefined>(undefined);
 
   const { data: course, isLoading: loadingCourse } = useQuery<Course>({
     queryKey: [`/api/courses/${courseId}`],
@@ -77,22 +79,23 @@ export default function CourseView() {
     enabled: courseId > 0 && !isInstructor, // Don't fetch enrollment for instructor preview
   });
 
-  // State to track which module is open
-  const [openModule, setOpenModule] = useState<string | undefined>(undefined);
-
   // Set the first module to be open when course data is loaded
   useEffect(() => {
-    if (course && course.modules && (course.modules as Module[]).length > 0) {
-      setOpenModule((course.modules as Module[])[0].id);
+    if (course?.modules && Array.isArray(course.modules) && course.modules.length > 0) {
+      const modules = course.modules as Module[];
+      if (modules[0]?.id) {
+        setOpenModule(modules[0].id);
+      }
     }
   }, [course]);
 
   // Track the previous progress to detect course completion
   useEffect(() => {
     if (!loadingEnrollment && enrollment && course) {
-      const modules = course.modules as Module[];
+      // Safely handle the modules even if it's undefined or not an array
+      const modules = Array.isArray(course.modules) ? course.modules as Module[] : [];
       const totalLessons = modules.reduce(
-        (acc, module) => acc + module.lessons.length, 0
+        (acc, module) => acc + (module?.lessons?.length || 0), 0
       );
       
       // Only count valid lesson IDs that exist in the course
@@ -101,7 +104,10 @@ export default function CourseView() {
         {};
         
       const validCompletedLessons = Object.keys(enrollmentProgress).filter(lessonId => 
-        modules.some(module => module.lessons.some(lesson => lesson.id === lessonId))
+        modules.some(module => 
+          Array.isArray(module?.lessons) && 
+          module.lessons.some(lesson => lesson?.id === lessonId)
+        )
       );
       
       const completedLessons = validCompletedLessons.length;
@@ -172,9 +178,10 @@ export default function CourseView() {
     );
   }
 
-  const modules = course.modules as Module[];
+  // Safely handle modules even if it's undefined or not an array
+  const modules = Array.isArray(course.modules) ? course.modules as Module[] : [];
   const totalLessons = modules.reduce(
-    (acc, module) => acc + module.lessons.length,
+    (acc, module) => acc + (module?.lessons?.length || 0),
     0
   );
 
@@ -188,7 +195,8 @@ export default function CourseView() {
   const validCompletedLessons = Object.keys(enrollmentProgress).filter(lessonId => {
     // Check if this lessonId exists in any module of the course
     return modules.some(module => 
-      module.lessons.some(lesson => lesson.id === lessonId)
+      Array.isArray(module?.lessons) && 
+      module.lessons.some(lesson => lesson?.id === lessonId)
     );
   });
   

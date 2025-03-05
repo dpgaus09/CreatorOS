@@ -14,28 +14,32 @@ export default function StudentDashboard() {
   // Fetch user's instructor if applicable
   const userInstructorId = user?.instructorId;
 
-  const { data: publishedCourses, isLoading: loadingCourses } = useQuery<Course[]>({
+  const { data: publishedCourses = [], isLoading: loadingCourses } = useQuery<Course[]>({
     queryKey: ["/api/courses/published"],
-    onError: (error: Error) => {
-      toast({
-        title: "Error loading courses",
-        description: error.message,
-        variant: "destructive",
-      });
+    // Handle errors through onSettled instead of onError for consistency
+    onSettled: (data, error) => {
+      if (error) {
+        toast({
+          title: "Error loading courses",
+          description: (error as Error).message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
-  const { data: enrollments, isLoading: loadingEnrollments } = useQuery<Enrollment[]>({
+  const { data: enrollments = [], isLoading: loadingEnrollments } = useQuery<Enrollment[]>({
     queryKey: ["/api/enrollments"],
   });
   
   // Filter courses based on instructor association if student has an assigned instructor
   const filteredCourses = useMemo(() => {
-    if (!publishedCourses) return [];
+    // If no courses are loaded yet, return empty array
+    if (!publishedCourses || !Array.isArray(publishedCourses)) return [];
     
     // If student has an assigned instructor, only show courses from that instructor
-    if (userInstructorId && publishedCourses) {
-      return publishedCourses.filter(course => course.instructorId === userInstructorId);
+    if (userInstructorId) {
+      return publishedCourses.filter((course: Course) => course.instructorId === userInstructorId);
     }
     
     // Otherwise show all published courses
