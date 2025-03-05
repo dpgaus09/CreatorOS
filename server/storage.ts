@@ -209,12 +209,41 @@ export class DatabaseStorage implements IStorage {
     id: number,
     progress: Partial<EnrollmentProgress>
   ): Promise<Enrollment> {
-    const [updatedEnrollment] = await db
-      .update(enrollments)
-      .set({ progress })
-      .where(eq(enrollments.id, id))
-      .returning();
-    return updatedEnrollment;
+    try {
+      // Get current enrollment to merge progress safely
+      const [currentEnrollment] = await db
+        .select()
+        .from(enrollments)
+        .where(eq(enrollments.id, id));
+      
+      if (!currentEnrollment) {
+        throw new Error(`Enrollment with id ${id} not found`);
+      }
+      
+      // Safely merge existing progress with new progress to ensure type safety
+      const currentProgress = currentEnrollment.progress as Partial<EnrollmentProgress> || {};
+      const mergedProgress = {
+        ...currentProgress,
+        ...progress,
+        // Ensure arrays and objects are properly handled
+        completedModules: progress.completedModules || currentProgress.completedModules || [],
+        quizScores: { ...(currentProgress.quizScores || {}), ...(progress.quizScores || {}) },
+        notes: { ...(currentProgress.notes || {}), ...(progress.notes || {}) }
+      };
+      
+      // Update with the safely merged progress
+      const [updatedEnrollment] = await db
+        .update(enrollments)
+        .set({ progress: mergedProgress })
+        .where(eq(enrollments.id, id))
+        .returning();
+        
+      return updatedEnrollment;
+    } catch (error) {
+      console.error(`Error updating enrollment progress for id ${id}:`, 
+        error instanceof Error ? error.message : String(error));
+      throw error;
+    }
   }
 
   async getSetting(name: string): Promise<Setting | undefined> {

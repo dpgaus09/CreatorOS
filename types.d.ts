@@ -17,8 +17,10 @@ declare global {
   }
 }
 
-// Extend Error to include status or statusCode properties
-interface ServerError extends Error {
-  status?: number;
-  statusCode?: number;
+// Define ServerError interface for better error handling
+declare global {
+  interface ServerError extends Error {
+    status?: number;
+    statusCode?: number;
+  }
 }
