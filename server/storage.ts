@@ -220,18 +220,62 @@ export class DatabaseStorage implements IStorage {
         throw new Error(`Enrollment with id ${id} not found`);
       }
       
-      // Safely merge existing progress with new progress to ensure type safety
-      const currentProgress = currentEnrollment.progress as Partial<EnrollmentProgress> || {};
-      const mergedProgress = {
-        ...currentProgress,
-        ...progress,
-        // Ensure arrays and objects are properly handled
-        completedModules: progress.completedModules || currentProgress.completedModules || [],
-        quizScores: { ...(currentProgress.quizScores || {}), ...(progress.quizScores || {}) },
-        notes: { ...(currentProgress.notes || {}), ...(progress.notes || {}) }
-      };
+      // Handle the progress object based on its structure
+      let mergedProgress: any;
       
-      // Update with the safely merged progress
+      // Check if we have the current simplified implementation (Record<string, boolean>)
+      if (typeof progress === 'object' && 
+          !('completedModules' in progress) && 
+          !('quizScores' in progress) && 
+          !('notes' in progress)) {
+        // Simple key-value mapping of lesson IDs to completion status
+        mergedProgress = {
+          ...currentEnrollment.progress,
+          ...progress
+        };
+      } else {
+        // Complex progress schema with structured data
+        const currentProgress = currentEnrollment.progress || {};
+        
+        // Create safe empty objects for nested properties
+        const safeCurrentProgress = {
+          ...currentProgress
+        };
+        
+        const safeProgressUpdate = {
+          ...progress
+        };
+        
+        // Create merged progress with proper nested object handling
+        mergedProgress = {
+          ...safeCurrentProgress,
+          ...safeProgressUpdate
+        };
+        
+        // Handle specific nested properties if they exist in our schema
+        if ('completedModules' in progress || 'completedModules' in currentProgress) {
+          mergedProgress.completedModules = 
+            (progress as any)?.completedModules || 
+            (currentProgress as any)?.completedModules || 
+            [];
+        }
+        
+        if ('quizScores' in progress || 'quizScores' in currentProgress) {
+          mergedProgress.quizScores = {
+            ...((currentProgress as any)?.quizScores || {}),
+            ...((progress as any)?.quizScores || {})
+          };
+        }
+        
+        if ('notes' in progress || 'notes' in currentProgress) {
+          mergedProgress.notes = {
+            ...((currentProgress as any)?.notes || {}),
+            ...((progress as any)?.notes || {})
+          };
+        }
+      }
+      
+      // Update with the properly merged progress
       const [updatedEnrollment] = await db
         .update(enrollments)
         .set({ progress: mergedProgress })
