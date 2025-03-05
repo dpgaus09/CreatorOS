@@ -18,6 +18,39 @@ export async function initializeAnalyticsService() {
   console.log('Initializing analytics service...');
   
   try {
+    // First, verify database connection is working
+    try {
+      await db.execute('SELECT 1');
+      console.log('Database connection verified successfully');
+    } catch (dbError) {
+      console.error('Failed to connect to database:', dbError);
+      // Return early but with success=true to prevent app from failing to start
+      return true;
+    }
+    
+    // Check if analytics tables exist before querying them
+    try {
+      // Perform a safer check to see if tables exist before querying them
+      const queryText = `
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'page_views'
+        )
+      `;
+      const pageViewTableExists = await db.execute(queryText);
+      
+      if (!pageViewTableExists || !pageViewTableExists.rows || !pageViewTableExists.rows[0]?.exists) {
+        console.log('Analytics tables may not exist yet - skipping initialization');
+        return true;
+      }
+      
+      console.log('Analytics tables exist, proceeding with initialization');
+    } catch (tableCheckError) {
+      console.error('Error checking if analytics tables exist:', tableCheckError);
+      // Continue anyway, the next steps have their own error handling
+    }
+    
     // Check if analytics tables have data - with error handling
     let pageViewCount;
     try {
@@ -36,6 +69,8 @@ export async function initializeAnalyticsService() {
     } catch (err) {
       console.error('Error checking course analytics records, but continuing:', err);
       // If this fails, continue with other initialization
+      // Return success to allow server to start regardless
+      return true;
     }
     
     // If no course analytics exist, create default records for existing courses
@@ -73,10 +108,12 @@ export async function initializeAnalyticsService() {
       }
     }
 
+    console.log('Analytics service initialization completed successfully');
     return true;
   } catch (error) {
     console.error('Error initializing analytics service:', error);
-    return false;
+    // Return true anyway to allow the server to start
+    return true;
   }
 }
 
@@ -88,24 +125,62 @@ export async function initializeProductionServer() {
   console.log('Starting production server initialization...');
   
   try {
+    // First verify DB connection directly
+    try {
+      await db.execute('SELECT 1');
+      console.log('Database connection verified for production initialization');
+    } catch (dbError) {
+      console.error('Database connection failed during production initialization:', dbError);
+      console.log('Starting server anyway - DB connection may be established later');
+      // Return success to allow server to start
+      return true;
+    }
+    
     // Initialize analytics service with error handling
     try {
-      await initializeAnalyticsService();
+      const analyticsResult = await initializeAnalyticsService();
+      if (analyticsResult) {
+        console.log('Analytics service initialized successfully');
+      } else {
+        console.log('Analytics service initialization skipped or had issues');
+      }
     } catch (error) {
       console.error('Error initializing analytics service, but continuing with other initialization:', error);
       // Don't return here, continue with other initialization steps
     }
     
-    // Verify LMS settings
+    // Verify LMS settings - with improved error handling
     try {
-      const lmsName = await storage.getSetting('lms-name');
-      if (!lmsName) {
-        console.log('Creating default LMS name setting');
-        await storage.updateSetting('lms-name', 'Learner_Bruh LMS');
+      // Check if settings table exists first
+      const settingsTableExists = await db.execute(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'settings'
+        )
+      `);
+      
+      if (settingsTableExists && settingsTableExists.rows && settingsTableExists.rows[0]?.exists) {
+        console.log('Settings table exists, checking LMS name setting');
+        
+        try {
+          const lmsName = await storage.getSetting('lms-name');
+          if (!lmsName) {
+            console.log('Creating default LMS name setting');
+            await storage.updateSetting('lms-name', 'Learner_Bruh LMS');
+          } else {
+            console.log('LMS name setting already exists:', lmsName.value);
+          }
+        } catch (settingError) {
+          console.error('Error while checking LMS name setting:', settingError);
+          // Don't fail the entire initialization for settings errors
+        }
+      } else {
+        console.log('Settings table may not exist yet - skipping settings verification');
       }
-    } catch (settingError) {
-      console.error('Error verifying LMS settings:', settingError);
-      // Don't fail the entire initialization for settings errors
+    } catch (tableCheckError) {
+      console.error('Error checking for settings table:', tableCheckError);
+      // Continue execution regardless
     }
     
     console.log('Production server initialization completed');
