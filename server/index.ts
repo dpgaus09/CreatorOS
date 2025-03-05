@@ -41,8 +41,13 @@ app.use((req, res, next) => {
     // Register all routes
     const server = await registerRoutes(app);
 
-    // Add global error handler
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    // Add global error handler with improved typing
+    interface ServerError extends Error {
+      status?: number;
+      statusCode?: number;
+    }
+    
+    app.use((err: ServerError, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
       console.error("Server error:", err);
@@ -80,7 +85,7 @@ app.use((req, res, next) => {
         .on('listening', () => {
           log(`Server listening on http://${host}:${attemptPort}`);
         })
-        .on('error', (error: any) => {
+        .on('error', (error: NodeJS.ErrnoException) => {
           if (error.code === 'EADDRINUSE' && attemptPort < 5010) {
             // Try next port
             log(`Port ${attemptPort} is busy, trying ${attemptPort + 1}...`);

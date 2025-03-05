@@ -37,12 +37,14 @@ export const analyticsMiddleware = async (req: Request, res: Response, next: Nex
   // Prepare response interceptor to track after response is sent
   const originalEnd = res.end;
   
-  // @ts-ignore: We're intentionally overriding the end method with our own implementation
+  // Define proper types for res.end parameters
+  type ResEndCallback = () => void;
+  
   res.end = function(
     this: Response, 
-    chunk?: any, 
-    encoding?: any, 
-    callback?: any
+    chunk?: string | Buffer | Uint8Array, 
+    encoding?: BufferEncoding | ResEndCallback,
+    callback?: ResEndCallback
   ) {
     // Track analytics before completing the response
     try {
@@ -153,8 +155,8 @@ export const trackCourseView = async (courseId: number, userId?: number) => {
         uniqueViews: userId ? 1 : 0,
       });
     }
-  } catch (error) {
-    console.error("Error tracking course view:", error);
+  } catch (error: unknown) {
+    console.error("Error tracking course view:", error instanceof Error ? error.message : error);
   }
 };
 
