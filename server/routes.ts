@@ -470,11 +470,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const students = await storage.getStudentsWithEnrollments();
+      // Only show students assigned to this instructor if strict multi-tenant mode
+      const instructorId = req.user.id;
+      const students = await storage.getStudentsWithEnrollments(instructorId);
       res.json(students);
     } catch (error) {
       console.error("Error fetching students:", error);
       res.status(500).json({ message: "Failed to fetch students" });
+    }
+  });
+  
+  // Add endpoint to get instructor information for student registration
+  app.get("/api/users/instructor/:id", async (req, res) => {
+    try {
+      const instructorId = parseInt(req.params.id);
+      if (isNaN(instructorId)) {
+        return res.status(400).json({ message: "Invalid instructor ID" });
+      }
+
+      const instructor = await storage.getUser(instructorId);
+      if (!instructor || instructor.role !== "instructor") {
+        return res.status(404).json({ message: "Instructor not found" });
+      }
+
+      // Return instructor info without sensitive data
+      const { password, ...instructorData } = instructor;
+      res.json(instructorData);
+    } catch (error) {
+      console.error("Error fetching instructor:", error);
+      res.status(500).json({ message: "Failed to fetch instructor" });
     }
   });
 

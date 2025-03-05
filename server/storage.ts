@@ -116,8 +116,8 @@ export class DatabaseStorage implements IStorage {
     return query.orderBy(users.createdAt);
   }
 
-  async getStudentsWithEnrollments(): Promise<(User & { enrollments: (Enrollment & { course?: Course })[] })[]> {
-    const students = await this.getAllStudents();
+  async getStudentsWithEnrollments(instructorId?: number): Promise<(User & { enrollments: (Enrollment & { course?: Course })[] })[]> {
+    const students = await this.getAllStudents(instructorId);
     const studentsWithEnrollments = await Promise.all(
       students.map(async (student) => {
         const studentEnrollments = await db

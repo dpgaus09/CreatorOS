@@ -5,10 +5,14 @@ import CourseCard from "@/components/course-card";
 import { Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useMemo } from "react";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Fetch user's instructor if applicable
+  const userInstructorId = user?.instructorId;
 
   const { data: publishedCourses, isLoading: loadingCourses } = useQuery<Course[]>({
     queryKey: ["/api/courses/published"],
@@ -24,6 +28,19 @@ export default function StudentDashboard() {
   const { data: enrollments, isLoading: loadingEnrollments } = useQuery<Enrollment[]>({
     queryKey: ["/api/enrollments"],
   });
+  
+  // Filter courses based on instructor association if student has an assigned instructor
+  const filteredCourses = useMemo(() => {
+    if (!publishedCourses) return [];
+    
+    // If student has an assigned instructor, only show courses from that instructor
+    if (userInstructorId && publishedCourses) {
+      return publishedCourses.filter(course => course.instructorId === userInstructorId);
+    }
+    
+    // Otherwise show all published courses
+    return publishedCourses;
+  }, [publishedCourses, userInstructorId]);
 
   if (loadingCourses || loadingEnrollments) {
     return (
