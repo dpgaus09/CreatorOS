@@ -38,9 +38,56 @@ const upload = multer({
 // We're now importing hashPassword from auth.ts
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Health check endpoint for deployment monitoring
-  app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  // Health check endpoint for deployment monitoring - serves both /health and /api/health
+  app.get(['/health', '/api/health'], (req, res) => {
+    // Check database connection if possible
+    try {
+      // Use a quick query with timeout to check database status
+      const dbPromise = db.execute(sql`SELECT 1`);
+      const timeoutPromise = new Promise((_resolve, reject) => {
+        setTimeout(() => reject(new Error("Database query timeout")), 3000);
+      });
+      
+      // Race the query against a timeout
+      Promise.race([dbPromise, timeoutPromise])
+        .then(() => {
+          // Database is connected
+          res.status(200).json({
+            status: "healthy",
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            environment: process.env.NODE_ENV || 'unknown',
+            version: process.version,
+            database: "connected", 
+            message: "All systems operational"
+          });
+        })
+        .catch(err => {
+          // Database is not reachable but app is running
+          console.warn("Health check database connectivity issue:", err.message);
+          res.status(200).json({
+            status: "degraded",
+            timestamp: new Date().toISOString(),
+            uptime: process.uptime(),
+            environment: process.env.NODE_ENV || 'unknown',
+            version: process.version,
+            database: "disconnected",
+            message: "App running with database connectivity issues"
+          });
+        });
+    } catch (error) {
+      // Something went wrong with even setting up the query
+      console.warn("Health check error:", error);
+      res.status(200).json({
+        status: "minimal",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'unknown',
+        version: process.version,
+        database: "unknown",
+        message: "Application running but database status unknown"
+      });
+    }
   });
   setupAuth(app);
 

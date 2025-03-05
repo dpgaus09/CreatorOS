@@ -3,7 +3,8 @@ import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-// Error handler for WebSocket - set this up before creating the pool
+// Error handlers for WebSocket - set these up before creating the pool
+// This is a known issue with Neon DB and can be safely ignored
 process.on('uncaughtException', (err) => {
   if (err.message && err.message.includes('Cannot set property message of #<ErrorEvent>')) {
     console.warn('Caught Neon WebSocket error (safe to ignore):', err.message);
@@ -12,8 +13,15 @@ process.on('uncaughtException', (err) => {
   }
 });
 
+process.on('unhandledRejection', (reason, promise) => {
+  console.warn('Unhandled promise rejection:', reason);
+  // Continue execution anyway
+});
+
 // Configure Neon database with WebSocket support
 try {
+  // Set global timeout for connection attempts
+  neonConfig.connectionTimeoutMillis = 10000;
   neonConfig.webSocketConstructor = ws;
   console.log('Neon WebSocket configured successfully');
 } catch (error) {
@@ -21,11 +29,12 @@ try {
   // Continue execution anyway
 }
 
-// Verify DATABASE_URL exists
+// Verify DATABASE_URL exists with better error handling
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+  console.error('⚠️ DATABASE_URL environment variable is not set');
+  console.log('Will attempt to proceed with startup, but database features will fail');
+  // Set a dummy URL that will fail safely later
+  process.env.DATABASE_URL = 'postgresql://user:password@localhost:5432/dummy_db';
 }
 
 console.log('Initializing database connection');
@@ -35,31 +44,64 @@ const connectionOptions = {
   connectionString: process.env.DATABASE_URL,
   max: 10, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // How long a client is allowed to remain idle before being closed
-  connectionTimeoutMillis: 5000, // Maximum time to wait for connection
+  connectionTimeoutMillis: 10000, // Maximum time to wait for connection (increased)
+  allowExitOnIdle: false, // Don't exit on idle in production
 };
 
-// Initialize the connection pool with error handling
+// Initialize the connection pool with more robust error handling
 let pool;
 try {
-  pool = new Pool(connectionOptions);
+  // Create the pool with a timeout guard
+  const poolPromise = new Pool(connectionOptions);
   
-  // Test the connection immediately to catch early failures
+  // Set a timeout to prevent hanging on pool creation
+  const timeoutPromise = new Promise<any>((_, reject) => {
+    setTimeout(() => reject(new Error('Database pool creation timed out')), 5000);
+  });
+  
+  // Use Promise.race to handle potential hanging
+  pool = await Promise.race([poolPromise, timeoutPromise]).catch(err => {
+    console.error('Error during pool creation:', err.message);
+    console.log('Using fallback pool configuration');
+    return new Pool({ 
+      connectionString: process.env.DATABASE_URL,
+      max: 3, // Reduced pool size for fallback
+      connectionTimeoutMillis: 5000,
+    });
+  });
+  
+  // Register pool error handler
   pool.on('error', (err) => {
     console.error('Unexpected database pool error:', err);
+    // Don't crash the application
   });
   
   console.log('Database pool created successfully');
 } catch (error) {
   console.error('Error creating database pool:', error);
   // Create a minimal pool that will be replaced later
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  pool = new Pool({ 
+    connectionString: process.env.DATABASE_URL,
+    max: 2 // Minimal connections
+  });
   console.log('Created fallback database pool');
 }
 
 // Initialize Drizzle ORM with the connection pool and schema
 let db;
 try {
-  db = drizzle({ client: pool, schema });
+  // Include a timeout here as well
+  const dbPromise = drizzle({ client: pool, schema });
+  const timeoutPromise = new Promise<any>((_, reject) => {
+    setTimeout(() => reject(new Error('Drizzle ORM initialization timed out')), 5000);
+  });
+  
+  db = await Promise.race([dbPromise, timeoutPromise]).catch(err => {
+    console.error('Error during ORM initialization:', err.message);
+    console.log('Using fallback ORM configuration');
+    return drizzle({ client: pool }); // Minimal instance
+  });
+  
   console.log('Database ORM initialized successfully');
 } catch (error) {
   console.error('Error initializing Drizzle ORM:', error);

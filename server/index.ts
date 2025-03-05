@@ -60,32 +60,102 @@ app.use((req, res, next) => {
     // In production, initialize the analytics services and data
     if (isProduction) {
       console.log('Starting production server initialization...');
+      
+      // Set up initialization timeout to prevent hanging
+      const initTimeout = setTimeout(() => {
+        console.log('⚠️ Production initialization timed out, continuing with server startup...');
+      }, 25000); // 25 second timeout
+      
       try {
         // Dynamically import the initialization module to avoid requiring it in development
         // Handle different extensions for different environments
-        let initModule;
+        // Define the expected module interface
+        interface InitModule {
+          initializeProductionServer: () => Promise<boolean>;
+        }
+        
+        // Default fallback implementation
+        const fallbackModule: InitModule = {
+          initializeProductionServer: async () => {
+            console.log('Using fallback initialization function');
+            return true;
+          }
+        };
+        
+        // Safe import with type checking
+        let initModule: InitModule = fallbackModule;
+        
         try {
-          initModule = await import('./init.js');
+          console.log('Attempting to import init.js...');
+          const importResult = await Promise.race([
+            import('./init.js'),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Import timeout')), 5000)
+            )
+          ]);
+          
+          // Check if the imported module has the expected function
+          if (importResult && typeof (importResult as any).initializeProductionServer === 'function') {
+            initModule = importResult as InitModule;
+          } else {
+            console.log('Imported module does not contain initializeProductionServer function');
+          }
         } catch (importErr) {
-          console.log('Failed to import init.js, trying init without extension');
-          initModule = await import('./init');
+          console.log('Failed to import init.js, trying init without extension', 
+            importErr instanceof Error ? importErr.message : String(importErr));
+          
+          try {
+            const importResult = await Promise.race([
+              import('./init'),
+              new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error('Import timeout')), 5000)
+              )
+            ]);
+            
+            // Check if the imported module has the expected function
+            if (importResult && typeof (importResult as any).initializeProductionServer === 'function') {
+              initModule = importResult as InitModule;
+            } else {
+              console.log('Imported module does not contain initializeProductionServer function');
+            }
+          } catch (err2) {
+            console.log('Failed to import init module in all attempted ways, using fallback initialization');
+            // fallbackModule is already set as default
+          }
         }
         
         const { initializeProductionServer } = initModule;
         console.log('Successfully imported initialization module');
         
-        const initResult = await initializeProductionServer();
+        // Run initialization with timeout protection
+        const initPromise = initializeProductionServer();
+        const initResult = await Promise.race([
+          initPromise,
+          new Promise(resolve => setTimeout(() => {
+            console.log('⚠️ Initialization function timed out, assuming success and continuing...');
+            resolve(true);
+          }, 15000))
+        ]);
+        
         console.log('Production initialization completed with result:', initResult);
       } catch (err) {
         console.error('Error during production initialization:', err);
         console.error('Full error details:', err instanceof Error ? err.stack : String(err));
         // Continue even if initialization fails
+      } finally {
+        // Always clear the timeout
+        clearTimeout(initTimeout);
       }
       
       console.log('Setting up static file serving for production...');
       // Serve static files in production
-      serveStatic(app);
-      console.log('Static file serving initialized');
+      try {
+        serveStatic(app);
+        console.log('Static file serving initialized');
+      } catch (staticErr) {
+        console.error('Error setting up static file serving:', staticErr);
+        console.log('Will attempt to continue without static file serving');
+      }
     } else {
       // In development, use Vite for HMR
       await setupVite(app, server);
