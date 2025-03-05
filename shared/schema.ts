@@ -12,6 +12,18 @@ export const images = pgTable("images", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Define type for enrollment progress tracking
+export const progressSchema = z.object({
+  completedModules: z.array(z.number()).default([]),
+  currentModule: z.number().optional(),
+  lastAccessedAt: z.string().optional(),
+  quizScores: z.record(z.string(), z.number()).default({}),
+  notes: z.record(z.string(), z.string()).default({}),
+  timeSpent: z.number().default(0)
+});
+
+export type EnrollmentProgress = z.infer<typeof progressSchema>;
+
 // Keep existing tables and add accessibility preferences to users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

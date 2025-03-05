@@ -1,5 +1,5 @@
 import { users, courses, enrollments, settings, images, pageViews, userEvents, courseAnalytics, sessionData, announcements } from "@shared/schema";
-import { InsertUser, User, Course, Enrollment, Setting, InsertImage, Image, InsertPageView, PageView, InsertUserEvent, UserEvent, InsertCourseAnalytic, CourseAnalytic, InsertSessionData, SessionData, Announcement, InsertAnnouncement } from "@shared/schema";
+import { InsertUser, User, Course, Enrollment, Setting, InsertImage, Image, InsertPageView, PageView, InsertUserEvent, UserEvent, InsertCourseAnalytic, CourseAnalytic, InsertSessionData, SessionData, Announcement, InsertAnnouncement, EnrollmentProgress } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, count, sql, lt, gt, isNull, or } from "drizzle-orm";
 import session from "express-session";
@@ -29,7 +29,7 @@ export interface IStorage {
   getEnrollment(studentId: number, courseId: number): Promise<Enrollment | undefined>;
   getStudentEnrollments(studentId: number): Promise<Enrollment[]>;
   getStudentsWithEnrollments(): Promise<(User & { enrollments: (Enrollment & { course?: Course })[] })[]>;
-  updateEnrollmentProgress(id: number, progress: Record<string, any>): Promise<Enrollment>;
+  updateEnrollmentProgress(id: number, progress: Partial<EnrollmentProgress>): Promise<Enrollment>;
 
   // Settings
   getSetting(name: string): Promise<Setting | undefined>;
@@ -207,7 +207,7 @@ export class DatabaseStorage implements IStorage {
 
   async updateEnrollmentProgress(
     id: number,
-    progress: Record<string, any>
+    progress: Partial<EnrollmentProgress>
   ): Promise<Enrollment> {
     const [updatedEnrollment] = await db
       .update(enrollments)
@@ -487,13 +487,9 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async createSession(sessionData: InsertSessionData): Promise<SessionData> {
-    const [newSession] = await db
-      .insert(sessionData)
-      .values({
-        ...sessionData,
-      })
-      .returning();
+  async createSession(data: InsertSessionData): Promise<SessionData> {
+    // @ts-ignore: Drizzle ORM sometimes has type issues with jsonb fields
+    const [newSession] = await db.insert(sessionData).values(data).returning();
     return newSession;
   }
 
