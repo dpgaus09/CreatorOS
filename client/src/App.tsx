@@ -5,23 +5,35 @@ import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AccessibilityProvider } from "@/hooks/use-accessibility";
+import { Suspense, lazy } from "react";
 import Navbar from "@/components/navbar";
+import { ProtectedRoute } from "./lib/protected-route";
+import { AnnouncementBanner } from "@/components/announcement-banner";
+
+// Eager-loaded critical components
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/auth/login";
-import InstructorRegister from "@/pages/auth/instructor-register";
-import StudentRegister from "@/pages/auth/student-register";
-import InstructorDashboard from "@/pages/instructor/dashboard";
-import CreateCourse from "@/pages/instructor/create-course";
-import StudentDashboard from "@/pages/student/dashboard";
-import CourseView from "@/pages/student/course-view";
-import CourseEditor from "@/pages/instructor/course-editor";
-import StudentsList from "@/pages/instructor/students-list";
-import { ProtectedRoute } from "./lib/protected-route";
-import PasswordReset from "@/pages/auth/password-reset";
-import AdminSettings from "@/pages/instructor/admin-settings";
-import StudentProfile from "@/pages/student/profile";
-import PublicCourseCatalog from "@/pages/public/course-catalog";
-import { AnnouncementBanner } from "@/components/announcement-banner";
+
+// Lazy-loaded components
+const InstructorRegister = lazy(() => import("@/pages/auth/instructor-register"));
+const StudentRegister = lazy(() => import("@/pages/auth/student-register"));
+const InstructorDashboard = lazy(() => import("@/pages/instructor/dashboard"));
+const CreateCourse = lazy(() => import("@/pages/instructor/create-course"));
+const StudentDashboard = lazy(() => import("@/pages/student/dashboard"));
+const CourseView = lazy(() => import("@/pages/student/course-view"));
+const CourseEditor = lazy(() => import("@/pages/instructor/course-editor"));
+const StudentsList = lazy(() => import("@/pages/instructor/students-list"));
+const PasswordReset = lazy(() => import("@/pages/auth/password-reset"));
+const AdminSettings = lazy(() => import("@/pages/instructor/admin-settings"));
+const StudentProfile = lazy(() => import("@/pages/student/profile"));
+const PublicCourseCatalog = lazy(() => import("@/pages/public/course-catalog"));
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
 
 function Layout({ children, showNav = true }: { children: React.ReactNode, showNav?: boolean }) {
   return (
@@ -29,7 +41,9 @@ function Layout({ children, showNav = true }: { children: React.ReactNode, showN
       {showNav && <Navbar />}
       <main className="container mx-auto px-4 py-8">
         <AnnouncementBanner />
-        {children}
+        <Suspense fallback={<LoadingFallback />}>
+          {children}
+        </Suspense>
       </main>
     </div>
   );
@@ -39,11 +53,46 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth/login" component={Login} />
-      <Route path="/auth/register/instructor" component={InstructorRegister} />
-      <Route path="/auth/register/student" component={StudentRegister} />
-      <Route path="/auth/register/student/:instructorId" component={StudentRegister} />
-      <Route path="/auth/reset-password" component={PasswordReset} />
-      <Route path="/courses" component={PublicCourseCatalog} />
+      <Route 
+        path="/auth/register/instructor" 
+        component={() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <InstructorRegister />
+          </Suspense>
+        )}
+      />
+      <Route 
+        path="/auth/register/student" 
+        component={() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <StudentRegister />
+          </Suspense>
+        )}
+      />
+      <Route 
+        path="/auth/register/student/:instructorId" 
+        component={() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <StudentRegister />
+          </Suspense>
+        )}
+      />
+      <Route 
+        path="/auth/reset-password" 
+        component={() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <PasswordReset />
+          </Suspense>
+        )}
+      />
+      <Route 
+        path="/courses" 
+        component={() => (
+          <Suspense fallback={<LoadingFallback />}>
+            <PublicCourseCatalog />
+          </Suspense>
+        )}
+      />
       <ProtectedRoute 
         path="/" 
         component={({ user }) => (
