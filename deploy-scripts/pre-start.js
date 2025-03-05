@@ -5,6 +5,14 @@ console.log('🚀 Starting pre-deployment database validation...');
 console.log(`📌 Environment: ${process.env.NODE_ENV}`);
 console.log(`📌 Database URL present: ${Boolean(process.env.DATABASE_URL)}`);
 
+// Early exit if DATABASE_URL is not available
+if (!process.env.DATABASE_URL) {
+  console.log('⚠️ DATABASE_URL environment variable is not set');
+  console.log('⚠️ Skipping database initialization - server will use fallback mode');
+  console.log('✅ Exiting pre-start script successfully to continue deployment');
+  process.exit(0); // Exit with success
+}
+
 // Set up global error handlers for the Neon database connection issues
 process.on('uncaughtException', (err) => {
   if (err.message && err.message.includes('Cannot set property message of #<ErrorEvent>')) {
