@@ -5,24 +5,22 @@ This guide provides step-by-step instructions for deploying your multi-tenant Le
 ## Prerequisites
 
 - Your Replit project is already set up and running
-- You have a PostgreSQL database (either the built-in Replit Database or an external one like Neon Database)
+- You have a PostgreSQL database (using the built-in Replit Database)
 - Your app is working properly in the Replit development environment
 
 ## Step 1: Prepare for Deployment
 
 1. Verify your application is running correctly in development mode
 2. Make sure all your dependencies are properly installed
-3. Ensure your database is properly configured
+3. Ensure your database is properly configured via the `DATABASE_URL` environment variable
 
 ## Step 2: Deploy Using Replit Deployments
 
 1. Click the **Deploy** button in the top right corner of your Replit workspace
 2. In the deployment dialog, configure the following:
-   - **Name**: Choose a unique name for your deployment
-   - **Deployment Target**: Select "Cloud Run"
+   - **Name**: Choose a unique name for your deployment (e.g., learner-bruh-lms)
    - **Build Command**: `npm run build`
    - **Run Command**: `node dist/index.js`
-   - **Public Directory**: `dist/public` (for static assets)
 
 3. Click **Deploy** to start the deployment process
 
@@ -35,26 +33,23 @@ Replit will automatically:
 
 After deployment, configure your environment variables:
 
-1. Go to the **Deployment** tab in your Replit workspace
-2. Click on your deployment
-3. Go to the **Secrets** tab
-4. Add the following environment variables:
-   - `DATABASE_URL`: Your PostgreSQL connection string
+1. Go to the **Secrets** tab in your Replit workspace (lock icon)
+2. Add the following environment variables if they're not already set:
+   - `DATABASE_URL`: Your PostgreSQL connection string (this should be already set)
    - `NODE_ENV`: Set to `production`
-   - `PORT`: Set to `3000`
-   - `HOST`: Set to `0.0.0.0`
 
-## Step 4: Set Up Multi-Tenancy
+## Step 4: Multi-Tenancy
 
-Your current application already has a basic multi-tenant structure with:
-- Instructor accounts can create courses
-- Students enroll in specific instructor courses
-- Permissions are enforced based on roles
+Your application already has a multi-tenant structure with:
+- Instructor accounts act as separate tenants
+- Students are assigned to a specific instructor during registration
+- Strict data isolation between instructors and their students
+- Each instructor can only manage their own courses and students
 
-This approach means:
+This architecture ensures:
 1. A single deployment can serve multiple instructors
-2. Each instructor manages their own content
-3. Students only see courses they're enrolled in
+2. Each instructor has their own isolated environment
+3. Students only see courses from their assigned instructor
 
 ## Step 5: Custom Domains (Optional)
 
@@ -70,9 +65,9 @@ For a more professional look:
 If you encounter issues during deployment:
 
 1. **Database Connection Issues**:
-   - Verify your `DATABASE_URL` is correct
-   - Ensure your IP is whitelisted if using an external database
-   - Check that your database user has proper permissions
+   - Check the application logs for connection errors
+   - Verify your `DATABASE_URL` is correct in the Secrets tab
+   - Make sure your database is running and accessible
 
 2. **Build Failures**:
    - Look for errors in the build logs
@@ -82,7 +77,7 @@ If you encounter issues during deployment:
 3. **Runtime Errors**:
    - Check the deployment logs
    - Verify environment variables are set correctly
-   - Ensure your Node.js version is compatible
+   - If you see "Pretty-print" or related database errors, make sure the postgres.js driver is properly configured
    
 ## Additional Resources
 
