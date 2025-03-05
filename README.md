@@ -7,7 +7,7 @@ A comprehensive learning management system for instructors and students.
 
 You can deploy this application to Digital Ocean with a single click:
 
-[![Deploy to DO](https://www.deploytodo.com/deploy-button.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/dpgaus09/CreatorOS)
+[![Deploy to DO](https://www.deploytodo.com/deploy-button.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/dpgaus09/CreatorOS/tree/main)
 
 ## For Clients: Getting Your Own Copy
 
