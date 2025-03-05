@@ -2,10 +2,11 @@
  * Database connection manager
  * 
  * This file establishes the database connection using Drizzle ORM.
+ * Supports both regular PostgreSQL and Neon serverless database.
  */
 
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from '@shared/schema';
 import pg from 'pg';
 
@@ -17,7 +18,7 @@ if (!dbUrl) {
   process.exit(1);
 }
 
-// Create a pg pool for session store and direct DB access
+// Create a pg pool for session store
 export const pool = new pg.Pool({
   connectionString: dbUrl,
   max: 10,
@@ -30,22 +31,26 @@ pool.on('error', (err: Error) => {
   console.error('Unexpected error on idle postgres client', err);
 });
 
-// Create a Neon serverless client for Drizzle ORM
-const sql = neon(dbUrl);
+// Use postgres.js client for Drizzle ORM which works better with Neon
+// Configure with reasonable defaults for serverless environment
+const client = postgres(dbUrl, {
+  max: 10,
+  idle_timeout: 20,
+  connect_timeout: 10,
+  prepare: false,
+});
 
 // Create a drizzle instance with our schema
-export const db = drizzle(sql, { schema });
+export const db = drizzle(client, { schema });
 
 // Keep connections alive with a heartbeat
 const HEARTBEAT_INTERVAL = 10 * 60 * 1000; // 10 minutes
 
 setInterval(async () => {
   try {
-    const client = await pool.connect();
-    try {
-      await client.query('SELECT 1');
-    } finally {
-      client.release();
+    const result = await client`SELECT 1`;
+    if (!result || result.length !== 1) {
+      console.warn('Database heartbeat returned unexpected result');
     }
   } catch (err) {
     console.error('Database heartbeat error:', err);
@@ -55,13 +60,8 @@ setInterval(async () => {
 // Test the database connection
 export async function testConnection(): Promise<boolean> {
   try {
-    const client = await pool.connect();
-    try {
-      const result = await client.query('SELECT 1 as test');
-      return result.rows?.length > 0 && result.rows[0].test === 1;
-    } finally {
-      client.release();
-    }
+    const result = await client`SELECT 1 as test`;
+    return result?.length > 0 && result[0].test === 1;
   } catch (err) {
     console.error('Database connection test failed:', err);
     return false;

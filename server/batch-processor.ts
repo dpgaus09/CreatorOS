@@ -127,10 +127,15 @@ export function createBatchProcessor<T>(
  */
 export const pageViewProcessor = createBatchProcessor<InsertPageView>(
   async (pageViews: InsertPageView[]) => {
-    // Process all page views in the batch individually
-    // (Could be optimized with bulk inserts if DB supports it)
-    for (const pageView of pageViews) {
-      await storage.createPageView(pageView);
+    try {
+      // Process all page views in the batch individually
+      // (Could be optimized with bulk inserts if DB supports it)
+      for (const pageView of pageViews) {
+        await storage.createPageView(pageView);
+      }
+    } catch (error) {
+      console.error("[page-view-processor] Error processing batch details:", 
+        error instanceof Error ? error.message : String(error));
     }
   },
   {
@@ -146,9 +151,14 @@ export const pageViewProcessor = createBatchProcessor<InsertPageView>(
  */
 export const userEventProcessor = createBatchProcessor<InsertUserEvent>(
   async (userEvents: InsertUserEvent[]) => {
-    // Process all user events in the batch individually
-    for (const userEvent of userEvents) {
-      await storage.createUserEvent(userEvent);
+    try {
+      // Process all user events in the batch individually
+      for (const userEvent of userEvents) {
+        await storage.createUserEvent(userEvent);
+      }
+    } catch (error) {
+      console.error("[user-event-processor] Error processing batch details:", 
+        error instanceof Error ? error.message : String(error));
     }
   },
   {

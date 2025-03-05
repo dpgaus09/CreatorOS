@@ -18,7 +18,7 @@ async function runMigration() {
       );
     `);
     
-    const columnExists = result.rows[0]?.exists;
+    const columnExists = result[0]?.exists;
     
     if (!columnExists) {
       console.log('Adding instructor_id column to users table...');
