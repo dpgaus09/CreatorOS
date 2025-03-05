@@ -38,8 +38,10 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
+    // Register all routes
     const server = await registerRoutes(app);
 
+    // Add global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
@@ -50,16 +52,29 @@ app.use((req, res, next) => {
     // Check for environment
     const isProduction = process.env.NODE_ENV === 'production';
     
-    if (!isProduction) {
-      await setupVite(app, server);
-    } else {
+    // In production, initialize the analytics services and data
+    if (isProduction) {
+      try {
+        // Dynamically import the initialization module to avoid requiring it in development
+        const { initializeProductionServer } = await import('./init.js');
+        await initializeProductionServer();
+      } catch (err) {
+        console.error('Error during production initialization:', err);
+        // Continue even if initialization fails
+      }
+      
+      // Serve static files in production
       serveStatic(app);
+    } else {
+      // In development, use Vite for HMR
+      await setupVite(app, server);
     }
 
     // Get port from env or use default
     const port = parseInt(process.env.PORT || '5000', 10);
     const host = process.env.HOST || "0.0.0.0";
 
+    // Start server with port retry capability
     const startServer = (attemptPort: number) => {
       server.listen(attemptPort, host)
         .on('listening', () => {
