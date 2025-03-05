@@ -5,7 +5,7 @@ spec:
     git:
       branch: main
       repo_clone_url: https://github.com/dpgaus09/CreatorOS.git
-    build_command: npm install && npm run build
+    build_command: chmod +x .do/deploy.sh && ./.do/deploy.sh
     run_command: npm run start
     envs:
     - key: NODE_ENV
@@ -20,6 +20,16 @@ spec:
     - key: HOST
       scope: RUN_TIME
       value: "0.0.0.0"
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xs
+    health_check:
+      http_path: /api/health
+      initial_delay_seconds: 30
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
   
   databases:
   - name: db

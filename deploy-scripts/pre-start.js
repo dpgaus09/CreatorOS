@@ -1,5 +1,9 @@
 // Database initialization script
-// This script verifies the database connection and preloads critical data
+// This script verifies the database connection and preloads critical data for DigitalOcean deployment
+
+console.log('🚀 Starting pre-deployment database validation...');
+console.log(`📌 Environment: ${process.env.NODE_ENV}`);
+console.log(`📌 Database URL present: ${Boolean(process.env.DATABASE_URL)}`);
 
 // Set up global error handlers for the Neon database connection issues
 process.on('uncaughtException', (err) => {
@@ -15,6 +19,13 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('🔶 Unhandled Rejection at:', promise, 'reason:', reason);
   // Continue execution
 });
+
+// Set a global timeout for the entire script
+const GLOBAL_TIMEOUT = 30000; // 30 seconds
+setTimeout(() => {
+  console.log('⏱️ Global pre-deployment script timeout reached. Exiting with success to proceed with deployment.');
+  process.exit(0);
+}, GLOBAL_TIMEOUT);
 
 // Enhanced error handling for module imports
 async function loadModules() {

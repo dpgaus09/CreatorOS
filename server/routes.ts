@@ -38,6 +38,10 @@ const upload = multer({
 // We're now importing hashPassword from auth.ts
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for deployment monitoring
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
   setupAuth(app);
 
   // Register the analytics middleware
