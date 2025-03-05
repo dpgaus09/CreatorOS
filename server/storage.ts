@@ -22,7 +22,7 @@ export interface IStorage {
   updateCourse(id: number, course: Partial<Course>): Promise<Course>;
   getCourse(id: number): Promise<Course | undefined>;
   getCoursesByInstructor(instructorId: number): Promise<Course[]>;
-  getPublishedCourses(): Promise<Course[]>;
+  getPublishedCourses(instructorId?: number): Promise<Course[]>;
 
   // Enrollments
   createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment>;
@@ -175,12 +175,20 @@ export class DatabaseStorage implements IStorage {
       .orderBy(courses.id);  // This ensures consistent ordering by course ID
   }
 
-  async getPublishedCourses(): Promise<Course[]> {
-    return db
+  async getPublishedCourses(instructorId?: number): Promise<Course[]> {
+    // Base query for published courses
+    let query = db
       .select()
       .from(courses)
-      .where(eq(courses.published, true))
-      .orderBy(courses.id);  // This ensures consistent ordering by course ID
+      .where(eq(courses.published, true));
+      
+    // If instructorId is provided, filter by that instructor
+    if (instructorId) {
+      query = query.where(eq(courses.instructorId, instructorId));
+    }
+    
+    // Apply ordering and return results
+    return query.orderBy(courses.id);  // This ensures consistent ordering by course ID
   }
 
   async createEnrollment(enrollment: Omit<Enrollment, "id">): Promise<Enrollment> {

@@ -51,8 +51,8 @@ export default function StudentDashboard() {
   }
 
   const enrolledCourseIds = new Set(enrollments?.map(e => e.courseId));
-  const enrolledCourses = publishedCourses?.filter(c => enrolledCourseIds.has(c.id)) || [];
-  const availableCourses = publishedCourses?.filter(c => !enrolledCourseIds.has(c.id)) || [];
+  const enrolledCourses = filteredCourses.filter(c => enrolledCourseIds.has(c.id)) || [];
+  const availableCourses = filteredCourses.filter(c => !enrolledCourseIds.has(c.id)) || [];
 
   return (
     <div className="container mx-auto py-8 space-y-8">
