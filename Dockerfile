@@ -26,21 +26,35 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm install --production
 
 # Copy the rest of the application
 COPY . .
 
 # Copy built files from build stage
-COPY --from=build /app/server/public ./server/public
+COPY --from=build /app/dist /app/dist
+COPY --from=build /app/server/public /app/server/public
+
+# Create uploads directory if it doesn't exist
+RUN mkdir -p /app/uploads && chmod 777 /app/uploads
 
 # Expose the port the app runs on
 EXPOSE 5000
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:5000/ || exit 1
 
 # Set environment variables
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=5000
 
+# Copy deployment scripts
+COPY deploy-scripts /app/deploy-scripts
+
+# Make scripts executable
+RUN chmod +x /app/deploy-scripts/start.sh
+
 # Command to run the application
-CMD ["npm", "run", "start"]
+CMD ["/app/deploy-scripts/start.sh"]
