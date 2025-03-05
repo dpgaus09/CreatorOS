@@ -42,39 +42,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get(['/health', '/api/health'], (req, res) => {
     // Check database connection if possible
     try {
-      // Use a quick query with timeout to check database status
-      const dbPromise = pool.query('SELECT 1');
-      const timeoutPromise = new Promise((_resolve, reject) => {
-        setTimeout(() => reject(new Error("Database query timeout")), 3000);
-      });
+      // Use db.query to verify database connection
+      // Use a try-catch statement with simpler logic to avoid undefined sql reference
+      const response = {
+        status: "minimal",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'unknown',
+        version: process.version,
+        database: "unknown",
+        message: "Application running"
+      };
       
-      // Race the query against a timeout
-      Promise.race([dbPromise, timeoutPromise])
-        .then(() => {
-          // Database is connected
-          res.status(200).json({
-            status: "healthy",
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime(),
-            environment: process.env.NODE_ENV || 'unknown',
-            version: process.version,
-            database: "connected", 
-            message: "All systems operational"
+      // Simplified check - no SQL reference that could cause problems
+      if (pool && typeof pool.query === 'function') {
+        pool.query('SELECT 1')
+          .then(() => {
+            response.status = "healthy";
+            response.database = "connected";
+            response.message = "All systems operational";
+            res.status(200).json(response);
+          })
+          .catch(err => {
+            console.warn("Health check database connectivity issue:", err.message);
+            response.status = "degraded";
+            response.database = "disconnected";
+            response.message = "App running with database connectivity issues";
+            res.status(200).json(response);
           });
-        })
-        .catch(err => {
-          // Database is not reachable but app is running
-          console.warn("Health check database connectivity issue:", err.message);
-          res.status(200).json({
-            status: "degraded",
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime(),
-            environment: process.env.NODE_ENV || 'unknown',
-            version: process.version,
-            database: "disconnected",
-            message: "App running with database connectivity issues"
-          });
-        });
+      } else {
+        res.status(200).json(response);
+      }
     } catch (error) {
       // Something went wrong with even setting up the query
       console.warn("Health check error:", error);
