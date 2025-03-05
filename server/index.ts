@@ -59,17 +59,33 @@ app.use((req, res, next) => {
     
     // In production, initialize the analytics services and data
     if (isProduction) {
+      console.log('Starting production server initialization...');
       try {
         // Dynamically import the initialization module to avoid requiring it in development
-        const { initializeProductionServer } = await import('./init.js');
-        await initializeProductionServer();
+        // Handle different extensions for different environments
+        let initModule;
+        try {
+          initModule = await import('./init.js');
+        } catch (importErr) {
+          console.log('Failed to import init.js, trying init without extension');
+          initModule = await import('./init');
+        }
+        
+        const { initializeProductionServer } = initModule;
+        console.log('Successfully imported initialization module');
+        
+        const initResult = await initializeProductionServer();
+        console.log('Production initialization completed with result:', initResult);
       } catch (err) {
         console.error('Error during production initialization:', err);
+        console.error('Full error details:', err instanceof Error ? err.stack : String(err));
         // Continue even if initialization fails
       }
       
+      console.log('Setting up static file serving for production...');
       // Serve static files in production
       serveStatic(app);
+      console.log('Static file serving initialized');
     } else {
       // In development, use Vite for HMR
       await setupVite(app, server);
