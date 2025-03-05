@@ -41,6 +41,7 @@ function Router() {
       <Route path="/auth/login" component={Login} />
       <Route path="/auth/register/instructor" component={InstructorRegister} />
       <Route path="/auth/register/student" component={StudentRegister} />
+      <Route path="/auth/register/student/:instructorId" component={StudentRegister} />
       <Route path="/auth/reset-password" component={PasswordReset} />
       <Route path="/courses" component={PublicCourseCatalog} />
       <ProtectedRoute 
