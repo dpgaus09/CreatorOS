@@ -91,6 +91,8 @@ export default function AdminSettings() {
   const [showAnnouncementDialog, setShowAnnouncementDialog] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [stripePortalUrl, setStripePortalUrl] = useState("");
+  const [registrationUrl, setRegistrationUrl] = useState("");
+  const registrationLinkRef = useRef<HTMLInputElement>(null);
 
   // Define setting type
   type Setting = { id?: number; name?: string; value: string };
@@ -613,6 +615,27 @@ export default function AdminSettings() {
   const handleSaveStripePortalUrl = () => {
     updateStripePortalUrlMutation.mutate(stripePortalUrl);
   };
+  
+  // Generate registration URL based on current window location and instructor ID
+  useEffect(() => {
+    if (user?.id) {
+      // Get the base URL (protocol + hostname + port if not standard)
+      const baseUrl = window.location.origin;
+      setRegistrationUrl(`${baseUrl}/auth/register/student/${user.id}`);
+    }
+  }, [user?.id]);
+  
+  // Function to copy registration URL to clipboard
+  const copyRegistrationLink = () => {
+    if (registrationLinkRef.current) {
+      registrationLinkRef.current.select();
+      document.execCommand('copy');
+      toast({
+        title: "Registration link copied",
+        description: "You can now share this link with your students"
+      });
+    }
+  };
 
   const handleDeleteStudent = (student: Student) => {
     setStudentToDelete(student);
@@ -847,6 +870,37 @@ export default function AdminSettings() {
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Student Registration Link */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Student Registration Link</CardTitle>
+                <CardDescription>
+                  Share this link with students to register them under your tenant
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="registration-link">Registration URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="registration-link"
+                      value={registrationUrl}
+                      readOnly
+                      ref={registrationLinkRef}
+                      className="bg-muted"
+                    />
+                    <Button onClick={copyRegistrationLink}>
+                      Copy Link
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Students who register using this link will automatically be assigned to your tenant
+                    and will only be able to access your courses.
+                  </p>
                 </div>
               </CardContent>
             </Card>
