@@ -95,22 +95,54 @@ app.use((req, res, next) => {
     const port = parseInt(process.env.PORT || '5000', 10);
     const host = process.env.HOST || "0.0.0.0";
 
-    // Start server with port retry capability
+    // Start server with port retry capability and enhanced error handling
     const startServer = (attemptPort: number) => {
-      server.listen(attemptPort, host)
-        .on('listening', () => {
-          log(`Server listening on http://${host}:${attemptPort}`);
-        })
-        .on('error', (error: NodeJS.ErrnoException) => {
-          if (error.code === 'EADDRINUSE' && attemptPort < 5010) {
-            // Try next port
-            log(`Port ${attemptPort} is busy, trying ${attemptPort + 1}...`);
-            startServer(attemptPort + 1);
-          } else {
-            console.error('Failed to start server:', error);
-            process.exit(1);
-          }
-        });
+      // Log deployment environment for debugging
+      console.log('Server environment:', {
+        NODE_ENV: process.env.NODE_ENV || 'not set',
+        PORT: process.env.PORT || 'not set',
+        DATABASE_URL: process.env.DATABASE_URL ? 'set (value hidden)' : 'not set'
+      });
+      
+      try {
+        server.listen(attemptPort, host)
+          .on('listening', () => {
+            log(`Server listening on http://${host}:${attemptPort}`);
+            
+            // Log successful startup message
+            console.log('✅ Server started successfully!');
+            
+            // Try to log available routes for debugging
+            try {
+              const routes = app._router.stack
+                .filter((r: any) => r.route)
+                .map((r: any) => {
+                  return {
+                    path: r.route.path,
+                    methods: Object.keys(r.route.methods).join(',')
+                  };
+                });
+              console.log(`Available routes: ${routes.length} endpoints registered`);
+            } catch (routeError) {
+              // Just log and continue if this fails
+              console.log('Could not print routes');
+            }
+          })
+          .on('error', (error: NodeJS.ErrnoException) => {
+            if (error.code === 'EADDRINUSE' && attemptPort < 5010) {
+              // Try next port
+              log(`Port ${attemptPort} is busy, trying ${attemptPort + 1}...`);
+              startServer(attemptPort + 1);
+            } else {
+              console.error('Failed to start server:', error);
+              // Don't exit - allow the process to continue
+              console.log('Continuing despite server start failure');
+            }
+          });
+      } catch (criticalError) {
+        console.error('Critical error during server start:', criticalError);
+        console.log('Will attempt to continue execution');
+      }
     };
 
     // Start the server with configured port

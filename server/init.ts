@@ -6,8 +6,9 @@
  */
 import { db } from './db';
 import { storage } from './storage';
-import { pageViews, users, settings, courses, courseAnalytics } from '../shared/schema';
 import { count, eq } from 'drizzle-orm';
+// Direct imports from schema for use in development
+import { pageViews, users, settings, courses, courseAnalytics } from '../shared/schema';
 
 /**
  * Initializes the analytics service by ensuring all required tables
