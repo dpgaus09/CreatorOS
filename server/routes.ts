@@ -677,8 +677,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const courses = await storage.getPublishedCourses();
-      console.log("Published courses:", courses); // Debug log
+      // Check if the user is a student with an assigned instructor
+      let instructorId: number | undefined = undefined;
+      if (req.user.role === 'student' && req.user.instructorId) {
+        instructorId = req.user.instructorId;
+        console.log(`Filtering courses for student by instructor ID: ${instructorId}`);
+      }
+      
+      // Fetch courses with optional instructor filtering
+      const courses = await storage.getPublishedCourses(instructorId);
+      console.log("Published courses count:", courses.length); // Debug log
       res.json(courses);
     } catch (error) {
       console.error("Error fetching published courses:", error);
@@ -698,8 +706,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const course = await storage.getCourse(courseId);
-      if (!course || (!course.published && course.instructorId !== req.user.id)) {
+      
+      // Basic validation: course must exist
+      if (!course) {
         return res.sendStatus(404);
+      }
+      
+      // Access control rules:
+      // 1. Instructors can access their own courses (published or not)
+      // 2. Students can access published courses from their assigned instructor
+      if (req.user.role === "instructor") {
+        // Instructors can only access their own courses
+        if (course.instructorId !== req.user.id) {
+          return res.status(403).json({ message: "You don't have access to this course" });
+        }
+      } else if (req.user.role === "student") {
+        // Students can only access published courses
+        if (!course.published) {
+          return res.status(404).json({ message: "Course not found" });
+        }
+        
+        // If student has an assigned instructor, they can only access courses from that instructor
+        if (req.user.instructorId && course.instructorId !== req.user.instructorId) {
+          return res.status(403).json({ message: "You don't have access to this course" });
+        }
       }
 
       // Track course view for analytics - only track student views, not instructor previews
@@ -746,10 +776,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      const courseId = req.body.courseId;
+      if (!courseId) {
+        return res.status(400).json({ message: "Course ID is required" });
+      }
+      
+      // Get the course to verify the instructor
+      const course = await storage.getCourse(courseId);
+      if (!course) {
+        return res.status(404).json({ message: "Course not found" });
+      }
+      
+      // Verify the student can access this course based on instructor assignment
+      if (req.user.instructorId && course.instructorId !== req.user.instructorId) {
+        return res.status(403).json({ 
+          message: "You cannot enroll in courses from other instructors"
+        });
+      }
+      
       const enrollmentData = insertEnrollmentSchema.parse({
         ...req.body,
         studentId: req.user.id
       });
+      
+      // Check if student is already enrolled in this course
+      const existingEnrollment = await storage.getEnrollment(req.user.id, courseId);
+      if (existingEnrollment) {
+        return res.status(400).json({ message: "You are already enrolled in this course" });
+      }
 
       const enrollment = await storage.createEnrollment({
         ...enrollmentData,
@@ -761,7 +815,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.message });
       }
-      throw error;
+      console.error("Error creating enrollment:", error);
+      res.status(500).json({ message: "Failed to create enrollment" });
     }
   });
 
@@ -924,10 +979,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const [userCountResult] = await db.select({ count: count() }).from(users);
         response.summary.userCount = userCountResult?.count || 0;
 
-        // Count courses and published courses
-        const publishedCourses = await storage.getPublishedCourses();
-        response.summary.courseCount = publishedCourses.length;
-        response.summary.publishedCourseCount = publishedCourses.filter(c => c.published).length;
+        // Count courses and published courses for this instructor
+        const instructorCourses = await storage.getCoursesByInstructor(req.user.id);
+        const publishedCourses = instructorCourses.filter(c => c.published);
+        response.summary.courseCount = instructorCourses.length;
+        response.summary.publishedCourseCount = publishedCourses.length;
 
         // Count enrollments
         const students = await storage.getStudentsWithEnrollments();
