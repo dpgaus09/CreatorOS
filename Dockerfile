@@ -13,9 +13,6 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
-# Build the application
-RUN npm run build
-
 # Production stage
 FROM node:20-alpine
 
@@ -25,16 +22,19 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install only production dependencies
-RUN npm install --only=production
+# Install dependencies
+RUN npm install
 
-# Copy built application from build stage
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/node_modules/@tiptap ./node_modules/@tiptap
-COPY --from=build /app/node_modules/@radix-ui ./node_modules/@radix-ui
+# Copy the rest of the application
+COPY . .
 
 # Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 5000
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=5000
 
 # Command to run the application
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "dev"]

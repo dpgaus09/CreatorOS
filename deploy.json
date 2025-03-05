@@ -1,14 +1,17 @@
 {
-  "name": "CreatorOS App",
+  "name": "LearnBruh LMS",
   "description": "Deploy this Learning Management System to Digital Ocean with one click.",
   "repository": "https://github.com/dpgaus09/CreatorOS",
+  "template": true,
   "services": [
     {
-      "name": "creatorOS-app",
+      "name": "learnbruh-app",
       "github": {
         "branch": "main",
-        "repo": "CreatorOS"
+        "repo": "dpgaus09/CreatorOS"
       },
+      "build_command": "npm install",
+      "run_command": "npm run dev",
       "envs": [
         { "key": "NODE_ENV", "value": "production", "scope": "RUN_TIME" },
         { "key": "DATABASE_URL", "type": "SECRET", "scope": "RUN_TIME" }
@@ -17,7 +20,7 @@
   ],
   "databases": [
     {
-      "name": "creatoros-db",
+      "name": "learnbruh-db",
       "engine": "PG",
       "version": "14"
     }

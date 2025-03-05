@@ -1,0 +1,21 @@
+spec:
+  name: learnbruh-lms
+  services:
+  - name: web
+    git:
+      branch: main
+      repo_clone_url: https://github.com/dpgaus09/CreatorOS.git
+    build_command: npm install
+    run_command: npm run dev
+    envs:
+    - key: NODE_ENV
+      scope: RUN_TIME
+      value: production
+    - key: DATABASE_URL
+      scope: RUN_TIME
+      value: ${db.DATABASE_URL}
+  
+  databases:
+  - name: db
+    engine: PG
+    version: "14"

@@ -1,0 +1,19 @@
+name: learner-bruh-lms
+services:
+- name: web
+  github:
+    repo: dpgaus09/CreatorOS
+    branch: main
+  build_command: npm install
+  run_command: npm run dev
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${db.DATABASE_URL}
+  - key: NODE_ENV
+    scope: RUN_TIME
+    value: production
+  
+databases:
+- name: db
+  engine: PG
