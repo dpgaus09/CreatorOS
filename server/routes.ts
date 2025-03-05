@@ -52,7 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/settings/lms-name", async (req, res) => {
     try {
       const setting = await storage.getSetting("lms-name");
-      res.json(setting || { value: "LearnBruh" });
+      res.json(setting || { value: "CreatorOS" });
     } catch (error) {
       console.error("Error fetching LMS name:", error);
       res.status(500).json({ message: "Failed to fetch LMS name" });

@@ -1,5 +1,5 @@
 
-# LearnBruh Learning Management System
+# CreatorOS Learning Management System
 
 A comprehensive learning management system for instructors and students.
 
@@ -11,7 +11,7 @@ You can deploy this application to Digital Ocean with a single click:
 
 ## For Clients: Getting Your Own Copy
 
-To get your own copy of the LearnBruh LMS:
+To get your own copy of the CreatorOS LMS:
 
 1. Create a Replit account if you don't already have one
 2. Request an invite from your vendor to join their Replit Team
@@ -19,11 +19,11 @@ To get your own copy of the LearnBruh LMS:
 4. Follow the on-screen instructions to create your own copy
 5. Your data and users will be separate from other instances
 
-This process gives you a complete, independent copy of the LearnBruh LMS that you can customize and manage.
+This process gives you a complete, independent copy of the CreatorOS LMS that you can customize and manage.
 
 ## Quick Start for New Users
 
-To get started with your own copy of LearnBruh LMS:
+To get started with your own copy of CreatorOS LMS:
 
 1. Click the "Fork" button at the top of this template
 2. Wait for your copy to be created and dependencies to install

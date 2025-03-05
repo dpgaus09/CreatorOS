@@ -1,4 +1,4 @@
-name: learner-bruh-lms
+name: creatoros-lms
 services:
 - name: web
   github:

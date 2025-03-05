@@ -37,7 +37,7 @@ export default function PublicCourseCatalog() {
     queryKey: ["/api/settings/enrollment-url"],
   });
 
-  const lmsName = lmsSettings?.value || "LearnBruh";
+  const lmsName = lmsSettings?.value || "CreatorOS";
 
   // Update enrollment URL when setting is loaded
   useEffect(() => {
