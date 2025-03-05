@@ -42,8 +42,8 @@ export async function initializeAnalyticsService() {
             totalViews: 0,
             uniqueViews: 0,
             totalCompletions: 0,
-            averageRating: 0,
-            lastUpdated: new Date()
+            averageRating: 0
+            // lastUpdated is handled automatically by the schema default
           });
         } catch (error) {
           console.error(`Error creating analytics for course ${course.id}:`, error);
