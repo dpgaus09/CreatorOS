@@ -10,6 +10,39 @@ services:
   - key: DATABASE_URL
     scope: RUN_TIME
     value: ${db.DATABASE_URL}
+  # Add individual database credentials as fallbacks
+  - key: DB_HOST
+    scope: RUN_TIME
+    value: ${db.HOSTNAME}
+  - key: DB_PORT
+    scope: RUN_TIME
+    value: ${db.PORT}
+  - key: DB_USER
+    scope: RUN_TIME
+    value: ${db.USERNAME}
+  - key: DB_PASSWORD
+    scope: RUN_TIME
+    value: ${db.PASSWORD}
+  - key: DB_NAME
+    scope: RUN_TIME
+    value: ${db.DATABASE}
+  # Add standard PostgreSQL environment variables which some libraries use
+  - key: PGHOST
+    scope: RUN_TIME
+    value: ${db.HOSTNAME}
+  - key: PGPORT
+    scope: RUN_TIME
+    value: ${db.PORT}
+  - key: PGUSER
+    scope: RUN_TIME
+    value: ${db.USERNAME}
+  - key: PGPASSWORD
+    scope: RUN_TIME
+    value: ${db.PASSWORD}
+  - key: PGDATABASE
+    scope: RUN_TIME
+    value: ${db.DATABASE}
+  # Standard application configuration
   - key: NODE_ENV
     scope: RUN_TIME
     value: production
@@ -31,6 +64,16 @@ services:
   - key: NODE_OPTIONS
     scope: RUN_TIME
     value: "--experimental-specifier-resolution=node"
+  # Database connection parameters (helps with temporary disconnects)
+  - key: PG_MAX_CONNECTIONS
+    scope: RUN_TIME
+    value: "10"
+  - key: PG_IDLE_TIMEOUT_MS
+    scope: RUN_TIME
+    value: "30000"
+  - key: PG_CONNECTION_TIMEOUT_MS
+    scope: RUN_TIME
+    value: "10000"
   http_port: 8080
   instance_count: 1
   instance_size_slug: basic-xs
@@ -80,6 +123,38 @@ jobs:
   - key: DATABASE_URL
     scope: RUN_TIME
     value: ${db.DATABASE_URL}
+  # Add individual database credentials as fallbacks
+  - key: DB_HOST
+    scope: RUN_TIME
+    value: ${db.HOSTNAME}
+  - key: DB_PORT
+    scope: RUN_TIME
+    value: ${db.PORT}
+  - key: DB_USER
+    scope: RUN_TIME
+    value: ${db.USERNAME}
+  - key: DB_PASSWORD
+    scope: RUN_TIME
+    value: ${db.PASSWORD}
+  - key: DB_NAME
+    scope: RUN_TIME
+    value: ${db.DATABASE}
+  # Add standard PostgreSQL environment variables which some libraries use
+  - key: PGHOST
+    scope: RUN_TIME
+    value: ${db.HOSTNAME}
+  - key: PGPORT
+    scope: RUN_TIME
+    value: ${db.PORT}
+  - key: PGUSER
+    scope: RUN_TIME
+    value: ${db.USERNAME}
+  - key: PGPASSWORD
+    scope: RUN_TIME
+    value: ${db.PASSWORD}
+  - key: PGDATABASE
+    scope: RUN_TIME
+    value: ${db.DATABASE}
   - key: NODE_OPTIONS
     scope: RUN_TIME
     value: "--experimental-specifier-resolution=node"
