@@ -10,11 +10,13 @@
         "branch": "main",
         "repo": "dpgaus09/CreatorOS"
       },
-      "build_command": "npm install",
-      "run_command": "npm run dev",
+      "build_command": "npm install && npm run build",
+      "run_command": "npm run start",
       "envs": [
         { "key": "NODE_ENV", "value": "production", "scope": "RUN_TIME" },
-        { "key": "DATABASE_URL", "type": "SECRET", "scope": "RUN_TIME" }
+        { "key": "DATABASE_URL", "type": "SECRET", "scope": "RUN_TIME" },
+        { "key": "PORT", "value": "8080", "scope": "RUN_TIME" },
+        { "key": "HOST", "value": "0.0.0.0", "scope": "RUN_TIME" }
       ]
     }
   ],

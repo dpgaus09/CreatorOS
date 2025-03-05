@@ -4,8 +4,8 @@ services:
   github:
     repo: dpgaus09/CreatorOS
     branch: main
-  build_command: npm install
-  run_command: npm run dev
+  build_command: npm install && npm run build
+  run_command: npm run start
   envs:
   - key: DATABASE_URL
     scope: RUN_TIME
@@ -13,6 +13,12 @@ services:
   - key: NODE_ENV
     scope: RUN_TIME
     value: production
+  - key: PORT
+    scope: RUN_TIME
+    value: "8080"
+  - key: HOST
+    scope: RUN_TIME
+    value: "0.0.0.0"
   
 databases:
 - name: db
