@@ -19,18 +19,58 @@ services:
   - key: HOST
     scope: RUN_TIME
     value: "0.0.0.0"
+  - key: APP_VERSION
+    scope: RUN_TIME
+    value: "1.0.0"
   http_port: 8080
   instance_count: 1
   instance_size_slug: basic-xs
   health_check:
     http_path: /api/health
-    initial_delay_seconds: 45
-    period_seconds: 10
-    timeout_seconds: 5
+    initial_delay_seconds: 60
+    period_seconds: 15
+    timeout_seconds: 10
     success_threshold: 1
     failure_threshold: 3
+  routes:
+  - path: /
+    preserve_path_prefix: true
+  cors:
+  - allow_origins:
+    - "*"
+    allow_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+    allow_headers:
+    - Authorization
+    - Content-Type
+    - Accept
+    - Origin
+    - User-Agent
+    expose_headers:
+    - Content-Length
+    - Content-Type
+    max_age: 86400
   
 databases:
 - name: db
   engine: PG
   version: "14"
+  production: true
+
+jobs:
+- name: db-migration
+  kind: PRE_DEPLOY
+  github:
+    repo: dpgaus09/CreatorOS
+    branch: main
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_TIME
+    value: ${db.DATABASE_URL}
+  run_command: |
+    npm ci --quiet && \
+    npm run db:push

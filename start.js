@@ -83,32 +83,105 @@ if (!serverPath) {
     // Create a simple Express server that at least responds to health checks
     fs.writeFileSync(emergencyPath, `
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+// ESM __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.get('/api/health', (_req, res) => {
-  res.json({
-    status: 'minimal',
-    message: 'Emergency server running - build process failed',
-    timestamp: new Date().toISOString()
+// Handle health check endpoint
+app.get(['/health', '/api/health'], (_req, res) => {
+  res.status(200).json({
+    status: "minimal",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'unknown',
+    mode: "emergency",
+    message: "Emergency server running"
   });
 });
 
-app.get('/', (_req, res) => {
+// Try to serve static files from dist/public (Vite build output)
+const distPublicPath = path.join(process.cwd(), 'dist', 'public');
+const publicPath = path.join(process.cwd(), 'public');
+
+if (fs.existsSync(distPublicPath)) {
+  console.log(\`Serving static files from \${distPublicPath}\`);
+  app.use(express.static(distPublicPath));
+} else if (fs.existsSync(publicPath)) {
+  console.log(\`Serving static files from \${publicPath}\`);
+  app.use(express.static(publicPath));
+}
+
+// Serve uploads directory if it exists
+const uploadsPath = path.join(process.cwd(), 'uploads');
+if (fs.existsSync(uploadsPath)) {
+  console.log(\`Serving uploads from \${uploadsPath}\`);
+  app.use('/uploads', express.static(uploadsPath));
+}
+
+// Fallback route
+app.get('*', (req, res) => {
+  if (req.url.startsWith('/api/')) {
+    // For API routes, return a proper JSON response
+    return res.status(503).json({
+      status: "unavailable",
+      message: "API endpoint unavailable in emergency mode",
+      endpoint: req.url
+    });
+  }
+  
+  // Try to serve index.html from various locations
+  const possibleIndexFiles = [
+    path.join(distPublicPath, 'index.html'),
+    path.join(publicPath, 'index.html')
+  ];
+  
+  for (const indexPath of possibleIndexFiles) {
+    if (fs.existsSync(indexPath)) {
+      console.log(\`Serving index.html from \${indexPath}\`);
+      return res.sendFile(indexPath);
+    }
+  }
+  
+  // Last resort fallback
   res.send(\`
     <html>
-      <head><title>Learner_Bruh LMS - Maintenance</title></head>
-      <body style="font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem;">
-        <h1>Learner_Bruh LMS</h1>
-        <p>The application is currently in maintenance mode.</p>
-        <p>Please check back soon.</p>
+      <head>
+        <title>Learner_Bruh LMS - Maintenance</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+          body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }
+          .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+          .card { background: #f7f7f7; border-radius: 8px; padding: 2rem; margin-bottom: 1rem; border: 1px solid #ddd; }
+          h1 { margin-top: 0; color: #333; }
+          .btn { display: inline-block; background: #0070f3; color: white; padding: 0.5rem 1rem; border-radius: 4px; text-decoration: none; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Learner_Bruh LMS</h1>
+        </div>
+        <div class="card">
+          <h2>System Maintenance</h2>
+          <p>Our learning management system is currently undergoing scheduled maintenance.</p>
+          <p>We apologize for any inconvenience this may cause. Please check back soon.</p>
+          <p>API services remain available during maintenance.</p>
+          <a href="/api/health" class="btn">Check API Status</a>
+        </div>
       </body>
     </html>
   \`);
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(\`Emergency server listening on port \${PORT}\`);
+  console.log(\`Emergency server listening on port \${PORT} in \${process.env.NODE_ENV || 'development'} mode\`);
 });
     `);
     
