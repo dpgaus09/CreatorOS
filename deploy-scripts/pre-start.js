@@ -1,6 +1,21 @@
 // Database initialization script
 // This script verifies the database connection and preloads critical data
 
+// Set up global error handlers for the Neon database connection issues
+process.on('uncaughtException', (err) => {
+  if (err.message && err.message.includes('Cannot set property message of #<ErrorEvent>')) {
+    console.warn('🔶 Caught Neon WebSocket error (safe to ignore):', err.message);
+  } else {
+    console.error('💥 Uncaught exception:', err);
+  }
+  // Continue execution
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔶 Unhandled Rejection at:', promise, 'reason:', reason);
+  // Continue execution
+});
+
 // Enhanced error handling for module imports
 async function loadModules() {
   try {
@@ -16,8 +31,13 @@ async function loadModules() {
       try {
         dbModule = await import('./db.js');
       } catch (err2) {
-        console.error('❌ Failed to load database module:', err2);
-        throw new Error('Could not load database module');
+        console.log('⚠️ Could not load db.js from alternate path, trying without extension...');
+        try {
+          dbModule = await import('../server/db');
+        } catch (err3) {
+          console.error('❌ Failed to load database module:', err3);
+          throw new Error('Could not load database module');
+        }
       }
     }
     
@@ -28,8 +48,13 @@ async function loadModules() {
       try {
         schemaModule = await import('./schema.js');
       } catch (err2) {
-        console.error('❌ Failed to load schema module:', err2);
-        throw new Error('Could not load schema module');
+        console.log('⚠️ Could not load schema.js from alternate path, trying without extension...');
+        try {
+          schemaModule = await import('../shared/schema');
+        } catch (err3) {
+          console.error('❌ Failed to load schema module:', err3);
+          throw new Error('Could not load schema module');
+        }
       }
     }
     
@@ -71,48 +96,82 @@ async function initializeDatabase() {
   console.log('🔌 Verifying database connection...');
   
   try {
+    // Set a timeout to ensure the script doesn't hang indefinitely
+    const timeout = setTimeout(() => {
+      console.log('⏱️ Database initialization timed out - continuing with server startup');
+      process.exit(0); // Exit success to let the server start
+    }, 15000); // 15 seconds timeout
+    
     // Load required modules
     const { db, pool, users, settings, courses, eq } = await loadModules();
     
     // Early exit if modules failed to load
     if (!db || !pool) {
       console.log('⚠️ Database modules not loaded, skipping initialization');
+      clearTimeout(timeout);
       return true; // Return true to continue server startup
     }
     
-    // Test raw database connection
+    // Test raw database connection with timeout protection
+    let connectionSuccessful = false;
     try {
-      const rawResult = await pool.query('SELECT 1 as alive');
+      // Set a short timeout just for the query
+      const queryPromise = pool.query('SELECT 1 as alive');
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      );
+      
+      const rawResult = await Promise.race([queryPromise, timeoutPromise]);
       console.log('✅ Raw database connection successful:', rawResult.rows[0]);
+      connectionSuccessful = true;
     } catch (rawErr) {
       console.error('❌ Raw database connection failed:', rawErr);
       console.log('🚨 Attempting to continue despite connection issues');
     }
     
-    // Test ORM connection
-    try {
-      const dbTest = await db.select().from(users).limit(1);
-      console.log('✅ ORM database connection successful');
-      
-      // Check if required settings exist
-      console.log('🔍 Checking critical application settings...');
-      const lmsName = await db.select().from(settings).where(eq(settings.name, 'lms-name')).limit(1);
-      
-      if (!lmsName || lmsName.length === 0) {
-        console.log('⚠️ Creating default LMS name setting...');
-        await db.insert(settings).values({
-          name: 'lms-name',
-          value: 'Learner_Bruh LMS',
-        });
+    // Only try ORM operations if raw connection worked
+    if (connectionSuccessful) {
+      try {
+        // Wrap in timeout protection
+        const ormPromise = db.select().from(users).limit(1);
+        const ormTimeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('ORM query timeout')), 5000)
+        );
+        
+        const dbTest = await Promise.race([ormPromise, ormTimeoutPromise]);
+        console.log('✅ ORM database connection successful');
+        
+        // Check if required settings exist
+        console.log('🔍 Checking critical application settings...');
+        try {
+          const lmsName = await db.select().from(settings).where(eq(settings.name, 'lms-name')).limit(1);
+          
+          if (!lmsName || lmsName.length === 0) {
+            console.log('⚠️ Creating default LMS name setting...');
+            await db.insert(settings).values({
+              name: 'lms-name',
+              value: 'Learner_Bruh LMS',
+            });
+          }
+        } catch (settingsErr) {
+          console.error('⚠️ Settings check failed:', settingsErr);
+        }
+        
+        // Check if any courses exist
+        try {
+          const courseCount = await db.select().from(courses).limit(1);
+          console.log(`📚 Found ${courseCount.length} courses in the database`);
+        } catch (coursesErr) {
+          console.error('⚠️ Courses check failed:', coursesErr);
+        }
+      } catch (ormErr) {
+        console.error('⚠️ ORM database operations failed:', ormErr);
+        console.log('🚨 Will attempt to continue server startup anyway');
       }
-      
-      // Check if any courses exist
-      const courseCount = await db.select().from(courses).limit(1);
-      console.log(`📚 Found ${courseCount.length} courses in the database`);
-    } catch (ormErr) {
-      console.error('⚠️ ORM database operations failed:', ormErr);
-      console.log('🚨 Will attempt to continue server startup anyway');
     }
+    
+    // Clear the overall timeout since we're done
+    clearTimeout(timeout);
     
     console.log('✅ Database initialization completed');
     return true;

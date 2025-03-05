@@ -10,6 +10,12 @@ import { count, eq } from 'drizzle-orm';
 // Direct imports from schema for use in development
 import { pageViews, users, settings, courses, courseAnalytics } from '../shared/schema';
 
+// Additional error handling for production environments
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Application continues running
+});
+
 /**
  * Initializes the analytics service by ensuring all required tables
  * and data structures exist and are populated with default values
