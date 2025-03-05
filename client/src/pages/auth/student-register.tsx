@@ -90,10 +90,9 @@ export default function StudentRegister() {
             ) : (
               <p>Create your student account for {lmsName} and start learning.</p>
             )}
-            {instructorId && (
+            {instructorId && instructorName && (
               <div className="mt-2 p-2 bg-muted rounded-md text-sm">
                 <p className="font-medium">You're registering as a student of {instructorName}</p>
-                <p>You'll only have access to courses by this instructor.</p>
               </div>
             )}
           </div>
