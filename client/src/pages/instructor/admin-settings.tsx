@@ -92,29 +92,37 @@ export default function AdminSettings() {
   const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [stripePortalUrl, setStripePortalUrl] = useState("");
 
+  // Define setting type
+  type Setting = { id?: number; name?: string; value: string };
+  
   // Settings query
-  const { data: settings, isLoading } = useQuery({
+  const { data: settings, isLoading } = useQuery<Setting>({
     queryKey: ["/api/settings/lms-name"],
+    placeholderData: { value: "CreatorOS" } as Setting,
   });
 
   // Enrollment URL query
-  const { data: enrollmentUrlSetting } = useQuery({
+  const { data: enrollmentUrlSetting } = useQuery<Setting>({
     queryKey: ["/api/settings/enrollment-url"],
+    placeholderData: { value: "/auth/login" } as Setting,
   });
 
   // Analytics settings query
-  const { data: analyticsEnabledSetting } = useQuery({
+  const { data: analyticsEnabledSetting } = useQuery<Setting>({
     queryKey: ["/api/analytics/settings"],
+    placeholderData: { value: "true" } as Setting,
   });
 
   // Announcements settings query
-  const { data: announcementsEnabledSetting } = useQuery({
+  const { data: announcementsEnabledSetting } = useQuery<Setting>({
     queryKey: ["/api/settings/announcements-enabled"],
+    placeholderData: { value: "true" } as Setting,
   });
   
   // Stripe portal URL query
-  const { data: stripePortalUrlSetting } = useQuery({
+  const { data: stripePortalUrlSetting } = useQuery<Setting>({
     queryKey: ["/api/settings/stripe-portal-url"],
+    placeholderData: { value: "" } as Setting,
   });
 
   // Announcements query
@@ -123,8 +131,9 @@ export default function AdminSettings() {
   });
 
   // Logo query
-  const logoQuery = useQuery({
+  const logoQuery = useQuery<Setting>({
     queryKey: ["/api/settings/logo"],
+    placeholderData: { value: "" } as Setting,
   });
 
   // Analytics data queries
@@ -518,6 +527,7 @@ export default function AdminSettings() {
     title: z.string().min(1, "Title is required"),
     content: z.string().min(1, "Content is required"),
     active: z.boolean().default(true),
+    createdBy: z.number().optional(),
   });
 
   // Announcement form

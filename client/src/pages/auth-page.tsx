@@ -20,8 +20,12 @@ export default function AuthPage() {
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { data: settings } = useQuery({
+  // Define setting type
+  type Setting = { id?: number; name?: string; value: string };
+
+  const { data: settings } = useQuery<Setting>({
     queryKey: ["/api/settings/lms-name"],
+    placeholderData: { value: "CreatorOS" } as Setting,
   });
 
   const lmsName = settings?.value || "CreatorOS";
